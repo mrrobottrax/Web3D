@@ -12,9 +12,13 @@ interface ShaderBase {
 	projectionMatrixUnif: WebGLUniformLocation | null;
 }
 
-interface DefaultShader extends ShaderBase {
+interface SpriteShader extends ShaderBase {
 	samplerUnif: WebGLUniformLocation | null;
 	colorUnif: WebGLUniformLocation | null;
+}
+
+interface DefaultShader extends ShaderBase {
+	
 }
 
 
@@ -23,9 +27,14 @@ export let fallbackShader: ShaderBase = {
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null
 };
-export let defaultShader: DefaultShader = {
+export let spriteShader: SpriteShader = {
+	program: null,
+	modelViewMatrixUnif: null,
+	projectionMatrixUnif: null,
 	samplerUnif: null,
-	colorUnif: null,
+	colorUnif: null
+};
+export let defaultShader: DefaultShader = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null
@@ -106,12 +115,12 @@ export async function initGl(): Promise<void> {
 	createSolidTexture();
 
 	// create remaining shader programs
-	const promises = [
+	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
-	];
-
-	await Promise.all<WebGLProgram>(promises).then((results) => {
+		initProgramFromWeb("data/shaders/sprite/sprite.vert", "data/shaders/sprite/sprite.frag"),
+	]).then((results) => {
 		defaultShader.program = results[0];
+		spriteShader.program = results[1];
 	});
 
 	// get shader locations
@@ -120,8 +129,11 @@ export async function initGl(): Promise<void> {
 
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
-	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
-	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+
+	spriteShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
+	spriteShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
+	spriteShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
+	spriteShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~
