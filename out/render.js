@@ -10,7 +10,7 @@ let vertBuffer;
 let elementBuffer;
 let cubeModel = new Model();
 cubeModel.position = new vec3(0, -3, -7);
-cubeModel.rotation = quaternion.identity();
+cubeModel.scale = new vec3(2, 0.5, 1);
 cubeModel.verts = [
     -1, -1, -1,
     -1, -1, 1,
@@ -69,7 +69,6 @@ export function drawFrame() {
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
     let mat = new mat4;
-    cubeModel.scale = new vec3(2, 0.5, 1);
     cubeModel.rotation = quaternion.euler(r1, r2, r3);
     r1 += Time.deltaTime * 20;
     r2 += Time.deltaTime * 15;
