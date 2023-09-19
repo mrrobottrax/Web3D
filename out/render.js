@@ -56,10 +56,12 @@ export function drawInit() {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(cubeModel.elements), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).data());
+    gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
     gl.useProgram(null);
 }
-let r = 0;
+let r1 = 0;
+let r2 = 0;
+let r3 = 0;
 export function drawFrame() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(defaultShader.program);
@@ -67,13 +69,15 @@ export function drawFrame() {
     gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
     let mat = new mat4;
-    cubeModel.scale = new vec3(1, 0.5, 2);
-    cubeModel.rotation = quaternion.euler(0, r, 0);
-    r += Time.deltaTime * 20;
-    mat.scale(cubeModel.scale);
-    mat.rotate(cubeModel.rotation);
+    cubeModel.scale = new vec3(2, 0.5, 1);
+    cubeModel.rotation = quaternion.euler(r1, r2, r3);
+    r1 += Time.deltaTime * 20;
+    r2 += Time.deltaTime * 15;
+    r3 += Time.deltaTime * 10;
     mat.translate(cubeModel.position);
-    gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.data());
+    mat.rotate(cubeModel.rotation);
+    mat.scale(cubeModel.scale);
+    gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
     gl.drawElements(gl.TRIANGLES, cubeModel.elements.length, gl.UNSIGNED_BYTE, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -86,8 +90,8 @@ function calcPerspectiveMatrix(fov, width, height) {
     matrix.setValue(0, 0, scale * (height / width));
     matrix.setValue(1, 1, scale);
     matrix.setValue(2, 2, (farClip + nearClip) / (nearClip - farClip));
-    matrix.setValue(2, 3, (2 * farClip * nearClip) / (nearClip - farClip));
-    matrix.setValue(3, 2, -1);
+    matrix.setValue(3, 2, (2 * farClip * nearClip) / (nearClip - farClip));
+    matrix.setValue(2, 3, -1);
     return matrix;
 }
 function getFrustumScale(fov) {
