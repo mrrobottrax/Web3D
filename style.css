@@ -1,0 +1,13 @@
+#game {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	image-rendering: auto;
+	-ms-interpolation-mode: nearest-neighbor;
+}
+
+.center {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
