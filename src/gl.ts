@@ -4,6 +4,8 @@ export let glProperties = {
 }
 export let gl: WebGL2RenderingContext;
 
+// ~~~~~~~~~~~~~ shaders ~~~~~~~~~~~~~~
+
 interface ShaderBase {
 	program: WebGLProgram | null;
 	modelViewMatrixUnif: WebGLUniformLocation | null;
@@ -15,7 +17,6 @@ interface DefaultShader extends ShaderBase {
 	colorUnif: WebGLUniformLocation | null;
 }
 
-let solidTex: WebGLTexture | null;
 
 let fallbackShader: ShaderBase = {
 	program: null,
@@ -30,7 +31,11 @@ let defaultShader: DefaultShader = {
 	projectionMatrixUnif: null
 };
 
-// Vertex shader program
+// ~~~~~~~~~~~~~ default / fallbacks ~~~~~~~~~~~~~~
+
+let solidTex: WebGLTexture | null;
+
+// vertex shader program
 const fallbackVSource = `
 attribute vec4 aVertexPosition;
 uniform mat4 uModelViewMatrix;
@@ -40,11 +45,14 @@ void main() {
 }
 `;
 
+// fragment shader program
 const fallbackFSource = `
 void main() {
   gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
 }
 `;
+
+// ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
 export async function initGl(): Promise<void> {
 	const canvas: HTMLCanvasElement | null = document.querySelector("#game");
@@ -57,13 +65,13 @@ export async function initGl(): Promise<void> {
 	glProperties.width = canvas.width;
 	glProperties.height = canvas.height;
 
-	// Initialize the GL context
+	// initialize the GL context
 	const _gl: WebGL2RenderingContext | null = canvas.getContext("webgl2", {
 		antialias: true,
 		alpha: false,
 	});
 
-	// Only continue if WebGL is available and working
+	// only continue if WebGL is available and working
 	if (!_gl) {
 		alert(
 			"Unable to initialize WebGL. Your browser or machine may not support it.",
@@ -71,6 +79,7 @@ export async function initGl(): Promise<void> {
 		return;
 	}
 
+	// initialize gl context
 	gl = _gl;
 
 	gl.clearColor(0.25, 0.25, 0.25, 1.0);
@@ -83,6 +92,7 @@ export async function initGl(): Promise<void> {
 
 	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
+	// create fallback program
 	const fallbackProgram: WebGLProgram | null = initShaderProgram(fallbackVSource, fallbackFSource);
 	if (!fallbackProgram) {
 		console.error("Failed to init fallback shader");
@@ -92,16 +102,19 @@ export async function initGl(): Promise<void> {
 
 	defaultShader.program = fallbackShader.program;
 
+	// create default solid texture
 	createSolidTexture();
 
+	// create remaining shader programs
 	const promises = [
-		initShaderProgramFromWeb("data/shaders/default.vert", "data/shaders/default.frag"),
+		initProgramFromWeb("data/shaders/default.vert", "data/shaders/default.frag"),
 	];
 
 	await Promise.all<WebGLProgram>(promises).then((results) => {
 		defaultShader.program = results[0];
 	});
 
+	// get shader locations
 	fallbackShader.modelViewMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uModelViewMatrix");
 	fallbackShader.projectionMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uProjectionMatrix");
 
@@ -111,7 +124,10 @@ export async function initGl(): Promise<void> {
 	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
 }
 
-async function initShaderProgramFromWeb(vs: string, fs: string): Promise<WebGLProgram | null> {
+// ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~
+
+async function initProgramFromWeb(vs: string, fs: string): Promise<WebGLProgram | null> {
+	// send requests
 	const reqV = new XMLHttpRequest();
 	const reqF = new XMLHttpRequest();
 
@@ -131,6 +147,7 @@ async function initShaderProgramFromWeb(vs: string, fs: string): Promise<WebGLPr
 
 	var shader: WebGLProgram | null = null;
 
+	// get shader from requests
 	await Promise.all<XMLHttpRequest>([promiseV, promiseF]).then((results) => {
 		if (results[0].status != 200 || results[1].status != 200) {
 			return null;
@@ -139,6 +156,7 @@ async function initShaderProgramFromWeb(vs: string, fs: string): Promise<WebGLPr
 		shader = initShaderProgram(results[0].responseText, results[1].responseText);
 	});
 
+	// fall back when request fails
 	if (!shader) {
 		console.error(`Failed to load shader ${vs}, ${fs}`);
 		shader = initShaderProgram(fallbackVSource, fallbackFSource);
@@ -147,6 +165,7 @@ async function initShaderProgramFromWeb(vs: string, fs: string): Promise<WebGLPr
 	return shader;
 }
 
+// ~~~~~~~~~~~~~ create shader program ~~~~~~~~~~~~~~
 
 function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | null {
 	const vertexShader: WebGLShader | null = loadShader(gl.VERTEX_SHADER, vsSource);
@@ -155,7 +174,7 @@ function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | n
 	if (!vertexShader || !fragmentShader)
 		return null;
 
-	// Create the shader program
+	// create the shader program
 
 	const shaderProgram: WebGLProgram | null = gl.createProgram();
 	if (!shaderProgram)
@@ -169,7 +188,7 @@ function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | n
 
 	gl.linkProgram(shaderProgram);
 
-	// If creating the shader program failed, alert
+	// if creating the shader program failed, alert
 
 	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
 		alert(
@@ -183,6 +202,8 @@ function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | n
 	return shaderProgram;
 }
 
+// ~~~~~~~~~~~~~ load shader from text ~~~~~~~~~~~~~~
+
 function loadShader(type: number, source: string): WebGLShader | null {
 	const shader: WebGLShader | null = gl.createShader(type);
 	if (!shader) {
@@ -190,15 +211,15 @@ function loadShader(type: number, source: string): WebGLShader | null {
 		return null;
 	}
 
-	// Send the source to the shader object
+	// send the source to the shader object
 
 	gl.shaderSource(shader, source);
 
-	// Compile the shader program
+	// compile the shader program
 
 	gl.compileShader(shader);
 
-	// See if it compiled successfully
+	// see if it compiled successfully
 
 	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
 		alert(
@@ -211,13 +232,17 @@ function loadShader(type: number, source: string): WebGLShader | null {
 	return shader;
 }
 
+// ~~~~~~~~~~~~~ default solid texture ~~~~~~~~~~~~~~
+
 function createSolidTexture(): void {
+	// create texture
 	solidTex = gl.createTexture();
 	if (!solidTex) {
 		console.error("Failed to create solid texture")
 		return;
 	}
 
+	// set texture properties
 	gl.bindTexture(gl.TEXTURE_2D, solidTex);
 
 	const level = 0;
@@ -227,6 +252,8 @@ function createSolidTexture(): void {
 	const border = 0;
 	const srcFormat = gl.RGBA;
 	const srcType = gl.UNSIGNED_BYTE;
+
+	// generate texture
 	const pixel = new Uint8Array([255, 255, 255, 255]); // opaque blue
 	gl.texImage2D(
 		gl.TEXTURE_2D,
@@ -243,13 +270,17 @@ function createSolidTexture(): void {
 	gl.bindTexture(gl.TEXTURE_2D, null);
 }
 
+// ~~~~~~~~~~~~~ load a texture from url ~~~~~~~~~~~~~~
+
 export async function loadTexture(url: string): Promise<WebGLTexture | null> {
+	// create texture
 	const texture = gl.createTexture();
 	if (!texture) {
 		console.error("Failed to create texture: " + url);
 		return null
 	}
 
+	// set to fallback texture
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 
 	const level = 0;
@@ -270,6 +301,7 @@ export async function loadTexture(url: string): Promise<WebGLTexture | null> {
 		pixel,
 	);
 
+	// replace when texture loads
 	const image = new Image();
 	image.onload = () => {
 		gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -282,6 +314,7 @@ export async function loadTexture(url: string): Promise<WebGLTexture | null> {
 			image,
 		);
 
+		// power of 2 textures require special treatment
 		if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
 			gl.generateMipmap(gl.TEXTURE_2D);
 		} else {
