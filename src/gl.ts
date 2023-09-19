@@ -18,12 +18,12 @@ interface DefaultShader extends ShaderBase {
 }
 
 
-let fallbackShader: ShaderBase = {
+export let fallbackShader: ShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null
 };
-let defaultShader: DefaultShader = {
+export let defaultShader: DefaultShader = {
 	samplerUnif: null,
 	colorUnif: null,
 	program: null,
@@ -107,7 +107,7 @@ export async function initGl(): Promise<void> {
 
 	// create remaining shader programs
 	const promises = [
-		initProgramFromWeb("data/shaders/default.vert", "data/shaders/default.frag"),
+		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 	];
 
 	await Promise.all<WebGLProgram>(promises).then((results) => {

@@ -12,12 +12,12 @@ export let glProperties = {
     height: 0
 };
 export let gl;
-let fallbackShader = {
+export let fallbackShader = {
     program: null,
     modelViewMatrixUnif: null,
     projectionMatrixUnif: null
 };
-let defaultShader = {
+export let defaultShader = {
     samplerUnif: null,
     colorUnif: null,
     program: null,
@@ -82,7 +82,7 @@ export function initGl() {
         createSolidTexture();
         // create remaining shader programs
         const promises = [
-            initProgramFromWeb("data/shaders/default.vert", "data/shaders/default.frag"),
+            initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
         ];
         yield Promise.all(promises).then((results) => {
             defaultShader.program = results[0];

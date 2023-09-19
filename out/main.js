@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { initGl } from "./gl.js";
-import { drawFrame } from "./render.js";
+import { drawFrame, drawInit } from "./render.js";
 import { updateTime } from "./time.js";
 let running = false;
 main();
@@ -18,6 +18,7 @@ function exit() {
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         yield init();
+        drawInit();
         running = true;
         window.requestAnimationFrame(gameLoop);
     });
