@@ -23,8 +23,7 @@ export function loadModelFromWeb(url) {
             if (result.status != 200) {
                 return null;
             }
-            model = loadModel(result.response.Uint8Array);
-            console.log(result.response);
+            model = loadModel(new Uint8Array(result.response));
         });
         // fall back when request fails
         // todo: error model
@@ -35,9 +34,13 @@ export function loadModelFromWeb(url) {
         return model;
     });
 }
+const magicNumber = 1735152710;
 function loadModel(file) {
     // assert magic number
-    console.log(readUInt32(0, file));
+    if (readUInt32(0, file) != magicNumber) {
+        return 0;
+    }
+    console.log('Loaded model');
     return 1;
 }
 function readUInt32(position, file) {

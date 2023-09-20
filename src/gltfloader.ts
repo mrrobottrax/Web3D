@@ -18,8 +18,7 @@ export async function loadModelFromWeb(url: string) {
 			return null;
 		}
 
-		model = loadModel(result.response.Uint8Array);
-		console.log(result.response);
+		model = loadModel(new Uint8Array(result.response));
 	});
 
 	// fall back when request fails
@@ -32,20 +31,25 @@ export async function loadModelFromWeb(url: string) {
 	return model;
 }
 
+const magicNumber: number = 1735152710;
 function loadModel(file: Uint8Array) {
 	// assert magic number
-	console.log(readUInt32(0, file));
+	if (readUInt32(0, file) != magicNumber) {
+		return 0;
+	}
+
+	console.log('Loaded model');
 
 	return 1;
 }
 
 function readUInt32(position: number, file: Uint8Array): number {
-	let num = 0;
+	let num: number = 0;
 
 	for (let i = 0; i < 4; i++) {
 		num = num << 8;
 		num |= file[position + i];
 	}
-	
+
 	return num;
 }
