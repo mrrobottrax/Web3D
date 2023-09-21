@@ -130,19 +130,20 @@ export async function initGl(): Promise<void> {
 }
 
 export function resizeCanvas() {
-	const width = canvas.clientWidth;
-	const height = canvas.clientHeight;
+	const ratio = window.devicePixelRatio;
+	const width = canvas.clientWidth * ratio;
+	const height = canvas.clientHeight * ratio;
 
 	if (glProperties.width == width && glProperties.height == height) {
 		return;
 	}
 
-	glProperties.width = canvas.clientWidth;
-	glProperties.height = canvas.clientHeight;
-	canvas.width = canvas.clientWidth;
-	canvas.height = canvas.clientHeight;
+	glProperties.width = width;
+	glProperties.height = height;
+	canvas.width = width;
+	canvas.height = height;
 
-	gl.viewport(0, 0, glProperties.width, glProperties.height);
+	gl.viewport(0, 0, width, height);
 
 	initProjection();
 }
