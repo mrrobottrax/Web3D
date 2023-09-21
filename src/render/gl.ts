@@ -96,10 +96,8 @@ export async function initGl(): Promise<void> {
 
 	gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LEQUAL);
-	//gl.enable(gl.CULL_FACE);
+	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.BACK);
-
-	//gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
 	// create fallback program
 	const fallbackProgram: WebGLProgram | null = initShaderProgram(fallbackVSource, fallbackFSource);

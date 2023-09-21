@@ -1,9 +1,5 @@
 #game {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	image-rendering: auto;
-	-ms-interpolation-mode: nearest-neighbor;
+	image-rendering: pixelated;
 }
 
 .center {
