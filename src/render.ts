@@ -1,4 +1,4 @@
-import { defaultShader, gl, glProperties } from "./gl.js";
+import { defaultShader, gl, glProperties, loadTexture } from "./gl.js";
 import gMath from "./gmath.js";
 import { quaternion, vec3 } from "./vector.js";
 import { Model } from "./mesh/model.js";
@@ -11,6 +11,7 @@ const nearClip = 0.3;
 const farClip = 1000;
 
 let webModel: Model = new Model();
+let cloudsTex: WebGLTexture;
 
 export async function drawInit(): Promise<void> {
 	gl.useProgram(defaultShader.program);
@@ -24,6 +25,10 @@ export async function drawInit(): Promise<void> {
 	const m = await loadMeshFromWeb("./data/models/texCube.glb");
 	if (m)
 		webModel.mesh = m;
+
+	const t = await loadTexture("./data/textures/clouds.png");
+	if (t)
+		cloudsTex = t;
 }
 
 let r1 = 0;
@@ -52,9 +57,15 @@ function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternio
 	mat.rotate(rotation);
 	mat.scale(scale);
 
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, cloudsTex);
+
 	gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
+	gl.uniform1i(defaultShader.samplerUnif, 0);
 
 	gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
+
+	gl.bindTexture(gl.TEXTURE_2D, null);
 
 	gl.bindVertexArray(null);
 }

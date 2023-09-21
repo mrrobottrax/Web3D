@@ -27,6 +27,7 @@ export let spriteShader = {
 export let defaultShader = {
     program: null,
     modelViewMatrixUnif: null,
+    samplerUnif: null,
     projectionMatrixUnif: null
 };
 // ~~~~~~~~~~~~~ default / fallbacks ~~~~~~~~~~~~~~
@@ -83,6 +84,7 @@ export function initGl() {
         }
         fallbackShader.program = fallbackProgram;
         defaultShader.program = fallbackShader.program;
+        spriteShader.program = fallbackShader.program;
         // create default solid texture
         createSolidTexture();
         // create remaining shader programs
@@ -98,10 +100,11 @@ export function initGl() {
         fallbackShader.projectionMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uProjectionMatrix");
         defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
         defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
-        spriteShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
-        spriteShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
         spriteShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
-        spriteShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+        spriteShader.modelViewMatrixUnif = gl.getUniformLocation(spriteShader.program, "uModelViewMatrix");
+        spriteShader.projectionMatrixUnif = gl.getUniformLocation(spriteShader.program, "uProjectionMatrix");
+        spriteShader.samplerUnif = gl.getUniformLocation(spriteShader.program, "uSampler");
+        spriteShader.colorUnif = gl.getUniformLocation(spriteShader.program, "uColor");
     });
 }
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~

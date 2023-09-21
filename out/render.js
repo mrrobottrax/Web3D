@@ -7,7 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { defaultShader, gl, glProperties } from "./gl.js";
+import { defaultShader, gl, glProperties, loadTexture } from "./gl.js";
 import gMath from "./gmath.js";
 import { quaternion, vec3 } from "./vector.js";
 import { Model } from "./mesh/model.js";
@@ -17,6 +17,7 @@ import { loadMeshFromWeb } from "./mesh/gltfloader.js";
 const nearClip = 0.3;
 const farClip = 1000;
 let webModel = new Model();
+let cloudsTex;
 export function drawInit() {
     return __awaiter(this, void 0, void 0, function* () {
         gl.useProgram(defaultShader.program);
@@ -26,6 +27,9 @@ export function drawInit() {
         const m = yield loadMeshFromWeb("./data/models/texCube.glb");
         if (m)
             webModel.mesh = m;
+        const t = yield loadTexture("./data/textures/clouds.png");
+        if (t)
+            cloudsTex = t;
     });
 }
 let r1 = 0;
@@ -47,8 +51,12 @@ function drawPrimitive(primitive, position, rotation, scale) {
     mat.translate(position);
     mat.rotate(rotation);
     mat.scale(scale);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, cloudsTex);
     gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
+    gl.uniform1i(defaultShader.samplerUnif, 0);
     gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindVertexArray(null);
 }
 function calcPerspectiveMatrix(fov, width, height) {
