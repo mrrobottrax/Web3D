@@ -24,7 +24,7 @@ export class Mesh {
 			// get textures
 			let t: WebGLTexture[] = [];
 			for (let j = 0; j < data[i].textureUris.length; ++j) {
-				const url = "./data/" + data[i].textureUris[0];
+				const url = "./data/models/" + data[i].textureUris[0];
 
 				const textureLoaded = textures[url] !== undefined;
 

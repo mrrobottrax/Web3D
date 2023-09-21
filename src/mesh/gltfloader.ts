@@ -1,5 +1,5 @@
 import { Mesh } from "./mesh.js";
-import { PrimitiveData } from "./primitive.js";
+import { Primitive, PrimitiveData } from "./primitive.js";
 
 export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
 	// send requests
@@ -149,14 +149,20 @@ function loadGlb(file: Uint8Array): Mesh | null {
 }
 
 function loadGltf(json: any, buffers: Uint8Array[]): Mesh | null {
-	// temp: load first primitive
-	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
-	if (!p) {
-		return null;
+	let pDatas: PrimitiveData[] = [];
+
+	for (let i = 0; i < json.meshes[0].primitives.length; ++i) {
+
+		// temp: load first primitive
+		const p = loadPrimitive(json.meshes[0].primitives[i], json, buffers);
+		if (!p) {
+			return null;
+		}
+		pDatas.push(p);
 	}
 
 	const m = new Mesh();
-	m.genBuffers([p]);
+	m.genBuffers(pDatas);
 	return m;
 }
 

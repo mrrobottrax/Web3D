@@ -22,8 +22,8 @@ export function drawInit() {
         gl.useProgram(defaultShader.program);
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
-        webModel.position = new vec3(0, -2, -10);
-        const m = yield loadGlTFFromWeb("./data/models/texCube");
+        webModel.position = new vec3(0, 0, -0.3);
+        const m = yield loadGlTFFromWeb("./data/models/sign");
         if (m)
             webModel.mesh = m;
     });
@@ -34,12 +34,17 @@ let r3 = 0;
 export function drawFrame() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(defaultShader.program);
-    drawPrimitive(webModel.mesh.primitives[0], webModel.position, webModel.rotation, webModel.scale);
+    drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
     gl.useProgram(null);
     webModel.rotation = quaternion.euler(r1, r2, r3);
     r1 += Time.deltaTime * 20;
     r2 += Time.deltaTime * 15;
     r3 += Time.deltaTime * 10;
+}
+function drawMesh(mesh, position, rotation, scale) {
+    for (let i = 0; i < mesh.primitives.length; ++i) {
+        drawPrimitive(mesh.primitives[i], position, rotation, scale);
+    }
 }
 function drawPrimitive(primitive, position, rotation, scale) {
     gl.bindVertexArray(primitive.vao);

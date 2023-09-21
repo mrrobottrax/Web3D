@@ -131,13 +131,17 @@ function loadGlb(file) {
     return m;
 }
 function loadGltf(json, buffers) {
-    // temp: load first primitive
-    const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
-    if (!p) {
-        return null;
+    let pDatas = [];
+    for (let i = 0; i < json.meshes[0].primitives.length; ++i) {
+        // temp: load first primitive
+        const p = loadPrimitive(json.meshes[0].primitives[i], json, buffers);
+        if (!p) {
+            return null;
+        }
+        pDatas.push(p);
     }
     const m = new Mesh();
-    m.genBuffers([p]);
+    m.genBuffers(pDatas);
     return m;
 }
 function loadPrimitive(primitive, json, buffers) {

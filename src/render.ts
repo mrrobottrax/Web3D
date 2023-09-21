@@ -6,6 +6,7 @@ import { mat4 } from "./matrix.js";
 import { Time } from "./time.js";
 import { Primitive } from "./mesh/primitive.js";
 import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
+import { Mesh } from "./mesh/mesh.js";
 
 const nearClip = 0.3;
 const farClip = 1000;
@@ -20,8 +21,8 @@ export async function drawInit(): Promise<void> {
 
 	gl.useProgram(null);
 
-	webModel.position = new vec3(0, -2, -10);
-	const m = await loadGlTFFromWeb("./data/models/texCube");
+	webModel.position = new vec3(0, 0, -0.3);
+	const m = await loadGlTFFromWeb("./data/models/sign");
 	if (m)
 		webModel.mesh = m;
 }
@@ -34,7 +35,7 @@ export function drawFrame(): void {
 
 	gl.useProgram(defaultShader.program);
 
-	drawPrimitive(webModel.mesh.primitives[0], webModel.position, webModel.rotation, webModel.scale);
+	drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
 
 	gl.useProgram(null);
 
@@ -42,6 +43,12 @@ export function drawFrame(): void {
 	r1 += Time.deltaTime * 20;
 	r2 += Time.deltaTime * 15;
 	r3 += Time.deltaTime * 10;
+}
+
+function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3) {
+	for (let i = 0; i < mesh.primitives.length; ++i) {
+		drawPrimitive(mesh.primitives[i], position, rotation, scale);
+	}
 }
 
 function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3) {
