@@ -13,7 +13,7 @@ import { quaternion, vec3 } from "./vector.js";
 import { Model } from "./mesh/model.js";
 import { mat4 } from "./matrix.js";
 import { Time } from "./time.js";
-import { loadMeshFromWeb } from "./mesh/gltfloader.js";
+import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
 const nearClip = 0.3;
 const farClip = 1000;
 let webModel = new Model();
@@ -24,7 +24,7 @@ export function drawInit() {
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
         webModel.position = new vec3(0, -2, -10);
-        const m = yield loadMeshFromWeb("./data/models/texCube.glb");
+        const m = yield loadGlTFFromWeb("./data/models/texCube");
         if (m)
             webModel.mesh = m;
         const t = yield loadTexture("./data/textures/clouds.png");

@@ -1,27 +1,65 @@
 import { Mesh } from "./mesh.js";
 import { PrimitiveData } from "./primitive.js";
 
-export async function loadMeshFromWeb(url: string): Promise<Mesh | null> {
+export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
 	// send requests
-	const req = new XMLHttpRequest();
+	const req1 = new XMLHttpRequest();
+	const req2 = new XMLHttpRequest();
 
-	const promise = new Promise<XMLHttpRequest>((resolve) => {
-		req.addEventListener("load", function () { resolve(this); });
+	const promise1 = new Promise<XMLHttpRequest>((resolve) => {
+		req1.addEventListener("load", function () { resolve(this); });
+	});
+	const promise2 = new Promise<XMLHttpRequest>((resolve) => {
+		req2.addEventListener("load", function () { resolve(this); });
 	});
 
-	req.responseType = "arraybuffer";
-	req.open("GET", url);
-	req.send();
+	req1.open("GET", url + ".gltf");
+	req1.send();
+	req2.responseType = "arraybuffer";
+	req2.open("GET", url + ".bin");
+	req2.send();
 
 	let mesh: Mesh | null = null;
 
 	// get shader from requests
-	await promise.then((result) => {
-		if (result.status != 200) {
+	await Promise.all([promise1, promise2]).then((results) => {
+		if (results[0].status != 200 || results[1].status != 200) {
 			return null;
 		}
 
-		mesh = loadModel(new Uint8Array(result.response));
+		mesh = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)]);
+	});
+
+	// fall back when request fails
+	// todo: error model
+	//if (!result) {
+	//	console.error(`Failed to load shader ${vs}, ${fs}`);
+	//	shader = initShaderProgram(fallbackVSource, fallbackFSource);
+	//}
+
+	return mesh;
+}
+
+export async function loadGlbFromWeb(url: string): Promise<Mesh | null> {
+	// send requests
+	const req1 = new XMLHttpRequest();
+
+	const promise1 = new Promise<XMLHttpRequest>((resolve) => {
+		req1.addEventListener("load", function () { resolve(this); });
+	});
+
+	req1.open("GET", url + ".glb");
+	req1.send();
+
+	let mesh: Mesh | null = null;
+
+	// get shader from requests
+	await promise1.then((result) => {
+		if (result.status != 200 || result.status != 200) {
+			return null;
+		}
+
+		mesh = loadGlb(new Uint8Array(result.response));
 	});
 
 	// fall back when request fails
@@ -57,7 +95,7 @@ const accessorTypes = {
 	MAT3: "MAT3",
 	MAT4: "MAT4",
 }
-function loadModel(file: Uint8Array): Mesh | null {
+function loadGlb(file: Uint8Array): Mesh | null {
 	let pos = 0;
 
 	// ~~~~~~ HEADER ~~~~~~~
@@ -99,7 +137,18 @@ function loadModel(file: Uint8Array): Mesh | null {
 
 	let buffers = [file.subarray(binChunk.dataPos, binChunk.dataPos + binChunk.chunkLength)];
 
+	// temp: load first primitive
+	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
+	if (!p) {
+		return null;
+	}
 
+	const m = new Mesh();
+	m.genBuffers([p]);
+	return m;
+}
+
+function loadGltf(json: any, buffers: Uint8Array[]): Mesh | null {
 	// temp: load first primitive
 	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
 	if (!p) {

@@ -5,7 +5,7 @@ import { Model } from "./mesh/model.js";
 import { mat4 } from "./matrix.js";
 import { Time } from "./time.js";
 import { Primitive } from "./mesh/primitive.js";
-import { loadMeshFromWeb } from "./mesh/gltfloader.js";
+import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
 
 const nearClip = 0.3;
 const farClip = 1000;
@@ -22,7 +22,7 @@ export async function drawInit(): Promise<void> {
 	gl.useProgram(null);
 
 	webModel.position = new vec3(0, -2, -10);
-	const m = await loadMeshFromWeb("./data/models/texCube.glb");
+	const m = await loadGlTFFromWeb("./data/models/texCube");
 	if (m)
 		webModel.mesh = m;
 
