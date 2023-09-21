@@ -1,4 +1,4 @@
-import { defaultShader, gl, glProperties, loadTexture } from "./gl.js";
+import { defaultShader, gl, glProperties } from "./gl.js";
 import gMath from "../math/gmath.js";
 import { quaternion, vec3 } from "../math/vector.js";
 import { Model } from "../mesh/model.js";
@@ -14,17 +14,18 @@ const farClip = 1000;
 let webModel: Model = new Model();
 
 export async function drawInit(): Promise<void> {
-	gl.useProgram(defaultShader.program);
-
-	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false,
-		calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
-
-	gl.useProgram(null);
-
 	webModel.position = new vec3(0, -2, -5);
 	const m = await loadGlTFFromWeb("./data/models/texCube");
 	if (m)
 		webModel.mesh = m;
+}
+
+export function initProjection() {
+	gl.useProgram(defaultShader.program);
+	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false,
+		calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
+
+	gl.useProgram(null);
 }
 
 let r1 = 0;
@@ -62,6 +63,7 @@ function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternio
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, primitive.textures[0]);
 
+	gl.uniform4fv(defaultShader.colorUnif, [1, 1, 1, 1]);
 	gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
 	gl.uniform1i(defaultShader.samplerUnif, 0);
 

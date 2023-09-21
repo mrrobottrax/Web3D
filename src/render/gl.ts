@@ -1,8 +1,15 @@
+import { initProjection } from "./render.js";
+
 export let glProperties = {
 	width: 0,
 	height: 0
 }
 export let gl: WebGL2RenderingContext;
+
+enum SharedAttribs {
+	positionAttrib,
+	texCoordAttrib
+}
 
 // ~~~~~~~~~~~~~ shaders ~~~~~~~~~~~~~~
 
@@ -10,34 +17,26 @@ interface ShaderBase {
 	program: WebGLProgram | null;
 	modelViewMatrixUnif: WebGLUniformLocation | null;
 	projectionMatrixUnif: WebGLUniformLocation | null;
-}
-
-interface SpriteShader extends ShaderBase {
 	samplerUnif: WebGLUniformLocation | null;
 	colorUnif: WebGLUniformLocation | null;
 }
 
-interface DefaultShader extends ShaderBase {
-	samplerUnif: WebGLUniformLocation | null;
-}
-
 export let fallbackShader: ShaderBase = {
-	program: null,
-	modelViewMatrixUnif: null,
-	projectionMatrixUnif: null
-};
-export let spriteShader: SpriteShader = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
 	samplerUnif: null,
 	colorUnif: null
 };
+
+interface DefaultShader extends ShaderBase {
+}
 export let defaultShader: DefaultShader = {
 	program: null,
 	modelViewMatrixUnif: null,
 	samplerUnif: null,
-	projectionMatrixUnif: null
+	projectionMatrixUnif: null,
+	colorUnif: null
 };
 
 // ~~~~~~~~~~~~~ default / fallbacks ~~~~~~~~~~~~~~
@@ -75,8 +74,6 @@ export async function initGl(): Promise<void> {
 
 	canvas = c;
 
-	resizeCanvas();
-
 	// initialize the GL context
 	const _gl: WebGL2RenderingContext | null = canvas.getContext("webgl2", {
 		antialias: false,
@@ -111,7 +108,6 @@ export async function initGl(): Promise<void> {
 	fallbackShader.program = fallbackProgram;
 
 	defaultShader.program = fallbackShader.program;
-	spriteShader.program = fallbackShader.program;
 
 	// create default solid texture
 	createSolidTexture();
@@ -119,10 +115,8 @@ export async function initGl(): Promise<void> {
 	// create remaining shader programs
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
-		initProgramFromWeb("data/shaders/sprite/sprite.vert", "data/shaders/sprite/sprite.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
-		spriteShader.program = results[1];
 	});
 
 	// get shader locations
@@ -131,12 +125,8 @@ export async function initGl(): Promise<void> {
 
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
-	spriteShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
-
-	spriteShader.modelViewMatrixUnif = gl.getUniformLocation(spriteShader.program, "uModelViewMatrix");
-	spriteShader.projectionMatrixUnif = gl.getUniformLocation(spriteShader.program, "uProjectionMatrix");
-	spriteShader.samplerUnif = gl.getUniformLocation(spriteShader.program, "uSampler");
-	spriteShader.colorUnif = gl.getUniformLocation(spriteShader.program, "uColor");
+	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
+	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
 }
 
 export function resizeCanvas() {
@@ -151,6 +141,10 @@ export function resizeCanvas() {
 	glProperties.height = canvas.clientHeight;
 	canvas.width = canvas.clientWidth;
 	canvas.height = canvas.clientHeight;
+
+	gl.viewport(0, 0, glProperties.width, glProperties.height);
+
+	initProjection();
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~
@@ -212,8 +206,8 @@ function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | n
 	gl.attachShader(shaderProgram, vertexShader);
 	gl.attachShader(shaderProgram, fragmentShader);
 
-	gl.bindAttribLocation(shaderProgram, 0, "aVertexPosition");
-	gl.bindAttribLocation(shaderProgram, 1, "aTexCoord");
+	gl.bindAttribLocation(shaderProgram, SharedAttribs.positionAttrib, "aVertexPosition");
+	gl.bindAttribLocation(shaderProgram, SharedAttribs.texCoordAttrib, "aTexCoord");
 
 	gl.linkProgram(shaderProgram);
 

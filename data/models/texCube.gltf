@@ -23,7 +23,6 @@
 	],
 	"materials":[
 		{
-			"doubleSided":true,
 			"extensions":{
 				"KHR_materials_unlit":{}
 			},
