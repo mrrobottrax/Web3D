@@ -12,45 +12,6 @@ const nearClip = 0.3;
 const farClip = 1000;
 
 let webModel: Model = new Model();
-let cubeModel: Model = new Model();
-
-let cubeData: PrimitiveData[] = [{
-	vertices: new Float32Array([
-		-1, -1, -1, // 0
-		-1, -1, 1, // 1
-		-1, 1, -1, // 2
-		-1, 1, 1, // 3
-		1, -1, -1, // 4
-		1, -1, 1, // 5
-		1, 1, -1, // 6
-		1, 1, 1, // 7
-	]),
-	elements: new Uint16Array([
-		// top
-		3, 7, 2,
-		6, 2, 7,
-
-		// left
-		0, 1, 2,
-		3, 2, 1,
-
-		// right
-		6, 5, 4,
-		7, 5, 6,
-
-		// bottom
-		4, 1, 0,
-		5, 1, 4,
-
-		// front
-		5, 3, 1,
-		7, 3, 5,
-
-		// back
-		0, 2, 4,
-		4, 2, 6,
-	])
-}];
 
 export async function drawInit(): Promise<void> {
 	gl.useProgram(defaultShader.program);
@@ -60,12 +21,9 @@ export async function drawInit(): Promise<void> {
 
 	gl.useProgram(null);
 
-	cubeModel.position = new vec3(0, -3, -7);
-	cubeModel.scale = new vec3(2, 0.5, 1);
-
-	//cubeModel.mesh.genBuffers(cubeData);
-
+	webModel.scale = new vec3(2, 0.5, 1);
 	webModel.position = new vec3(0, -3, -7);
+
 	const m = await loadMeshFromWeb("./data/models/cube.glb");
 	if (m)
 		webModel.mesh = m;
@@ -80,7 +38,6 @@ export function drawFrame(): void {
 	gl.useProgram(defaultShader.program);
 	gl.enableVertexAttribArray(0);
 
-	//drawMesh(cubeModel.mesh, cubeModel.position, cubeModel.rotation, cubeModel.scale);
 	drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
 
 	gl.disableVertexAttribArray(0);

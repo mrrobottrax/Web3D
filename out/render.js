@@ -17,47 +17,12 @@ import { loadMeshFromWeb } from "./gltfloader.js";
 const nearClip = 0.3;
 const farClip = 1000;
 let webModel = new Model();
-let cubeModel = new Model();
-let cubeData = [{
-        vertices: new Float32Array([
-            -1, -1, -1,
-            -1, -1, 1,
-            -1, 1, -1,
-            -1, 1, 1,
-            1, -1, -1,
-            1, -1, 1,
-            1, 1, -1,
-            1, 1, 1, // 7
-        ]),
-        elements: new Uint16Array([
-            // top
-            3, 7, 2,
-            6, 2, 7,
-            // left
-            0, 1, 2,
-            3, 2, 1,
-            // right
-            6, 5, 4,
-            7, 5, 6,
-            // bottom
-            4, 1, 0,
-            5, 1, 4,
-            // front
-            5, 3, 1,
-            7, 3, 5,
-            // back
-            0, 2, 4,
-            4, 2, 6,
-        ])
-    }];
 export function drawInit() {
     return __awaiter(this, void 0, void 0, function* () {
         gl.useProgram(defaultShader.program);
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
-        cubeModel.position = new vec3(0, -3, -7);
-        cubeModel.scale = new vec3(2, 0.5, 1);
-        //cubeModel.mesh.genBuffers(cubeData);
+        webModel.scale = new vec3(2, 0.5, 1);
         webModel.position = new vec3(0, -3, -7);
         const m = yield loadMeshFromWeb("./data/models/cube.glb");
         if (m)
@@ -71,7 +36,6 @@ export function drawFrame() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(defaultShader.program);
     gl.enableVertexAttribArray(0);
-    //drawMesh(cubeModel.mesh, cubeModel.position, cubeModel.rotation, cubeModel.scale);
     drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
     gl.disableVertexAttribArray(0);
     gl.useProgram(null);
