@@ -71,7 +71,7 @@ export class Mesh {
 			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data[i].elements, gl.STATIC_DRAW);
 
 			gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-			gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 20, 12);
+			gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
 			gl.enableVertexAttribArray(0);
 			gl.enableVertexAttribArray(1);

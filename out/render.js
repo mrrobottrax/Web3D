@@ -22,7 +22,7 @@ export function drawInit() {
         gl.useProgram(defaultShader.program);
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
-        webModel.position = new vec3(0, 0, -5);
+        webModel.position = new vec3(0, -2, -5);
         const m = yield loadGlTFFromWeb("./data/models/texCube");
         if (m)
             webModel.mesh = m;
@@ -37,9 +37,9 @@ export function drawFrame() {
     drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
     gl.useProgram(null);
     webModel.rotation = quaternion.euler(r1, r2, r3);
-    r1 += Time.deltaTime * 20;
-    r2 += Time.deltaTime * 15;
-    r3 += Time.deltaTime * 10;
+    r1 += Time.deltaTime * 0;
+    r2 += Time.deltaTime * -10;
+    r3 += Time.deltaTime * 0;
 }
 function drawMesh(mesh, position, rotation, scale) {
     for (let i = 0; i < mesh.primitives.length; ++i) {

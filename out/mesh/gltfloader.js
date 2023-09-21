@@ -132,8 +132,8 @@ function loadGlb(file) {
 }
 function loadGltf(json, buffers) {
     let pDatas = [];
+    // temp: load first mesh
     for (let i = 0; i < json.meshes[0].primitives.length; ++i) {
-        // temp: load first primitive
         const p = loadPrimitive(json.meshes[0].primitives[i], json, buffers);
         if (!p) {
             return null;

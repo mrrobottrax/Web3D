@@ -21,7 +21,7 @@ export async function drawInit(): Promise<void> {
 
 	gl.useProgram(null);
 
-	webModel.position = new vec3(0, 0, -5);
+	webModel.position = new vec3(0, -2, -5);
 	const m = await loadGlTFFromWeb("./data/models/texCube");
 	if (m)
 		webModel.mesh = m;
@@ -40,9 +40,9 @@ export function drawFrame(): void {
 	gl.useProgram(null);
 
 	webModel.rotation = quaternion.euler(r1, r2, r3);
-	r1 += Time.deltaTime * 20;
-	r2 += Time.deltaTime * 15;
-	r3 += Time.deltaTime * 10;
+	r1 += Time.deltaTime * 0;
+	r2 += Time.deltaTime * -10;
+	r3 += Time.deltaTime * 0;
 }
 
 function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3) {
