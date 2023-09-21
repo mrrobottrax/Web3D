@@ -63,16 +63,19 @@ void main() {
 
 // ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
-export async function initGl(): Promise<void> {
-	const canvas: HTMLCanvasElement | null = document.querySelector("#game");
+let canvas: HTMLCanvasElement;
 
-	if (!canvas) {
+export async function initGl(): Promise<void> {
+	const c: HTMLCanvasElement | null = document.querySelector("#game");
+
+	if (!c) {
 		console.error("Could not find canvas");
 		return;
 	}
 
-	glProperties.width = canvas.width;
-	glProperties.height = canvas.height;
+	canvas = c;
+
+	resizeCanvas();
 
 	// initialize the GL context
 	const _gl: WebGL2RenderingContext | null = canvas.getContext("webgl2", {
@@ -134,6 +137,20 @@ export async function initGl(): Promise<void> {
 	spriteShader.projectionMatrixUnif = gl.getUniformLocation(spriteShader.program, "uProjectionMatrix");
 	spriteShader.samplerUnif = gl.getUniformLocation(spriteShader.program, "uSampler");
 	spriteShader.colorUnif = gl.getUniformLocation(spriteShader.program, "uColor");
+}
+
+export function resizeCanvas() {
+	const width = canvas.clientWidth;
+	const height = canvas.clientHeight;
+
+	if (glProperties.width == width && glProperties.height == height) {
+		return;
+	}
+
+	glProperties.width = canvas.clientWidth;
+	glProperties.height = canvas.clientHeight;
+	canvas.width = canvas.clientWidth;
+	canvas.height = canvas.clientHeight;
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~

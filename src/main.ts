@@ -1,4 +1,4 @@
-import { initGl } from "./render/gl.js";
+import { initGl, resizeCanvas } from "./render/gl.js";
 import { drawFrame, drawInit } from "./render/render.js";
 import { updateTime } from "./time.js";
 
@@ -28,6 +28,7 @@ function gameLoop(): void {
 
 	window.requestAnimationFrame(gameLoop);
 
+	resizeCanvas();
 	updateTime();
 	drawFrame();
 }
