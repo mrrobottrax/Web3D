@@ -1,1 +1,0 @@
-{"version":3,"file":"primitive.js","sourceRoot":"./out/","sources":["mesh/primitive.ts"],"names":[],"mappings":"AAQA,MAAM,OAAO,SAAS;IAKrB,YAAY,GAA2B,EAAE,QAAwB,EAAE,YAAoB;QACtF,IAAI,CAAC,GAAG,GAAG,GAAG,CAAC;QACf,IAAI,CAAC,QAAQ,GAAG,QAAQ,CAAC;QACzB,IAAI,CAAC,YAAY,GAAG,YAAY,CAAC;IAClC,CAAC;CACD"}
