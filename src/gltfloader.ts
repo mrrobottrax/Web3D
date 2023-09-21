@@ -99,7 +99,7 @@ function loadModel(file: Uint8Array): Mesh | null {
 
 	let buffers = [file.subarray(binChunk.dataPos, binChunk.dataPos + binChunk.chunkLength)];
 
-	
+
 	// temp: load first primitive
 	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
 	if (!p) {
@@ -107,9 +107,7 @@ function loadModel(file: Uint8Array): Mesh | null {
 	}
 
 	const m = new Mesh();
-
 	m.genBuffers([p]);
-
 	return m;
 }
 
@@ -151,10 +149,15 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	const indicesBuffer = new DataView(buffers[indicesBufferView.buffer].buffer,
 		buffers[indicesBufferView.buffer].byteOffset + indicesBufferView.byteOffset);
 
+	let data = '';
+	for (let i = 0; i < positionBuffer.byteLength; ++i) {
+		data += positionBuffer.getUint8(i).toString(16) + " ";
+	}
+
 	// positions
 	let vertices: number[] = [];
 
-	for (let i = 0; i < positionAccessor.count; ++i) {
+	for (let i = 0; i < positionAccessor.count * 3; ++i) {
 		vertices[i] = positionBuffer.getFloat32(i * 4, true);
 	}
 

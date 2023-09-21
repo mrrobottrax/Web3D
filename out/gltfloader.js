@@ -125,9 +125,13 @@ function loadPrimitive(primitive, json, buffers) {
     const indicesBufferView = json.bufferViews[indicesAccessor.bufferView];
     const positionBuffer = new DataView(buffers[positionBufferView.buffer].buffer, buffers[positionBufferView.buffer].byteOffset + positionBufferView.byteOffset);
     const indicesBuffer = new DataView(buffers[indicesBufferView.buffer].buffer, buffers[indicesBufferView.buffer].byteOffset + indicesBufferView.byteOffset);
+    let data = '';
+    for (let i = 0; i < positionBuffer.byteLength; ++i) {
+        data += positionBuffer.getUint8(i).toString(16) + " ";
+    }
     // positions
     let vertices = [];
-    for (let i = 0; i < positionAccessor.count; ++i) {
+    for (let i = 0; i < positionAccessor.count * 3; ++i) {
         vertices[i] = positionBuffer.getFloat32(i * 4, true);
     }
     // indices

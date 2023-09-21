@@ -63,8 +63,9 @@ export async function drawInit(): Promise<void> {
 	cubeModel.position = new vec3(0, -3, -7);
 	cubeModel.scale = new vec3(2, 0.5, 1);
 
-	cubeModel.mesh.genBuffers(cubeData);
+	//cubeModel.mesh.genBuffers(cubeData);
 
+	webModel.position = new vec3(0, -3, -7);
 	const m = await loadMeshFromWeb("./data/models/cube.glb");
 	if (m)
 		webModel.mesh = m;
@@ -79,13 +80,13 @@ export function drawFrame(): void {
 	gl.useProgram(defaultShader.program);
 	gl.enableVertexAttribArray(0);
 
-	drawMesh(cubeModel.mesh, cubeModel.position, cubeModel.rotation, cubeModel.scale);
-	//drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
+	//drawMesh(cubeModel.mesh, cubeModel.position, cubeModel.rotation, cubeModel.scale);
+	drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
 
 	gl.disableVertexAttribArray(0);
 	gl.useProgram(null);
 
-	cubeModel.rotation = quaternion.euler(r1, r2, r3);
+	webModel.rotation = quaternion.euler(r1, r2, r3);
 	r1 += Time.deltaTime * 20;
 	r2 += Time.deltaTime * 15;
 	r3 += Time.deltaTime * 10;
