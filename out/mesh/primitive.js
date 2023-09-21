@@ -1,6 +1,7 @@
 export class Primitive {
-    constructor(vao, elementCount) {
+    constructor(vao, textures, elementCount) {
         this.vao = vao;
+        this.textures = textures;
         this.elementCount = elementCount;
     }
 }

@@ -1,5 +1,6 @@
-import { gl } from "../gl.js";
+import { gl, loadTexture } from "../gl.js";
 import { Primitive } from "./primitive.js";
+import { textures } from "./textures.js";
 export class Mesh {
     constructor() {
         this.primitives = [];
@@ -15,7 +16,25 @@ export class Mesh {
                 console.error("Error creating buffer");
                 return;
             }
-            this.primitives.push(new Primitive(vao, data[i].elements.length));
+            // get textures
+            let t = [];
+            for (let j = 0; j < data[i].textureUris.length; ++j) {
+                const url = "./data/" + data[i].textureUris[0];
+                const textureLoaded = textures[url] !== undefined;
+                if (textureLoaded) {
+                    t[j] = textures[url];
+                }
+                else {
+                    loadTexture(url).then((result) => {
+                        textures[url] = result;
+                        if (!result) {
+                            return;
+                        }
+                        this.primitives[i].textures[j] = result;
+                    });
+                }
+            }
+            this.primitives.push(new Primitive(vao, t, data[i].elements.length));
             const length = data[i].positions.length + data[i].texCoords.length;
             let verts = new Float32Array(length);
             // merge into one array

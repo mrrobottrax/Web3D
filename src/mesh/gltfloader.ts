@@ -166,6 +166,7 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	const positionIndex = attributes["POSITION"];
 	const texCoordIndex = attributes["TEXCOORD_0"];
 	const indicesIndex = primitive["indices"];
+	const materialIndex = primitive["material"];
 
 	const positionAccessor = json.accessors[positionIndex];
 	const texCoordAccessor = json.accessors[texCoordIndex];
@@ -239,10 +240,18 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 		indices[i] = indicesBuffer.getUint16(i * 2, true);
 	}
 
+	// material
+	const material = json.materials[materialIndex];
+	const baseColorIndex = material["pbrMetallicRoughness"]["baseColorTexture"].index;
+	const baseColorSource = json.textures[baseColorIndex].source;
+	const baseColorImage = json.images[baseColorSource];
+
 	let p: PrimitiveData = {
 		positions: new Float32Array(vertices),
 		texCoords: new Float32Array(texCoords),
-		elements: new Uint16Array(indices)
+		elements: new Uint16Array(indices),
+
+		textureUris: [baseColorImage.uri]
 	};
 
 	return p;

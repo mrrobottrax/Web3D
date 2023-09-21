@@ -11,7 +11,6 @@ const nearClip = 0.3;
 const farClip = 1000;
 
 let webModel: Model = new Model();
-let cloudsTex: WebGLTexture;
 
 export async function drawInit(): Promise<void> {
 	gl.useProgram(defaultShader.program);
@@ -25,10 +24,6 @@ export async function drawInit(): Promise<void> {
 	const m = await loadGlTFFromWeb("./data/models/texCube");
 	if (m)
 		webModel.mesh = m;
-
-	const t = await loadTexture("./data/textures/clouds.png");
-	if (t)
-		cloudsTex = t;
 }
 
 let r1 = 0;
@@ -58,7 +53,7 @@ function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternio
 	mat.scale(scale);
 
 	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, cloudsTex);
+	gl.bindTexture(gl.TEXTURE_2D, primitive.textures[0]);
 
 	gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
 	gl.uniform1i(defaultShader.samplerUnif, 0);

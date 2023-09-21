@@ -57,7 +57,7 @@
 		{
 			"mimeType":"image/png",
 			"name":"clouds",
-			"uri":"tex/clouds.png"
+			"uri":"textures/clouds.png"
 		}
 	],
 	"accessors":[

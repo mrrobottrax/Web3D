@@ -1,5 +1,6 @@
-import { gl, defaultShader } from "../gl.js";
+import { gl, loadTexture } from "../gl.js";
 import { Primitive, PrimitiveData } from "./primitive.js";
+import { textures } from "./textures.js";
 
 export class Mesh {
 	primitives: Primitive[] = [];
@@ -20,8 +21,29 @@ export class Mesh {
 				return;
 			}
 
+			// get textures
+			let t: WebGLTexture[] = [];
+			for (let j = 0; j < data[i].textureUris.length; ++j) {
+				const url = "./data/" + data[i].textureUris[0];
+
+				const textureLoaded = textures[url] !== undefined;
+
+				if (textureLoaded) {
+					t[j] = textures[url];
+				} else {
+					loadTexture(url).then((result) => {
+						textures[url] = result;
+						if (!result) {
+							return
+						}
+						this.primitives[i].textures[j] = result;
+					});
+				}
+			}
+
 			this.primitives.push(new Primitive(
 				vao,
+				t,
 				data[i].elements.length
 			));
 
@@ -50,7 +72,7 @@ export class Mesh {
 
 			gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
 			gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 20, 12);
-			
+
 			gl.enableVertexAttribArray(0);
 			gl.enableVertexAttribArray(1);
 
