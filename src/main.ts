@@ -1,5 +1,4 @@
 import { initGl } from "./gl.js";
-import { loadModelFromWeb } from "./gltfloader.js";
 import { drawFrame, drawInit } from "./render.js";
 import { updateTime } from "./time.js";
 
@@ -13,12 +12,10 @@ function exit(): void {
 
 async function main(): Promise<void> {
 	await init();
-	drawInit();
+	await drawInit();
 
 	running = true;
 	window.requestAnimationFrame(gameLoop);
-
-	loadModelFromWeb("./data/models/cube.glb");
 }
 
 async function init(): Promise<void> {

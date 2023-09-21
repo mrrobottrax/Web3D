@@ -1,4 +1,7 @@
-export async function loadModelFromWeb(url: string) {
+import { Mesh } from "./mesh/mesh.js";
+import { PrimitiveData } from "./mesh/primitive.js";
+
+export async function loadMeshFromWeb(url: string): Promise<Mesh | null> {
 	// send requests
 	const req = new XMLHttpRequest();
 
@@ -10,7 +13,7 @@ export async function loadModelFromWeb(url: string) {
 	req.open("GET", url);
 	req.send();
 
-	let model = 0;
+	let mesh: Mesh | null = null;
 
 	// get shader from requests
 	await promise.then((result) => {
@@ -18,7 +21,7 @@ export async function loadModelFromWeb(url: string) {
 			return null;
 		}
 
-		model = loadModel(new Uint8Array(result.response));
+		mesh = loadModel(new Uint8Array(result.response));
 	});
 
 	// fall back when request fails
@@ -28,28 +31,163 @@ export async function loadModelFromWeb(url: string) {
 	//	shader = initShaderProgram(fallbackVSource, fallbackFSource);
 	//}
 
-	return model;
+	return mesh;
 }
 
-const magicNumber: number = 1735152710;
-function loadModel(file: Uint8Array) {
+const magicNumber: number = 1179937895;
+const version: number = 2;
+const chunkTypes = {
+	JSON: 0x4E4F534A,
+	BIN: 0x004E4942
+}
+const componentTypes = {
+	BYTE: 5120,
+	UNSIGNED_BYTE: 5121,
+	SHORT: 5122,
+	UNSIGNED_SHORT: 5123,
+	UNSIGNED_INT: 5125,
+	FLOAT: 5126,
+}
+const accessorTypes = {
+	SCALAR: "SCALAR",
+	VEC2: "VEC2",
+	VEC3: "VEC3",
+	VEC4: "VEC4",
+	MAT2: "MAT2",
+	MAT3: "MAT3",
+	MAT4: "MAT4",
+}
+function loadModel(file: Uint8Array): Mesh | null {
+	let pos = 0;
+
+	// ~~~~~~ HEADER ~~~~~~~
+
 	// assert magic number
-	if (readUInt32(0, file) != magicNumber) {
-		return 0;
+	if (readUInt32(pos, file) != magicNumber) {
+		console.error("Failed to load glTF file");
+		return null;
+	}
+	pos += 4;
+
+	if (readUInt32(pos, file) != version) {
+		console.error("glTF: bad version");
+		return null;
+	}
+	pos += 4;
+
+	const length = readUInt32(pos, file);
+	pos += 4;
+
+	// ~~~~~~ JSON CHUNK ~~~~~~~
+
+	const jsonChunk = readChunk(pos, file);
+	if (jsonChunk.chunkType != chunkTypes.JSON) {
+		console.error("glTF: bad type");
+	}
+	pos = jsonChunk.dataPos;
+
+	const json = JSON.parse(new TextDecoder().decode(file.subarray(pos, pos + jsonChunk.chunkLength)));
+
+	// ~~~~~~~ BIN CHUNK ~~~~~~~
+
+	pos += jsonChunk.chunkLength;
+	const binChunk = readChunk(pos, file);
+	if (binChunk.chunkType != chunkTypes.BIN) {
+		console.error("glTF: bad type");
+	}
+	pos = binChunk.dataPos;
+
+	let buffers = [file.subarray(binChunk.dataPos, binChunk.dataPos + binChunk.chunkLength)];
+
+	
+	// temp: load first primitive
+	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
+	if (!p) {
+		return null;
 	}
 
-	console.log('Loaded model');
+	const m = new Mesh();
 
-	return 1;
+	m.genBuffers([p]);
+
+	return m;
+}
+
+function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): PrimitiveData | null {
+	const attributes = primitive.attributes;
+
+	const positionIndex = attributes["POSITION"];
+	const indicesIndex = primitive["indices"];
+
+	const positionAccessor = json.accessors[positionIndex];
+	const indicesAccessor = json.accessors[indicesIndex];
+
+	// asserts
+	if (positionAccessor.componentType != componentTypes.FLOAT) {
+		console.error("glTF: type error");
+		return null;
+	}
+
+	if (positionAccessor.type != accessorTypes.VEC3) {
+		console.error("glTF: type error");
+		return null;
+	}
+
+	if (indicesAccessor.componentType != componentTypes.UNSIGNED_SHORT) {
+		console.error("glTF: type error");
+		return null;
+	}
+
+	if (indicesAccessor.type != accessorTypes.SCALAR) {
+		console.error("glTF: type error");
+		return null;
+	}
+
+	const positionBufferView = json.bufferViews[positionAccessor.bufferView];
+	const indicesBufferView = json.bufferViews[indicesAccessor.bufferView];
+
+	const positionBuffer = new DataView(buffers[positionBufferView.buffer].buffer,
+		buffers[positionBufferView.buffer].byteOffset + positionBufferView.byteOffset);
+	const indicesBuffer = new DataView(buffers[indicesBufferView.buffer].buffer,
+		buffers[indicesBufferView.buffer].byteOffset + indicesBufferView.byteOffset);
+
+	// positions
+	let vertices: number[] = [];
+
+	for (let i = 0; i < positionAccessor.count; ++i) {
+		vertices[i] = positionBuffer.getFloat32(i * 4, true);
+	}
+
+	// indices
+	let indices: number[] = [];
+
+	for (let i = 0; i < indicesAccessor.count; ++i) {
+		indices[i] = indicesBuffer.getUint16(i * 2, true);
+	}
+
+	let p: PrimitiveData = {
+		vertices: new Float32Array(vertices),
+		elements: new Uint16Array(indices)
+	};
+
+	return p;
+}
+
+function readChunk(position: number, file: Uint8Array) {
+	return {
+		chunkLength: readUInt32(position, file),
+		chunkType: readUInt32(position + 4, file),
+		dataPos: position + 8,
+	};
 }
 
 function readUInt32(position: number, file: Uint8Array): number {
-	let num: number = 0;
+	let num = new Uint32Array(1);
 
-	for (let i = 0; i < 4; i++) {
-		num = num << 8;
-		num |= file[position + i];
+	for (let i = 3; i >= 0; --i) {
+		num[0] = num[0] << 8;
+		num[0] |= file[position + i];
 	}
 
-	return num;
+	return num[0];
 }

@@ -8,7 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { initGl } from "./gl.js";
-import { loadModelFromWeb } from "./gltfloader.js";
 import { drawFrame, drawInit } from "./render.js";
 import { updateTime } from "./time.js";
 let running = false;
@@ -19,10 +18,9 @@ function exit() {
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         yield init();
-        drawInit();
+        yield drawInit();
         running = true;
         window.requestAnimationFrame(gameLoop);
-        loadModelFromWeb("./data/models/cube.glb");
     });
 }
 function init() {
