@@ -22,8 +22,8 @@ export function drawInit() {
         gl.useProgram(defaultShader.program);
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
-        webModel.position = new vec3(0, 0, -0.3);
-        const m = yield loadGlTFFromWeb("./data/models/sign");
+        webModel.position = new vec3(0, 0, -5);
+        const m = yield loadGlTFFromWeb("./data/models/texCube");
         if (m)
             webModel.mesh = m;
     });

@@ -21,8 +21,8 @@ export async function drawInit(): Promise<void> {
 
 	gl.useProgram(null);
 
-	webModel.position = new vec3(0, 0, -0.3);
-	const m = await loadGlTFFromWeb("./data/models/sign");
+	webModel.position = new vec3(0, 0, -5);
+	const m = await loadGlTFFromWeb("./data/models/texCube");
 	if (m)
 		webModel.mesh = m;
 }

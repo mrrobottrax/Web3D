@@ -1,5 +1,5 @@
 import { Mesh } from "./mesh.js";
-import { Primitive, PrimitiveData } from "./primitive.js";
+import { PrimitiveData } from "./primitive.js";
 
 export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
 	// send requests

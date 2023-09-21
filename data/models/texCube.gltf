@@ -56,8 +56,8 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"clouds",
-			"uri":"textures/clouds.png"
+			"name":"cubeTex",
+			"uri":"textures/cubeTex.png"
 		}
 	],
 	"accessors":[
