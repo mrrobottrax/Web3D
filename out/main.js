@@ -7,8 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { initGl } from "./gl.js";
-import { drawFrame, drawInit } from "./render.js";
+import { initGl } from "./render/gl.js";
+import { drawFrame, drawInit } from "./render/render.js";
 import { updateTime } from "./time.js";
 let running = false;
 main();

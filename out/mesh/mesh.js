@@ -1,4 +1,4 @@
-import { gl, loadTexture } from "../gl.js";
+import { gl, loadTexture } from "../render/gl.js";
 import { Primitive } from "./primitive.js";
 import { textures } from "./textures.js";
 export class Mesh {

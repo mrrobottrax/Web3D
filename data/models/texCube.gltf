@@ -63,8 +63,8 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"cubeTex",
-			"uri":"textures/cubeTex.png"
+			"name":"texCube",
+			"uri":"textures/texCube.png"
 		}
 	],
 	"accessors":[

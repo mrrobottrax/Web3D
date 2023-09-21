@@ -91,7 +91,7 @@ export async function initGl(): Promise<void> {
 	// initialize gl context
 	gl = _gl;
 
-	gl.clearColor(0.25, 0.25, 0.25, 1.0);
+	gl.clearColor(0.15, 0.15, 0.15, 1.0);
 	gl.clearDepth(1.0);
 
 	gl.enable(gl.DEPTH_TEST);

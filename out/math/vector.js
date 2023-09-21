@@ -1,4 +1,4 @@
-import gMath from "./math/gmath.js";
+import gMath from "./gmath.js";
 export class vec3 {
     constructor(x, y, z) {
         this.x = x;

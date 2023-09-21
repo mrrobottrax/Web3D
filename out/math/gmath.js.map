@@ -1,0 +1,1 @@
+{"version":3,"file":"gmath.js","sourceRoot":"./out/","sources":["math/gmath.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,OAAO,OAAO,KAAK;IACzB,MAAM,CAAC,OAAO,CAAC,KAAa;QAC3B,OAAO,CAAC,KAAK,GAAG,IAAI,CAAC,EAAE,CAAC,GAAG,GAAG,CAAC;IAChC,CAAC;CACD"}

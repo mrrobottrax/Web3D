@@ -1,5 +1,5 @@
-import { initGl } from "./gl.js";
-import { drawFrame, drawInit } from "./render.js";
+import { initGl } from "./render/gl.js";
+import { drawFrame, drawInit } from "./render/render.js";
 import { updateTime } from "./time.js";
 
 let running: boolean = false;
