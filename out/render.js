@@ -22,9 +22,8 @@ export function drawInit() {
         gl.useProgram(defaultShader.program);
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
-        webModel.scale = new vec3(2, 0.5, 1);
-        webModel.position = new vec3(0, -3, -7);
-        const m = yield loadMeshFromWeb("./data/models/cube.glb");
+        webModel.position = new vec3(0, -2, -10);
+        const m = yield loadMeshFromWeb("./data/models/test.glb");
         if (m)
             webModel.mesh = m;
     });

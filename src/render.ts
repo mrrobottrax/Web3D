@@ -21,10 +21,9 @@ export async function drawInit(): Promise<void> {
 
 	gl.useProgram(null);
 
-	webModel.scale = new vec3(2, 0.5, 1);
-	webModel.position = new vec3(0, -3, -7);
+	webModel.position = new vec3(0, -2, -10);
 
-	const m = await loadMeshFromWeb("./data/models/cube.glb");
+	const m = await loadMeshFromWeb("./data/models/test.glb");
 	if (m)
 		webModel.mesh = m;
 }
