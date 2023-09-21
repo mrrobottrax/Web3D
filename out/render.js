@@ -13,7 +13,7 @@ import { quaternion, vec3 } from "./vector.js";
 import { Model } from "./mesh/model.js";
 import { mat4 } from "./matrix.js";
 import { Time } from "./time.js";
-import { loadMeshFromWeb } from "./gltfloader.js";
+import { loadMeshFromWeb } from "./mesh/gltfloader.js";
 const nearClip = 0.3;
 const farClip = 1000;
 let webModel = new Model();
@@ -23,7 +23,7 @@ export function drawInit() {
         gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
         gl.useProgram(null);
         webModel.position = new vec3(0, -2, -10);
-        const m = yield loadMeshFromWeb("./data/models/test.glb");
+        const m = yield loadMeshFromWeb("./data/models/texCube.glb");
         if (m)
             webModel.mesh = m;
     });
@@ -34,27 +34,22 @@ let r3 = 0;
 export function drawFrame() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(defaultShader.program);
-    gl.enableVertexAttribArray(0);
-    drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
-    gl.disableVertexAttribArray(0);
+    drawPrimitive(webModel.mesh.primitives[0], webModel.position, webModel.rotation, webModel.scale);
     gl.useProgram(null);
     webModel.rotation = quaternion.euler(r1, r2, r3);
     r1 += Time.deltaTime * 20;
     r2 += Time.deltaTime * 15;
     r3 += Time.deltaTime * 10;
 }
-function drawMesh(mesh, position, rotation, scale) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.primitives[0].vertBuffer);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.primitives[0].elementBuffer);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+function drawPrimitive(primitive, position, rotation, scale) {
+    gl.bindVertexArray(primitive.vao);
     let mat = new mat4;
     mat.translate(position);
     mat.rotate(rotation);
     mat.scale(scale);
     gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
-    gl.drawElements(gl.TRIANGLES, mesh.primitives[0].elementCount, gl.UNSIGNED_SHORT, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
+    gl.bindVertexArray(null);
 }
 function calcPerspectiveMatrix(fov, width, height) {
     const scale = getFrustumScale(fov);

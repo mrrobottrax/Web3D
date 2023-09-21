@@ -1,16 +1,15 @@
 export interface PrimitiveData {
-	vertices: Float32Array;
+	positions: Float32Array;
+	texCoords: Float32Array;
 	elements: Uint16Array;
 }
 
 export class Primitive {
-	vertBuffer: WebGLBuffer;
-	elementBuffer: WebGLBuffer;
+	vao: WebGLVertexArrayObject;
 	elementCount: number;
 
-	constructor(vertBuffer: WebGLBuffer, elementBuffer: WebGLBuffer, elementCount: number) {
-		this.vertBuffer = vertBuffer;
-		this.elementBuffer = elementBuffer;
+	constructor(vao: WebGLVertexArrayObject, elementCount: number) {
+		this.vao = vao;
 		this.elementCount = elementCount;
 	}
 }

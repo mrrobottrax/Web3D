@@ -1,5 +1,5 @@
-import { Mesh } from "./mesh/mesh.js";
-import { PrimitiveData } from "./mesh/primitive.js";
+import { Mesh } from "./mesh.js";
+import { PrimitiveData } from "./primitive.js";
 
 export async function loadMeshFromWeb(url: string): Promise<Mesh | null> {
 	// send requests
@@ -115,9 +115,11 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	const attributes = primitive.attributes;
 
 	const positionIndex = attributes["POSITION"];
+	const texCoordIndex = attributes["TEXCOORD_0"];
 	const indicesIndex = primitive["indices"];
 
 	const positionAccessor = json.accessors[positionIndex];
+	const texCoordAccessor = json.accessors[texCoordIndex];
 	const indicesAccessor = json.accessors[indicesIndex];
 
 	// asserts
@@ -127,6 +129,16 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	}
 
 	if (positionAccessor.type != accessorTypes.VEC3) {
+		console.error("glTF: type error");
+		return null;
+	}
+
+	if (texCoordAccessor.componentType != componentTypes.FLOAT) {
+		console.error("glTF: type error");
+		return null;
+	}
+
+	if (texCoordAccessor.type != accessorTypes.VEC2) {
 		console.error("glTF: type error");
 		return null;
 	}
@@ -142,10 +154,13 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	}
 
 	const positionBufferView = json.bufferViews[positionAccessor.bufferView];
+	const texCoordBufferView = json.bufferViews[texCoordAccessor.bufferView];
 	const indicesBufferView = json.bufferViews[indicesAccessor.bufferView];
 
 	const positionBuffer = new DataView(buffers[positionBufferView.buffer].buffer,
 		buffers[positionBufferView.buffer].byteOffset + positionBufferView.byteOffset);
+	const texCoordBuffer = new DataView(buffers[texCoordBufferView.buffer].buffer,
+		buffers[texCoordBufferView.buffer].byteOffset + texCoordBufferView.byteOffset);
 	const indicesBuffer = new DataView(buffers[indicesBufferView.buffer].buffer,
 		buffers[indicesBufferView.buffer].byteOffset + indicesBufferView.byteOffset);
 
@@ -161,6 +176,13 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 		vertices[i] = positionBuffer.getFloat32(i * 4, true);
 	}
 
+	// positions
+	let texCoords: number[] = [];
+
+	for (let i = 0; i < texCoordAccessor.count * 2; ++i) {
+		texCoords[i] = texCoordBuffer.getFloat32(i * 4, true);
+	}
+
 	// indices
 	let indices: number[] = [];
 
@@ -169,7 +191,8 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	}
 
 	let p: PrimitiveData = {
-		vertices: new Float32Array(vertices),
+		positions: new Float32Array(vertices),
+		texCoords: new Float32Array(texCoords),
 		elements: new Uint16Array(indices)
 	};
 

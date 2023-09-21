@@ -4,9 +4,8 @@ import { quaternion, vec3 } from "./vector.js";
 import { Model } from "./mesh/model.js";
 import { mat4 } from "./matrix.js";
 import { Time } from "./time.js";
-import { PrimitiveData } from "./mesh/primitive.js";
-import { Mesh } from "./mesh/mesh.js";
-import { loadMeshFromWeb } from "./gltfloader.js";
+import { Primitive } from "./mesh/primitive.js";
+import { loadMeshFromWeb } from "./mesh/gltfloader.js";
 
 const nearClip = 0.3;
 const farClip = 1000;
@@ -22,8 +21,7 @@ export async function drawInit(): Promise<void> {
 	gl.useProgram(null);
 
 	webModel.position = new vec3(0, -2, -10);
-
-	const m = await loadMeshFromWeb("./data/models/test.glb");
+	const m = await loadMeshFromWeb("./data/models/texCube.glb");
 	if (m)
 		webModel.mesh = m;
 }
@@ -35,11 +33,9 @@ export function drawFrame(): void {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	gl.useProgram(defaultShader.program);
-	gl.enableVertexAttribArray(0);
 
-	drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
+	drawPrimitive(webModel.mesh.primitives[0], webModel.position, webModel.rotation, webModel.scale);
 
-	gl.disableVertexAttribArray(0);
 	gl.useProgram(null);
 
 	webModel.rotation = quaternion.euler(r1, r2, r3);
@@ -48,10 +44,8 @@ export function drawFrame(): void {
 	r3 += Time.deltaTime * 10;
 }
 
-function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3) {
-	gl.bindBuffer(gl.ARRAY_BUFFER, mesh.primitives[0].vertBuffer);
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.primitives[0].elementBuffer);
-	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3) {
+	gl.bindVertexArray(primitive.vao);
 
 	let mat = new mat4;
 	mat.translate(position);
@@ -60,10 +54,9 @@ function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3)
 
 	gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
 
-	gl.drawElements(gl.TRIANGLES, mesh.primitives[0].elementCount, gl.UNSIGNED_SHORT, 0);
+	gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
 
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	gl.bindVertexArray(null);
 }
 
 function calcPerspectiveMatrix(fov: number, width: number, height: number): mat4 {

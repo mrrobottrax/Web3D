@@ -1,7 +1,6 @@
 export class Primitive {
-    constructor(vertBuffer, elementBuffer, elementCount) {
-        this.vertBuffer = vertBuffer;
-        this.elementBuffer = elementBuffer;
+    constructor(vao, elementCount) {
+        this.vao = vao;
         this.elementCount = elementCount;
     }
 }
