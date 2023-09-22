@@ -62,7 +62,7 @@ void main() {
 
 // ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
-let canvas: HTMLCanvasElement;
+export let canvas: HTMLCanvasElement;
 
 export async function initGl(): Promise<void> {
 	const c: HTMLCanvasElement | null = document.querySelector("#game");

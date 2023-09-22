@@ -1,3 +1,4 @@
+import { initInput, updateInput } from "./input.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
 import { drawFrame, drawInit } from "./render/render.js";
 import { updateTime } from "./time.js";
@@ -20,6 +21,7 @@ async function main(): Promise<void> {
 
 async function init(): Promise<void> {
 	await initGl();
+	initInput();
 }
 
 function gameLoop(): void {
@@ -27,8 +29,10 @@ function gameLoop(): void {
 		return;
 
 	window.requestAnimationFrame(gameLoop);
+	updateTime();
+
+	updateInput();
 
 	resizeCanvas();
-	updateTime();
 	drawFrame();
 }

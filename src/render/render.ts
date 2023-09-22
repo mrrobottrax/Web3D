@@ -7,6 +7,7 @@ import { Time } from "../time.js";
 import { Primitive } from "../mesh/primitive.js";
 import { loadGlTFFromWeb } from "../mesh/gltfloader.js";
 import { Mesh } from "../mesh/mesh.js";
+import { player } from "../localplayer.js";
 
 const nearClip = 0.3;
 const farClip = 1000;
@@ -23,7 +24,7 @@ export async function drawInit(): Promise<void> {
 export function initProjection() {
 	gl.useProgram(defaultShader.program);
 	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false,
-		calcPerspectiveMatrix(80, glProperties.width, glProperties.height).getData());
+		calcPerspectiveMatrix(90, glProperties.width, glProperties.height).getData());
 
 	gl.useProgram(null);
 }
@@ -36,26 +37,29 @@ export function drawFrame(): void {
 
 	gl.useProgram(defaultShader.program);
 
-	drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale);
+	let mat = mat4.identity();
+	mat.rotate(player.camRotation);
+	mat.translate(player.camPosition.inverse());
+
+	drawMesh(webModel.mesh, webModel.position, webModel.rotation, webModel.scale, mat);
 
 	gl.useProgram(null);
 
 	webModel.rotation = quaternion.euler(r1, r2, r3);
 	r1 += Time.deltaTime * 0;
-	r2 += Time.deltaTime * -10;
+	r2 += Time.deltaTime * 0;
 	r3 += Time.deltaTime * 0;
 }
 
-function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3) {
+function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3, mat: mat4) {
 	for (let i = 0; i < mesh.primitives.length; ++i) {
-		drawPrimitive(mesh.primitives[i], position, rotation, scale);
+		drawPrimitive(mesh.primitives[i], position, rotation, scale, mat);
 	}
 }
 
-function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3) {
+function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3, mat: mat4) {
 	gl.bindVertexArray(primitive.vao);
 
-	let mat = new mat4;
 	mat.translate(position);
 	mat.rotate(rotation);
 	mat.scale(scale);
@@ -77,7 +81,7 @@ function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternio
 function calcPerspectiveMatrix(fov: number, width: number, height: number): mat4 {
 	const scale = getFrustumScale(fov);
 
-	let matrix = new mat4;
+	let matrix = mat4.empty();
 	matrix.setValue(0, 0, scale * (height / width));
 	matrix.setValue(1, 1, scale);
 	matrix.setValue(2, 2, (farClip + nearClip) / (nearClip - farClip));
