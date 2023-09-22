@@ -1,6 +1,6 @@
 import { player } from "./localplayer.js";
 import { quaternion, vec3 } from "./math/vector.js";
-import { canvas } from "./render/gl.js";
+import { lockCursor, unlockCursor } from "./pointerlock.js"
 
 export let moveVector = vec3.origin();
 
@@ -47,10 +47,10 @@ export function updateInput() {
 	player.move(moveVector);
 }
 
-const sens = 0.002;
+const quakeSens = (1 / 16385) * 2 * Math.PI;
 function mouseLook(x: number, y: number) {
-	player.yaw -= x * sens;
-	player.pitch -= y * sens;
+	player.yaw -= x * quakeSens;
+	player.pitch -= y * quakeSens;
 	player.camRotation = quaternion.eulerRad(player.pitch, player.yaw, 0);
 }
 
@@ -107,16 +107,4 @@ function keyUp(name: string, code: string) {
 			console.log(code);
 			break;
 	}
-}
-
-export function lockCursor() {
-	/*canvas.requestPointerLock({
-		unadjustedMovement: true
-	});*/
-
-	canvas.requestPointerLock();
-}
-
-export function unlockCursor() {
-	document.exitPointerLock();
 }
