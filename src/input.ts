@@ -40,6 +40,7 @@ export function initInput() {
 			pointerLocked = true;
 		} else {
 			pointerLocked = false;
+			clearButtons();
 		}
 	}
 }
@@ -55,6 +56,12 @@ export function updateInput() {
 	moveVector.y -= buttons[Buttons.movedown] ? 1 : 0;
 
 	player.move(moveVector);
+}
+
+function clearButtons() {
+	for (let i = 0; i < buttons.length; ++i) {
+		buttons[i] = false;
+	}
 }
 
 const quakeSens = (1 / 16385) * 2 * Math.PI;
