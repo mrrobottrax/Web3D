@@ -1,8 +1,10 @@
+import { config } from "./config.js";
 import { player } from "./localplayer.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
 
 export let moveVector = vec3.origin();
+export let pointerLocked: boolean = false;
 
 enum Buttons {
 	forward,
@@ -32,6 +34,14 @@ export function initInput() {
 	document.addEventListener("mousemove", event => {
 		mouseLook(event.movementX, event.movementY)
 	});
+
+	document.onpointerlockchange = event => {
+		if (document.pointerLockElement) {
+			pointerLocked = true;
+		} else {
+			pointerLocked = false;
+		}
+	}
 }
 
 export function updateInput() {
@@ -49,8 +59,11 @@ export function updateInput() {
 
 const quakeSens = (1 / 16385) * 2 * Math.PI;
 function mouseLook(x: number, y: number) {
-	player.yaw -= x * quakeSens;
-	player.pitch -= y * quakeSens;
+	if (!pointerLocked)
+		return;
+
+	player.yaw -= x * quakeSens * config.sensitivity;
+	player.pitch -= y * quakeSens * config.sensitivity;
 	player.camRotation = quaternion.eulerRad(player.pitch, player.yaw, 0);
 }
 
