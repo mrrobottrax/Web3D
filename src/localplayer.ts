@@ -1,4 +1,3 @@
-import gMath from "./math/gmath.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { Time } from "./time.js";
 
