@@ -20,8 +20,24 @@ export class vec3 {
 		return new vec3(0, 0, 0);
 	}
 
+	static cross(a: vec3, b: vec3): vec3 {
+		return new vec3(
+			a.y * b.z - a.z * b.y,
+			a.z * b.x - a.x * b.z,
+			a.x * b.y - a.y * b.x,
+		);
+	}
+
+	equals(v: vec3): boolean {
+		return this.x == v.x && this.y == v.y && this.z == v.z;
+	}
+
 	add(vec: vec3): vec3 {
 		return new vec3(this.x + vec.x, this.y + vec.y, this.z + vec.z);
+	}
+
+	sub(vec: vec3): vec3 {
+		return new vec3(this.x - vec.x, this.y - vec.y, this.z - vec.z);
 	}
 
 	mult(s: number): vec3 {
@@ -36,8 +52,30 @@ export class vec3 {
 
 		v.x = this.z * s + this.x * c;
 		v.z = this.z * c - this.x * s;
-		
+
 		return v;
+	}
+
+	sqrMagnitude(): number {
+		return this.x * this.x + this.y * this.y + this.z * this.z;
+	}
+
+	magnitide(): number {
+		return Math.sqrt(this.sqrMagnitude());
+	}
+
+	normalise() {
+		const m = this.magnitide();
+
+		this.x /= m;
+		this.y /= m;
+		this.z /= m;
+	}
+
+	normalised(): vec3 {
+		const m = this.magnitide();
+
+		return this.mult(1/m);
 	}
 }
 
@@ -115,12 +153,12 @@ export class quaternion {
 		m.setValue(2, 0, 2 * (qxz - qwy));
 
 		m.setValue(0, 1, 2 * (qxy - qwz));
-		m.setValue(1, 1, 1 - 2 * (qxx +  qzz));
+		m.setValue(1, 1, 1 - 2 * (qxx + qzz));
 		m.setValue(2, 1, 2 * (qyz + qwx));
 
 		m.setValue(0, 2, 2 * (qxz + qwy));
 		m.setValue(1, 2, 2 * (qyz - qwx));
-		m.setValue(2, 2, 1 - 2 * (qxx +  qyy));
+		m.setValue(2, 2, 1 - 2 * (qxx + qyy));
 
 		return m;
 	}

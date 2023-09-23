@@ -149,20 +149,29 @@ function loadGlb(file: Uint8Array): Mesh | null {
 }
 
 function loadGltf(json: any, buffers: Uint8Array[]): Mesh | null {
-	let pDatas: PrimitiveData[] = [];
-
-	// temp: load first mesh
-	for (let i = 0; i < json.meshes[0].primitives.length; ++i) {
-		const p = loadPrimitive(json.meshes[0].primitives[i], json, buffers);
-		if (!p) {
-			return null;
-		}
-		pDatas.push(p);
-	}
+	let primitives = getGltfPrimitives(json, buffers);
 
 	const m = new Mesh();
-	m.genBuffers(pDatas);
+	m.genBuffers(primitives);
 	return m;
+}
+
+export function getGltfPrimitives(json: any, buffers: Uint8Array[]): PrimitiveData[] {
+	let primitives: PrimitiveData[] = [];
+
+	// temp: load first mesh
+	for (let j = 0; j < json.meshes.length; ++j) {
+		for (let i = 0; i < json.meshes[j].primitives.length; ++i) {
+			const p = loadPrimitive(json.meshes[j].primitives[i], json, buffers);
+			if (!p) {
+				// todo: return error model
+				return [];
+			}
+			primitives.push(p);
+		}
+	}
+
+	return primitives;
 }
 
 function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): PrimitiveData | null {
@@ -246,17 +255,24 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 	}
 
 	// material
-	const material = json.materials[materialIndex];
-	const baseColorIndex = material["pbrMetallicRoughness"]["baseColorTexture"].index;
-	const baseColorSource = json.textures[baseColorIndex].source;
-	const baseColorImage = json.images[baseColorSource];
+	const uris: string[] = [];
+	if (json.materials) {
+		const material = json.materials[materialIndex];
+		const baseColorTex = material["pbrMetallicRoughness"]["baseColorTexture"];
+		if (baseColorTex) {
+			const baseColorIndex = material["pbrMetallicRoughness"]["baseColorTexture"].index;
+			const baseColorSource = json.textures[baseColorIndex].source;
+			const baseColorImage = json.images[baseColorSource];
+			uris.push(baseColorImage.uri);
+		}
+	}
 
 	let p: PrimitiveData = {
 		positions: new Float32Array(vertices),
 		texCoords: new Float32Array(texCoords),
 		elements: new Uint16Array(indices),
 
-		textureUris: [baseColorImage.uri]
+		textureUris: uris
 	};
 
 	return p;

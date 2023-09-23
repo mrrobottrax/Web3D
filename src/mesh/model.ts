@@ -6,7 +6,7 @@ export class Model {
 	scale: vec3 = new vec3(1, 1, 1);
 	rotation: quaternion = new quaternion(1, 0, 0, 0);
 
-	mesh: Mesh = new Mesh();
+	mesh: Mesh;
 
 	constructor() {
 

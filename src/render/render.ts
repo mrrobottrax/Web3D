@@ -1,12 +1,12 @@
 import { defaultShader, gl, glProperties } from "./gl.js";
 import gMath from "../math/gmath.js";
 import { quaternion, vec3 } from "../math/vector.js";
+import { Mesh } from "../mesh/mesh.js";
 import { Model } from "../mesh/model.js";
 import { mat4 } from "../math/matrix.js";
 import { Time } from "../time.js";
 import { Primitive } from "../mesh/primitive.js";
 import { loadGlTFFromWeb } from "../mesh/gltfloader.js";
-import { Mesh } from "../mesh/mesh.js";
 import { player } from "../localplayer.js";
 
 const nearClip = 0.3;
