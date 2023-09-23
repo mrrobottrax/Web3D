@@ -61,7 +61,7 @@ export class HalfEdgeMesh {
 			halfEdges[index] = {
 				prev: index + 2,
 				next: index + 1,
-				twin: 0,
+				twin: -1,
 				face: i,
 				vert: vert0
 			}
@@ -69,7 +69,7 @@ export class HalfEdgeMesh {
 			halfEdges[index + 1] = {
 				prev: index,
 				next: index + 2,
-				twin: 0,
+				twin: -1,
 				face: i,
 				vert: vert1
 			}
@@ -77,7 +77,7 @@ export class HalfEdgeMesh {
 			halfEdges[index + 2] = {
 				prev: index + 1,
 				next: index,
-				twin: 0,
+				twin: -1,
 				face: i,
 				vert: vert2
 			}
