@@ -301,16 +301,24 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 		indices[i] = indicesBuffer.getUint16(i * 2, true);
 	}
 
+	let color: number[] = [1, 1, 1, 1];
+
 	// material
 	const uris: string[] = [];
 	if (materialIndex != undefined && json.materials) {
 		const material = json.materials[materialIndex];
 		const baseColorTex = material["pbrMetallicRoughness"]["baseColorTexture"];
+		const baseColorFactor = material["pbrMetallicRoughness"]["baseColorFactor"];
 		if (baseColorTex) {
 			const baseColorIndex = material["pbrMetallicRoughness"]["baseColorTexture"].index;
 			const baseColorSource = json.textures[baseColorIndex].source;
 			const baseColorImage = json.images[baseColorSource];
 			uris.push(baseColorImage.uri);
+		} else {
+			uris.push("textures/dev.png");
+		}
+		if (baseColorFactor) {
+			color = baseColorFactor;
 		}
 	} else {
 		uris.push("textures/default.png");
@@ -320,6 +328,7 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 		positions: new Float32Array(vertices),
 		texCoords: new Float32Array(texCoords),
 		elements: new Uint16Array(indices),
+		color: color,
 
 		textureUris: uris
 	};

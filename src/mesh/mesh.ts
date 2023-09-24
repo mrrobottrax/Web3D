@@ -26,7 +26,8 @@ export class Mesh {
 			this.primitives.push(new Primitive(
 				vao,
 				t,
-				data[i].elements.length
+				data[i].elements.length,
+				data[i].color
 			));
 			if (data[i].textureUris.length > 0) {
 				for (let j = 0; j < data[i].textureUris.length; ++j) {
