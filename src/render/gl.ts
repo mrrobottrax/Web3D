@@ -41,7 +41,7 @@ export let defaultShader: DefaultShader = {
 
 // ~~~~~~~~~~~~~ default / fallbacks ~~~~~~~~~~~~~~
 
-let solidTex: WebGLTexture | null;
+export let solidTex: WebGLTexture;
 
 // vertex shader program
 const fallbackVSource = `
@@ -260,11 +260,13 @@ function loadShader(type: number, source: string): WebGLShader | null {
 
 function createSolidTexture(): void {
 	// create texture
-	solidTex = gl.createTexture();
-	if (!solidTex) {
+	const t = gl.createTexture();
+	if (!t) {
 		console.error("Failed to create solid texture")
 		return;
 	}
+
+	solidTex = t;
 
 	// set texture properties
 	gl.bindTexture(gl.TEXTURE_2D, solidTex);

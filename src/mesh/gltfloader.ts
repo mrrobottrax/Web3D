@@ -23,7 +23,7 @@ export async function loadGlTFFromWeb(url: string): Promise<Model[]> {
 
 	let models: Model[] = [];
 
-	// get shader from requests
+	// get model from requests
 	await Promise.all([promise1, promise2]).then((results) => {
 		if (results[0].status != 200 || results[1].status != 200) {
 			return models;
@@ -312,6 +312,8 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 			const baseColorImage = json.images[baseColorSource];
 			uris.push(baseColorImage.uri);
 		}
+	} else {
+		uris.push("textures/default.png");
 	}
 
 	let p: PrimitiveData = {

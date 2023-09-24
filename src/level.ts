@@ -1,4 +1,3 @@
-import { vec3 } from "./math/vector.js";
 import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "./mesh/halfedge.js";
 import { Model } from "./mesh/model.js";

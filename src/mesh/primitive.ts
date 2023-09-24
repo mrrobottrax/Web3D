@@ -1,4 +1,4 @@
-import { quaternion, vec3 } from "../math/vector";
+import { quaternion, vec3 } from "../math/vector.js";
 
 export interface MeshData {
 	translation: vec3;
@@ -20,10 +20,12 @@ export class Primitive {
 	vao: WebGLVertexArrayObject;
 	textures: WebGLTexture[];
 	elementCount: number;
+	color: number[];
 
 	constructor(vao: WebGLVertexArrayObject, textures: WebGLTexture[], elementCount: number) {
 		this.vao = vao;
 		this.textures = textures;
 		this.elementCount = elementCount;
+		this.color = [1, 1, 1, 1];
 	}
 }

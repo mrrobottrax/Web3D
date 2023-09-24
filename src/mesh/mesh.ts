@@ -1,4 +1,4 @@
-import { gl, loadTexture } from "../render/gl.js";
+import { gl, loadTexture, solidTex } from "../render/gl.js";
 import { Primitive, PrimitiveData } from "./primitive.js";
 import { textures } from "./textures.js";
 
@@ -23,29 +23,32 @@ export class Mesh {
 
 			// get textures
 			let t: WebGLTexture[] = [];
-			for (let j = 0; j < data[i].textureUris.length; ++j) {
-				const url = "./data/models/" + data[i].textureUris[0];
-
-				const textureLoaded = textures[url] !== undefined;
-
-				if (textureLoaded) {
-					t[j] = textures[url];
-				} else {
-					loadTexture(url).then((result) => {
-						textures[url] = result;
-						if (!result) {
-							return
-						}
-						this.primitives[i].textures[j] = result;
-					});
-				}
-			}
-
 			this.primitives.push(new Primitive(
 				vao,
 				t,
 				data[i].elements.length
 			));
+			if (data[i].textureUris.length > 0) {
+				for (let j = 0; j < data[i].textureUris.length; ++j) {
+					const url = "./data/models/" + data[i].textureUris[0];
+
+					const textureLoaded = textures[url] !== undefined;
+
+					if (textureLoaded) {
+						t[j] = textures[url];
+					} else {
+						loadTexture(url).then((result) => {
+							textures[url] = result;
+							if (!result) {
+								return
+							}
+							this.primitives[i].textures[j] = result;
+						});
+					}
+				}
+			} else {
+				this.primitives[i].textures = [solidTex];
+			}
 
 			const length = data[i].positions.length + data[i].texCoords.length;
 			let verts = new Float32Array(length);

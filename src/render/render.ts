@@ -75,7 +75,7 @@ function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternio
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, primitive.textures[0]);
 
-	gl.uniform4fv(defaultShader.colorUnif, [1, 1, 1, 1]);
+	gl.uniform4fv(defaultShader.colorUnif, primitive.color);
 	gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, _mat.getData());
 	gl.uniform1i(defaultShader.samplerUnif, 0);
 
