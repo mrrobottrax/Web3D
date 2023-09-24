@@ -1,6 +1,7 @@
 import { Level, LevelFile } from "../src/level.js";
 import { getGltfMeshData } from "../src/mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../src/mesh/halfedge.js";
+import { drawLine } from "../src/render/render.js";
 
 const gltfInput: HTMLInputElement | null = document.getElementById("gltf-input") as HTMLInputElement | null;
 const binInput: HTMLInputElement | null = document.getElementById("bin-input") as HTMLInputElement | null;
@@ -25,16 +26,16 @@ if (submitInput && gltfInput && binInput) {
 			gltfName: gltfInput.files[0].name,
 			binName: binInput.files[0].name,
 		}
-	
+
 		const s = JSON.stringify(level);
 		const blob = new Blob([s], { type: 'text/plain' });
-		
+
 		const link = document.createElement("a");
-	
+
 		link.href = URL.createObjectURL(blob);
-	
+
 		link.download = fileName + ".lvl"
-	
+
 		link.click();
 		URL.revokeObjectURL(link.href);
 	}
@@ -47,6 +48,12 @@ function generateCollisionData(json: any, buffers: Uint8Array[]): HalfEdgeMesh {
 	return halfEdgeMesh;
 }
 
-function drawHalfEdgeMesh() {
-	
+export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[]) {
+	for (let i = 0; i < mesh.halfEdges.length; ++i) {
+		drawLine(
+			mesh.vertices[mesh.halfEdges[i].vert].position,
+			mesh.vertices[mesh.halfEdges[mesh.halfEdges[i].next].vert].position,
+			color
+		);
+	}
 }

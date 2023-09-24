@@ -9,6 +9,7 @@ import { Primitive } from "../mesh/primitive.js";
 import { loadGlTFFromWeb } from "../mesh/gltfloader.js";
 import { player } from "../localplayer.js";
 import { currentLevel } from "../level.js";
+import { drawHalfEdgeMesh } from "../../sdk/collision.js";
 
 const nearClip = 0.3;
 const farClip = 1000;
@@ -53,9 +54,9 @@ export function drawFrame(): void {
 		drawModel(currentLevel.models[i], mat);
 	}
 
-	drawLine(new vec3(-1, -1, -1), new vec3(1, 1, 1), [1, 1, 1, 1]);
-
 	gl.useProgram(null);
+
+	drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1]);
 
 	webModel.rotation = quaternion.euler(r1, r2, r3);
 	r1 += Time.deltaTime * 0;
