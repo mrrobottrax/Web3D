@@ -1,7 +1,7 @@
 import { quaternion, vec3 } from "./vector";
 
 export class mat4 {
-	values: number[];
+	private values: number[];
 
 	constructor(n: number) {
 		this.values = [
@@ -71,5 +71,11 @@ export class mat4 {
 		}
 
 		return result;
+	}
+
+	copy(): mat4 {
+		let ret = new mat4(1);
+		ret.values = this.values;
+		return ret;
 	}
 }

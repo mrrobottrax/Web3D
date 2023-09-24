@@ -1,3 +1,5 @@
+import { vec3 } from "./math/vector.js";
+import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "./mesh/halfedge.js";
 import { Model } from "./mesh/model.js";
 
@@ -12,65 +14,33 @@ export class Level {
 	models: Model[] = [];
 }
 
+export let currentLevel: Level;
+
 export async function setLevel(url: string): Promise<void> {
-	// // create texture
-	// const texture = gl.createTexture();
-	// if (!texture) {
-	// 	console.error("Failed to create texture: " + url);
-	// 	return null
-	// }
+	const req = new XMLHttpRequest();
+	const promise = new Promise<XMLHttpRequest>((resolve) => {
+		req.addEventListener("load", function () { resolve(this); });
+	});
 
-	// // set to fallback texture
-	// gl.bindTexture(gl.TEXTURE_2D, texture);
+	req.open("GET", url + ".lvl");
+	req.send();
 
-	// const level = 0;
-	// const internalFormat = gl.RGBA;
-	// const border = 0;
-	// const srcFormat = gl.RGBA;
-	// const srcType = gl.UNSIGNED_BYTE;
-	// const pixel = new Uint8Array([255, 0, 255, 255]);
-	// gl.texImage2D(
-	// 	gl.TEXTURE_2D,
-	// 	level,
-	// 	internalFormat,
-	// 	1,
-	// 	1,
-	// 	border,
-	// 	srcFormat,
-	// 	srcType,
-	// 	pixel,
-	// );
+	const res = await promise;
 
-	// // replace when texture loads
-	// const image = new Image();
-	// image.onload = () => {
-	// 	gl.bindTexture(gl.TEXTURE_2D, texture);
-	// 	gl.texImage2D(
-	// 		gl.TEXTURE_2D,
-	// 		level,
-	// 		internalFormat,
-	// 		srcFormat,
-	// 		srcType,
-	// 		image,
-	// 	);
+	if (res.status != 200) {
+		console.error("Failed to load level");
+		return;
+	}
 
-	// 	// power of 2 textures require special treatment
-	// 	if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-	// 		//gl.generateMipmap(gl.TEXTURE_2D);
-	// 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	// 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-	// 	} else {
-	// 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	// 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	// 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	// 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-	// 	}
+	const file: LevelFile = JSON.parse(res.response);
+	const models = loadGlTFFromWeb(url);
 
-	// 	gl.bindTexture(gl.TEXTURE_2D, null);
-	// };
-	// image.src = url;
+	if (!models) {
+		console.error("Failed to load level model");
+		return;
+	}
 
-	// return texture;
-
-	console.log("TEST");
+	currentLevel = new Level();
+	currentLevel.collision = file.collision;
+	currentLevel.models = await models;
 }

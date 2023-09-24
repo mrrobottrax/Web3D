@@ -3,7 +3,7 @@ import { Mesh } from "./mesh.js";
 import { Model } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
 
-export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
+export async function loadGlTFFromWeb(url: string): Promise<Model[]> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();
@@ -21,15 +21,15 @@ export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
 	req2.open("GET", url + ".bin");
 	req2.send();
 
-	let mesh: Mesh | null = null;
+	let models: Model[] = [];
 
 	// get shader from requests
 	await Promise.all([promise1, promise2]).then((results) => {
 		if (results[0].status != 200 || results[1].status != 200) {
-			return null;
+			return models;
 		}
 
-		mesh = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)]);
+		models = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)]);
 	});
 
 	// fall back when request fails
@@ -39,7 +39,7 @@ export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
 	//	shader = initShaderProgram(fallbackVSource, fallbackFSource);
 	//}
 
-	return mesh;
+	return models;
 }
 
 export async function loadGlbFromWeb(url: string): Promise<Mesh | null> {
@@ -150,12 +150,21 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[]): Mesh | null {
+function loadGltf(json: any, buffers: Uint8Array[]): Model[] {
 	let meshes = getGltfMeshData(json, buffers);
+	let models: Model[] = [];
 
-	const m = new Mesh();
-	m.genBuffers(meshes[0].primitives);
-	return m;
+	for (let i = 0; i < meshes.length; ++i) {
+		let m = new Model();
+		m.mesh.genBuffers(meshes[i].primitives);
+		m.position = meshes[i].translation;
+		m.rotation = meshes[i].rotation;
+		m.scale = meshes[i].scale;
+
+		models.push(m);
+	}
+
+	return models;
 }
 
 export function getGltfMeshData(json: any, buffers: Uint8Array[]): MeshData[] {
