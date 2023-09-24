@@ -31,7 +31,7 @@ export class Mesh {
 			));
 			if (data[i].textureUris.length > 0) {
 				for (let j = 0; j < data[i].textureUris.length; ++j) {
-					const url = "./data/models/" + data[i].textureUris[0];
+					const url = data[i].textureUris[0];
 
 					const textureLoaded = textures[url] !== undefined;
 

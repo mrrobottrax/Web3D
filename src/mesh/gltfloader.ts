@@ -29,7 +29,7 @@ export async function loadGlTFFromWeb(url: string): Promise<Model[]> {
 			return models;
 		}
 
-		models = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)]);
+		models = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)], url.substring(0, url.lastIndexOf('/') + 1));
 	});
 
 	// fall back when request fails
@@ -140,7 +140,7 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	let buffers = [file.subarray(binChunk.dataPos, binChunk.dataPos + binChunk.chunkLength)];
 
 	// temp: load first primitive
-	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers);
+	const p = loadPrimitive(json.meshes[0].primitives[0], json, buffers, "data/models/");
 	if (!p) {
 		return null;
 	}
@@ -150,8 +150,8 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[]): Model[] {
-	let meshes = getGltfMeshData(json, buffers);
+function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model[] {
+	let meshes = getGltfMeshData(json, buffers, texPrefix);
 	let models: Model[] = [];
 
 	for (let i = 0; i < meshes.length; ++i) {
@@ -167,7 +167,7 @@ function loadGltf(json: any, buffers: Uint8Array[]): Model[] {
 	return models;
 }
 
-export function getGltfMeshData(json: any, buffers: Uint8Array[]): MeshData[] {
+export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: string): MeshData[] {
 	let meshes: MeshData[] = [];
 
 	// load nodes
@@ -176,7 +176,7 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[]): MeshData[] {
 		const node = json.nodes[j];
 		const meshIndex = node.mesh;
 		for (let i = 0; i < json.meshes[meshIndex].primitives.length; ++i) {
-			const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers);
+			const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix);
 			if (!p) {
 				// todo: return error model
 				return [];
@@ -221,7 +221,7 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[]): MeshData[] {
 	return meshes;
 }
 
-function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): PrimitiveData | null {
+function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPrefix: string): PrimitiveData | null {
 	const attributes = primitive.attributes;
 
 	const positionIndex = attributes["POSITION"];
@@ -313,15 +313,15 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 			const baseColorIndex = material["pbrMetallicRoughness"]["baseColorTexture"].index;
 			const baseColorSource = json.textures[baseColorIndex].source;
 			const baseColorImage = json.images[baseColorSource];
-			uris.push(baseColorImage.uri);
+			uris.push(texPrefix + baseColorImage.uri);
 		} else {
-			uris.push("textures/dev.png");
+			uris.push("data/models/textures/dev.png");
 		}
 		if (baseColorFactor) {
 			color = baseColorFactor;
 		}
 	} else {
-		uris.push("textures/default.png");
+		uris.push("data/models/textures/default.png");
 	}
 
 	let p: PrimitiveData = {

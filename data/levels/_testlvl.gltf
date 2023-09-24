@@ -58,6 +58,9 @@
 			"doubleSided":true,
 			"name":"floor",
 			"pbrMetallicRoughness":{
+				"baseColorTexture":{
+					"index":0
+				},
 				"metallicFactor":0,
 				"roughnessFactor":0.5
 			}
@@ -116,6 +119,19 @@
 					"indices":15
 				}
 			]
+		}
+	],
+	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		}
+	],
+	"images":[
+		{
+			"mimeType":"image/png",
+			"name":"test",
+			"uri":"textures/test.png"
 		}
 	],
 	"accessors":[
@@ -352,6 +368,12 @@
 			"byteLength":24,
 			"byteOffset":10408,
 			"target":34963
+		}
+	],
+	"samplers":[
+		{
+			"magFilter":9728,
+			"minFilter":9984
 		}
 	],
 	"buffers":[

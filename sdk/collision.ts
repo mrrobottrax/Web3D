@@ -41,7 +41,7 @@ if (submitInput && gltfInput && binInput) {
 }
 
 function generateCollisionData(json: any, buffers: Uint8Array[]): HalfEdgeMesh {
-	const meshes = getGltfMeshData(json, buffers);
+	const meshes = getGltfMeshData(json, buffers, "data/levels/");
 	const halfEdgeMesh = HalfEdgeMesh.fromMeshes(meshes);
 
 	return halfEdgeMesh;
