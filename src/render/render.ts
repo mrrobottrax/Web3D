@@ -12,7 +12,7 @@ import { player } from "../localplayer.js";
 const nearClip = 0.3;
 const farClip = 1000;
 
-let webModel: Model = new Model();
+let webModel: Model;
 
 export async function drawInit(): Promise<void> {
 	webModel.position = new vec3(0, -2, -5);
