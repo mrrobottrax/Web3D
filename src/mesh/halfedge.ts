@@ -1,6 +1,6 @@
 import { mat4 } from "../math/matrix.js";
 import { vec3 } from "../math/vector.js";
-import { MeshData, PrimitiveData } from "./primitive.js";
+import { MeshData } from "./primitive.js";
 
 interface Vertex {
 	position: vec3;
