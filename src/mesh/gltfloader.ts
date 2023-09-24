@@ -294,7 +294,7 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 
 	// material
 	const uris: string[] = [];
-	if (materialIndex && json.materials) {
+	if (materialIndex != undefined && json.materials) {
 		const material = json.materials[materialIndex];
 		const baseColorTex = material["pbrMetallicRoughness"]["baseColorTexture"];
 		if (baseColorTex) {

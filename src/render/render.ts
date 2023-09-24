@@ -15,10 +15,13 @@ const farClip = 1000;
 let webModel: Model;
 
 export async function drawInit(): Promise<void> {
+	webModel = new Model();
+
 	webModel.position = new vec3(0, -2, -5);
 	const m = await loadGlTFFromWeb("./data/models/texCube");
-	if (m)
+	if (m) {
 		webModel.mesh = m;
+	}
 }
 
 export function initProjection() {

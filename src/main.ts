@@ -1,4 +1,5 @@
 import { initInput, updateInput } from "./input.js";
+import { setLevel } from "./level.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
 import { drawFrame, drawInit } from "./render/render.js";
 import { updateTime } from "./time.js";
@@ -14,7 +15,8 @@ function exit(): void {
 async function main(): Promise<void> {
 	await init();
 	await drawInit();
-
+	
+	await setLevel("./data/levels/_testlvl");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
 }
