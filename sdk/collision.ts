@@ -19,7 +19,6 @@ if (submitInput && gltfInput && binInput) {
 		const heMesh = generateCollisionData(json, buffers);
 
 		const fileName = gltfInput.files[0].name.split(".")[0];
-		console.log(fileName);
 
 		const level: LevelFile = {
 			collision: heMesh,

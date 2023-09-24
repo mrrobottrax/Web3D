@@ -50,13 +50,14 @@ export function drawFrame(): void {
 
 	drawModel(webModel, mat);
 
-	for (let i = 0; i < currentLevel.models.length; ++i) {
-		drawModel(currentLevel.models[i], mat);
+	if (currentLevel != undefined) {
+		for (let i = 0; i < currentLevel.models.length; ++i) {
+			drawModel(currentLevel.models[i], mat);
+		}
+		drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1]);
 	}
 
 	gl.useProgram(null);
-
-	drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1]);
 
 	webModel.rotation = quaternion.euler(r1, r2, r3);
 	r1 += Time.deltaTime * 0;

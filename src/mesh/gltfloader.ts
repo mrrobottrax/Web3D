@@ -315,13 +315,13 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 			const baseColorImage = json.images[baseColorSource];
 			uris.push(texPrefix + baseColorImage.uri);
 		} else {
-			uris.push("data/models/textures/dev.png");
+			uris.push("data/levels/textures/dev.png");
 		}
 		if (baseColorFactor) {
 			color = baseColorFactor;
 		}
 	} else {
-		uris.push("data/models/textures/default.png");
+		uris.push("data/levels/textures/dev.png");
 	}
 
 	let p: PrimitiveData = {

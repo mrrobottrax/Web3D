@@ -62,7 +62,9 @@ export class HalfEdgeMesh {
 			}
 		}
 
-		let offset = 0;
+		let vertOffset = 0;
+		let edgeOffset = 0;
+		let faceOffset = 0;
 		let faces: Face[] = [];
 		let halfEdges: HalfEdge[] = [];
 		for (let m = 0; m < meshes.length; ++m) {
@@ -70,47 +72,50 @@ export class HalfEdgeMesh {
 				const primitive = meshes[m].primitives[p];
 				const triCount = primitive.elements.length / 3;
 
-				// half edges
 				for (let i = 0; i < triCount; ++i) {
-					const index = i * 3;
+					const primEdgeIndex = i * 3;
+					const edgeIndex = edgeOffset + primEdgeIndex;
+					const faceIndex = faceOffset + i;
 
-					const vert0 = primitive.elements[index]
-					const vert1 = primitive.elements[index + 1]
-					const vert2 = primitive.elements[index + 2]
-					vertices[offset + vert0].halfEdge = index;
-					halfEdges[offset + index] = {
-						prev: offset + index + 2,
-						next: offset + index + 1,
+					const vert0 = vertOffset + primitive.elements[primEdgeIndex]
+					const vert1 = vertOffset + primitive.elements[primEdgeIndex + 1]
+					const vert2 = vertOffset + primitive.elements[primEdgeIndex + 2]
+					vertices[vert0].halfEdge = edgeIndex;
+					halfEdges[edgeIndex] = {
+						prev: edgeIndex + 2,
+						next: edgeIndex + 1,
 						twin: -1,
-						face: offset + i,
-						vert: offset + vert0
+						face: faceIndex,
+						vert: vert0
 					}
-					vertices[offset + vert1].halfEdge = index + 1;
-					halfEdges[offset + index + 1] = {
-						prev: offset + index,
-						next: offset + index + 2,
+					vertices[vert1].halfEdge = edgeIndex + 1;
+					halfEdges[edgeIndex + 1] = {
+						prev: edgeIndex,
+						next: edgeIndex + 2,
 						twin: -1,
-						face: offset + i,
-						vert: offset + vert1
+						face: faceIndex,
+						vert: vert1
 					}
-					vertices[offset + vert2].halfEdge = index + 2;
-					halfEdges[offset + index + 2] = {
-						prev: offset + index + 1,
-						next: offset + index,
+					vertices[vert2].halfEdge = edgeIndex + 2;
+					halfEdges[edgeIndex + 2] = {
+						prev: edgeIndex + 1,
+						next: edgeIndex,
 						twin: -1,
-						face: offset + i,
-						vert: offset + vert2
+						face: faceIndex,
+						vert: vert2
 					}
 
-					let dir0 = vertices[offset + vert1].position.sub(vertices[offset + vert0].position);
-					let dir1 = vertices[offset + vert2].position.sub(vertices[offset + vert0].position);
-					faces[offset + i] = {
-						halfEdge: offset + index,
+					let dir0 = vertices[vert1].position.sub(vertices[vert0].position);
+					let dir1 = vertices[vert2].position.sub(vertices[vert0].position);
+					faces[faceIndex] = {
+						halfEdge: edgeIndex,
 						normal: vec3.cross(dir0, dir1).normalised()
 					};
 				}
 
-				offset += triCount;
+				vertOffset += primitive.positions.length / 3;
+				edgeOffset += primitive.elements.length;
+				faceOffset += triCount;
 			}
 		}
 
