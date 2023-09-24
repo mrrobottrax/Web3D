@@ -77,6 +77,31 @@ export class vec3 {
 
 		return this.mult(1/m);
 	}
+
+	multMat4(mat: mat4): vec3 {
+		let result = vec3.origin();
+
+		result.x = (
+			this.x * mat.getValue(0, 0) + 
+			this.y * mat.getValue(1, 0) + 
+			this.z * mat.getValue(2, 0) +
+			mat.getValue(3, 0)
+		);
+		result.y = (
+			this.x * mat.getValue(0, 1) + 
+			this.y * mat.getValue(1, 1) + 
+			this.z * mat.getValue(2, 1) +
+			mat.getValue(3, 1)
+		);
+		result.z = (
+			this.x * mat.getValue(0, 2) + 
+			this.y * mat.getValue(1, 2) + 
+			this.z * mat.getValue(2, 2) +
+			mat.getValue(3, 2)
+		);
+		
+		return result;
+	}
 }
 
 export class quaternion {

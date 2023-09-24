@@ -1,5 +1,6 @@
+import { quaternion, vec3 } from "../math/vector.js";
 import { Mesh } from "./mesh.js";
-import { PrimitiveData } from "./primitive.js";
+import { MeshData, PrimitiveData } from "./primitive.js";
 
 export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
 	// send requests
@@ -149,29 +150,65 @@ function loadGlb(file: Uint8Array): Mesh | null {
 }
 
 function loadGltf(json: any, buffers: Uint8Array[]): Mesh | null {
-	let primitives = getGltfPrimitives(json, buffers);
+	let meshes = getGltfMeshes(json, buffers);
 
 	const m = new Mesh();
-	m.genBuffers(primitives);
+	m.genBuffers(meshes[0].primitives);
 	return m;
 }
 
-export function getGltfPrimitives(json: any, buffers: Uint8Array[]): PrimitiveData[] {
-	let primitives: PrimitiveData[] = [];
+export function getGltfMeshes(json: any, buffers: Uint8Array[]): MeshData[] {
+	let meshes: MeshData[] = [];
 
-	// temp: load first mesh
-	for (let j = 0; j < json.meshes.length; ++j) {
-		for (let i = 0; i < json.meshes[j].primitives.length; ++i) {
-			const p = loadPrimitive(json.meshes[j].primitives[i], json, buffers);
+	// temp: load first node
+	for (let j = 0; j < json.nodes.length; ++j) {
+		let primitives: PrimitiveData[] = [];
+		const node = json.nodes[j];
+		const meshIndex = node.mesh;
+		for (let i = 0; i < json.meshes[meshIndex].primitives.length; ++i) {
+			const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers);
 			if (!p) {
 				// todo: return error model
 				return [];
 			}
 			primitives.push(p);
 		}
+
+		let translation = vec3.origin();
+		let rotation = quaternion.identity();
+		let scale = new vec3(1, 1, 1);
+
+		const t = node.translation;
+		if (t) {
+			translation.x = t[0];
+			translation.y = t[1];
+			translation.z = t[2];
+		}
+
+		const r = node.rotation;
+		if (r) {
+			rotation.x = r[0];
+			rotation.y = r[1];
+			rotation.z = r[2];
+			rotation.w = r[3];
+		}
+
+		const s = node.scale;
+		if (s) {
+			scale.x = s[0];
+			scale.y = s[1];
+			scale.z = s[2];
+		}
+
+		meshes.push({
+			primitives: primitives,
+			translation: translation,
+			rotation: rotation,
+			scale: scale
+		})
 	}
 
-	return primitives;
+	return meshes;
 }
 
 function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): PrimitiveData | null {
@@ -256,7 +293,7 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[]): Primit
 
 	// material
 	const uris: string[] = [];
-	if (json.materials) {
+	if (materialIndex && json.materials) {
 		const material = json.materials[materialIndex];
 		const baseColorTex = material["pbrMetallicRoughness"]["baseColorTexture"];
 		if (baseColorTex) {

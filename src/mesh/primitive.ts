@@ -1,3 +1,13 @@
+import { quaternion, vec3 } from "../math/vector";
+
+export interface MeshData {
+	translation: vec3;
+	rotation: quaternion;
+	scale: vec3;
+
+	primitives: PrimitiveData[];
+}
+
 export interface PrimitiveData {
 	positions: Float32Array;
 	texCoords: Float32Array;

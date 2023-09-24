@@ -1,5 +1,6 @@
-import { getGltfPrimitives } from "../src/mesh/gltfloader.js";
+import { getGltfMeshes } from "../src/mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../src/mesh/halfedge.js";
+import { PrimitiveData } from "../src/mesh/primitive.js";
 
 const gltfInput: HTMLInputElement | null = document.getElementById("gltf-input") as HTMLInputElement | null;
 const binInput: HTMLInputElement | null = document.getElementById("bin-input") as HTMLInputElement | null;
@@ -19,11 +20,8 @@ if (submitInput && gltfInput && binInput) {
 }
 
 function generateCollisionData(json: any, buffers: Uint8Array[]) {
-	const primitives = getGltfPrimitives(json, buffers);
-	const halfEdgeMeshes: Array<HalfEdgeMesh> = new Array(primitives.length);
+	const meshes = getGltfMeshes(json, buffers);
+	const halfEdgeMesh = HalfEdgeMesh.fromMeshes(meshes);
 
-	for (let i = 0; i < primitives.length; ++i) {
-		halfEdgeMeshes[i] = HalfEdgeMesh.fromPrimitive(primitives[i]);
-		console.log(halfEdgeMeshes[i]);
-	}
+	console.log(halfEdgeMesh);
 }
