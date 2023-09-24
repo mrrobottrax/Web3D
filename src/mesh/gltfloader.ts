@@ -1,5 +1,6 @@
 import { quaternion, vec3 } from "../math/vector.js";
 import { Mesh } from "./mesh.js";
+import { Model } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
 
 export async function loadGlTFFromWeb(url: string): Promise<Mesh | null> {
@@ -150,17 +151,17 @@ function loadGlb(file: Uint8Array): Mesh | null {
 }
 
 function loadGltf(json: any, buffers: Uint8Array[]): Mesh | null {
-	let meshes = getGltfMeshes(json, buffers);
+	let meshes = getGltfMeshData(json, buffers);
 
 	const m = new Mesh();
 	m.genBuffers(meshes[0].primitives);
 	return m;
 }
 
-export function getGltfMeshes(json: any, buffers: Uint8Array[]): MeshData[] {
+export function getGltfMeshData(json: any, buffers: Uint8Array[]): MeshData[] {
 	let meshes: MeshData[] = [];
 
-	// temp: load first node
+	// load nodes
 	for (let j = 0; j < json.nodes.length; ++j) {
 		let primitives: PrimitiveData[] = [];
 		const node = json.nodes[j];
