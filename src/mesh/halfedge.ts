@@ -120,6 +120,7 @@ export class HalfEdgeMesh {
 		// }
 
 		// prune duplicate vertices
+		const epsilon = 0.01 * 0.01;
 		for (let i = 0; i < vertices.length; ++i) {
 			const a = vertices[i];
 			for (let j = vertices.length - 1; j >= 0; --j) {
@@ -127,7 +128,7 @@ export class HalfEdgeMesh {
 					continue;
 
 				let b = vertices[j];
-				if (a.position.equals(b.position)) {
+				if (a.position.sqrDist(b.position) < epsilon) {
 					// redirect all half edges that point to an index after j
 					// down by one
 					for (let k = 0; k < halfEdges.length; ++k) {

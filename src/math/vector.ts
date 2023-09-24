@@ -102,6 +102,14 @@ export class vec3 {
 		
 		return result;
 	}
+
+	sqrDist(v: vec3): number {
+		return this.sub(v).sqrMagnitude();
+	}
+
+	dist(v: vec3): number {
+		return this.sub(v).magnitide();
+	}
 }
 
 export class quaternion {
