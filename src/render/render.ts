@@ -1,4 +1,4 @@
-import { defaultShader, gl, glProperties } from "./gl.js";
+import { defaultShader, fallbackShader, gl, glProperties, lineBuffer, solidShader } from "./gl.js";
 import gMath from "../math/gmath.js";
 import { quaternion, vec3 } from "../math/vector.js";
 import { Mesh } from "../mesh/mesh.js";
@@ -21,9 +21,16 @@ export async function drawInit(): Promise<void> {
 }
 
 export function initProjection() {
+	let proj = calcPerspectiveMatrix(90, glProperties.width, glProperties.height).getData()
+
+	gl.useProgram(fallbackShader.program);
+	gl.uniformMatrix4fv(fallbackShader.projectionMatrixUnif, false, proj);
+
 	gl.useProgram(defaultShader.program);
-	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false,
-		calcPerspectiveMatrix(90, glProperties.width, glProperties.height).getData());
+	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, proj);
+
+	gl.useProgram(solidShader.program);
+	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, proj);
 
 	gl.useProgram(null);
 }
@@ -46,6 +53,8 @@ export function drawFrame(): void {
 		drawModel(currentLevel.models[i], mat);
 	}
 
+	drawLine(new vec3(-1, -1, -1), new vec3(1, 1, 1), [1, 1, 1, 1]);
+
 	gl.useProgram(null);
 
 	webModel.rotation = quaternion.euler(r1, r2, r3);
@@ -62,6 +71,31 @@ function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3,
 	for (let i = 0; i < mesh.primitives.length; ++i) {
 		drawPrimitive(mesh.primitives[i], position, rotation, scale, mat);
 	}
+}
+
+export function drawLine(start: vec3, end: vec3, color: number[]) {
+	gl.useProgram(solidShader.program);
+
+	let mat = mat4.identity();
+	mat.rotate(player.camRotation);
+	mat.translate(player.camPosition.inverse());
+
+	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+	gl.uniform4fv(solidShader.colorUnif, color);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
+	gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
+		start.x, start.y, start.z, end.x, end.y, end.z]));
+
+	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+	gl.enableVertexAttribArray(0);
+
+	gl.drawArrays(gl.LINES, 0, 2);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, null)
+
+	gl.useProgram(null);
 }
 
 function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3, mat: mat4) {

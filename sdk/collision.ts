@@ -46,3 +46,7 @@ function generateCollisionData(json: any, buffers: Uint8Array[]): HalfEdgeMesh {
 
 	return halfEdgeMesh;
 }
+
+function drawHalfEdgeMesh() {
+	
+}

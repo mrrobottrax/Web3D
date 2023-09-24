@@ -21,6 +21,14 @@ interface ShaderBase {
 	colorUnif: WebGLUniformLocation | null;
 }
 
+export let solidShader: ShaderBase = {
+	program: null,
+	modelViewMatrixUnif: null,
+	projectionMatrixUnif: null,
+	samplerUnif: null,
+	colorUnif: null
+};
+
 export let fallbackShader: ShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
@@ -60,10 +68,30 @@ void main() {
 }
 `;
 
+// vertex shader program
+const solidVSource = `
+attribute vec4 aVertexPosition;
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+void main() {
+	gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+}
+`;
+
+// fragment shader program
+const solidFSource = `
+precision mediump float;
+uniform vec4 uColor;
+void main() {
+  gl_FragColor = uColor;
+}
+`;
+
 // ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
 export let canvas: HTMLCanvasElement;
 
+export let lineBuffer: WebGLBuffer | null;
 export async function initGl(): Promise<void> {
 	const c: HTMLCanvasElement | null = document.querySelector("#game");
 
@@ -107,6 +135,13 @@ export async function initGl(): Promise<void> {
 	}
 	fallbackShader.program = fallbackProgram;
 
+	const solidProgram: WebGLProgram | null = initShaderProgram(solidVSource, solidFSource);
+	if (!solidProgram) {
+		console.error("Failed to init solid shader");
+		return;
+	}
+	solidShader.program = solidProgram;
+
 	defaultShader.program = fallbackShader.program;
 
 	// create default solid texture
@@ -123,10 +158,19 @@ export async function initGl(): Promise<void> {
 	fallbackShader.modelViewMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uModelViewMatrix");
 	fallbackShader.projectionMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uProjectionMatrix");
 
+	solidShader.modelViewMatrixUnif = gl.getUniformLocation(solidShader.program, "uModelViewMatrix");
+	solidShader.projectionMatrixUnif = gl.getUniformLocation(solidShader.program, "uProjectionMatrix");
+	solidShader.colorUnif = gl.getUniformLocation(solidShader.program, "uColor");
+
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
 	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
 	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+
+	lineBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1]), gl.DYNAMIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
 export function resizeCanvas() {
