@@ -32,6 +32,12 @@ export class vec3 {
 		return new vec3(this.x * s, this.y * s, this.z * s);
 	}
 
+	copy(v: vec3): void {
+		this.x = v.x;
+		this.y = v.y;
+		this.z = v.z;
+	}
+
 	rotateYaw(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 

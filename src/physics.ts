@@ -58,8 +58,9 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].prev].vert]);
 
 		// find axis with most seperation along move dir
-		let seperation = -Infinity;
-		let seperatingAxis: vec3 = vec3.origin();
+		let seperation: number = -Infinity;
+		let seperatingAxis: vec3 = new vec3(0, 0, 0);
+		let seperatingDist: number = 0;
 		{
 			// check tri face
 			// use side with most seperation
@@ -86,6 +87,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 			// check cube faces
 			let boxSeperation = -Infinity;
 			let boxNormal = vec3.origin();
+			let boxDist = 0;
 			for (let f = 0; f < box.faces.length; ++f) {
 				const face = box.faces[f];
 
@@ -104,6 +106,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 				if (sep >= boxSeperation) {
 					boxSeperation = sep;
 					boxNormal = face.normal;
+					boxDist = face.distance;
 				}
 			}
 			boxSeperation = boxSeperation / Math.abs(vec3.dot(boxNormal, moveDir));
@@ -113,19 +116,35 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 			// pick face with most seperation along move dir
 			if (boxSeperation > triSeperation) {
 				seperation = boxSeperation;
-				seperatingAxis = boxNormal;
+				seperatingAxis.copy(boxNormal);
+				seperatingDist = boxDist;
 			} else {
 				seperation = triSeperation;
-				seperatingAxis = tri.normal;
+				seperatingAxis.copy(tri.normal);
+				seperatingDist = tri.distance;
 			}
 
 			// clip dist to axis
-			if (seperation <= 0) {
-				dist = 0;
-			}
-			else if (seperation <= dist) {
+			if (seperation <= dist) {
+				// make normal point towards player center
 				const s = seperation - epsilon;
-				dist = s;
+				const d = s > 0 ? s : 0;
+				const p = start.add(moveDir.mult(d));
+				const dot = vec3.dot(seperatingAxis, p) - seperatingDist;
+
+				// flip normal
+				if (dot < 0) {
+					seperatingAxis = seperatingAxis.inverse();
+					seperatingDist *= -1;
+				}
+
+				// allow moves that de-penetrate
+				if (vec3.dot(seperatingAxis, moveDir) < 0) {
+					dist = d;
+					drawLine(triVerts[0].position, triVerts[1].position, [1, 0, 0, 1]);
+					drawLine(triVerts[1].position, triVerts[2].position, [1, 0, 0, 1]);
+					drawLine(triVerts[2].position, triVerts[0].position, [1, 0, 0, 1]);
+				}
 			}
 		}
 
