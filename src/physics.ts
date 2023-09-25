@@ -7,6 +7,8 @@ import { drawLine } from "./render/render.js";
 interface CastResult {
 	dist: number;
 	normal: vec3;
+	hit: boolean;
+	dir: vec3;
 }
 
 const epsilon = 0.001;
@@ -14,7 +16,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	const moveDir = end.sub(start).normalised();
 
 	if (moveDir.sqrMagnitude() == 0) {
-		return { dist: 0, normal: vec3.origin() };
+		return { dist: 0, normal: vec3.origin(), hit: false, dir: vec3.origin() };
 	}
 
 	// check aabb of start and end
@@ -44,6 +46,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	// clip to each tri
 	let dist = end.sub(start).magnitide();
 	let normal = vec3.origin();
+	let hit = false;
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
 		let triVerts: Array<Vertex> = new Array(3);
@@ -189,8 +192,8 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				seperatingDist = edgeDist;
 			}
 
-			// clip dist to axis
-			if (seperation <= dist) {
+			// clip dist
+			if (seperation < dist) {
 				// make normal point towards player center
 				const s = seperation - epsilon;
 				const d = s > 0 ? s : 0;
@@ -207,6 +210,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				if (vec3.dot(seperatingAxis, moveDir) < 0) {
 					dist = d;
 					normal = seperatingAxis;
+					hit = true;
 					drawLine(triVerts[0].position, triVerts[1].position, [1, 0, 0, 1]);
 					drawLine(triVerts[1].position, triVerts[2].position, [1, 0, 0, 1]);
 					drawLine(triVerts[2].position, triVerts[0].position, [1, 0, 0, 1]);
@@ -215,7 +219,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 		}
 
 	}
-	return { dist: dist, normal: normal };
+	return { dist: dist, normal: normal, hit: hit, dir: moveDir };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
