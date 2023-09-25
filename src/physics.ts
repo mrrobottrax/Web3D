@@ -176,6 +176,10 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 
 			// clip dist to axis
 			if (seperation <= dist) {
+				if (seperation == edgeSeperation) {
+					continue;
+				}
+
 				// make normal point towards player center
 				const s = seperation - epsilon;
 				const d = s > 0 ? s : 0;
