@@ -24,7 +24,6 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	// temp: get all tris everywhere
 	const level = currentLevel.collision;
 	let tris: Face[] = [];
-	// temp: just do first tri
 	for (let i = 0; i < level.faces.length; ++i) {
 		// ignore faces we are moving behind
 		if (vec3.dot(level.faces[i].normal, moveDir) < 0) {
@@ -40,10 +39,14 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	let dist = end.sub(start).magnitide();
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
-		let triVerts: Vertex[] = []
-		triVerts.push(level.vertices[level.halfEdges[tri.halfEdge].vert]);
-		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].next].vert]);
-		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].prev].vert]);
+		let triVerts: Array<Vertex> = new Array(3);
+		let triEdges: Array<HalfEdge> = new Array(3);
+		triEdges[0] = (level.halfEdges[tri.halfEdge]);
+		triEdges[1] = (level.halfEdges[level.halfEdges[tri.halfEdge].next]);
+		triEdges[2] = (level.halfEdges[level.halfEdges[tri.halfEdge].prev]);
+		triVerts[0] = (level.vertices[triEdges[0].vert]);
+		triVerts[1] = (level.vertices[triEdges[1].vert]);
+		triVerts[2] = (level.vertices[triEdges[2].vert]);
 
 		// find axis with most seperation along move dir
 		let seperation: number = -Infinity;
@@ -104,10 +107,11 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 			let edgeNormal = vec3.origin();
 			let edgeDist = 0;
 			for (let i = 0; i < 3; ++i) {
-				const triEdge: HalfEdge = level.halfEdges[triVerts[i].halfEdge];
+				const triEdge: HalfEdge = triEdges[i];
 				const triPos = vec3.origin();
 				triPos.copy(level.vertices[triEdge.vert].position);
-				const triEdgeDir = triPos.sub(level.vertices[level.halfEdges[triEdge.next].vert].position);
+				const triEdgeDir = triPos.sub(
+					level.vertices[level.halfEdges[triEdge.next].vert].position);
 				for (let j = 0; j < box.edges.length; ++j) {
 					const boxEdge = box.halfEdges[box.edges[j].halfEdge];
 					const boxPos = vec3.origin();
@@ -116,31 +120,31 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 						box.vertices[box.halfEdges[boxEdge.next].vert].position);
 
 					let normal = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
-					let dist = -Infinity;
 
-					// make normal align against box edge
+					// make normal align with box edge
 					{
 						const pos = boxPos.sub(start);
 
-						if (vec3.dot(pos, normal) > 0) {
+						if (vec3.dot(pos, normal) < 0) {
 							normal = normal.inverse();
 						}
 					}
 
 					// find box support point
+					let dist = -Infinity;
 					for (let s = 0; s < box.vertices.length; ++s) {
 						const point = box.vertices[s].position;
 						const dot = vec3.dot(normal, point);
 
-						if (dot > dist) {
+						if (dot >= dist) {
 							dist = dot;
 						}
 					}
 
 					// find point with least seperation
 					let sep = Infinity;
-					for (let j = 0; j < 3; ++j) {
-						const p = triVerts[j].position;
+					for (let k = 0; k < 3; ++k) {
+						const p = triVerts[k].position;
 
 						const dot = vec3.dot(normal, p) - dist;
 
@@ -156,6 +160,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 					}
 				}
 			}
+			edgeSeperation = edgeSeperation / Math.abs(vec3.dot(edgeNormal, moveDir));
 
 			// pick face with most seperation along move dir
 			if (boxSeperation > seperation) {
@@ -163,15 +168,15 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 				seperatingAxis.copy(boxNormal);
 				seperatingDist = boxDist;
 			}
-			if (edgeSeperation > seperation) {
-				seperation = edgeSeperation;
-				seperatingAxis.copy(edgeNormal);
-				seperatingDist = edgeDist;
-			}
 			if (triSeperation > seperation) {
 				seperation = triSeperation;
 				seperatingAxis.copy(tri.normal);
 				seperatingDist = tri.distance;
+			}
+			if (edgeSeperation > seperation) {
+				seperation = edgeSeperation;
+				seperatingAxis.copy(edgeNormal);
+				seperatingDist = edgeDist;
 			}
 
 			// clip dist to axis
