@@ -4,12 +4,17 @@ import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
 import { drawLine } from "./render/render.js";
 
+interface CastResult {
+	dist: number;
+	normal: vec3;
+}
+
 const epsilon = 0.001;
-export function castAABB(size: vec3, start: vec3, end: vec3): number {
+export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	const moveDir = end.sub(start).normalised();
 
 	if (moveDir.sqrMagnitude() == 0) {
-		return 0;
+		return { dist: 0, normal: vec3.origin() };
 	}
 
 	// check aabb of start and end
@@ -22,6 +27,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 
 	// find all tris in totalMin/totalMax
 	// temp: get all tris everywhere
+	// todo: aabb tree
 	const level = currentLevel.collision;
 	let tris: Face[] = [];
 	for (let i = 0; i < level.faces.length; ++i) {
@@ -37,6 +43,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 
 	// clip to each tri
 	let dist = end.sub(start).magnitide();
+	let normal = vec3.origin();
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
 		let triVerts: Array<Vertex> = new Array(3);
@@ -130,6 +137,9 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 						}
 					}
 
+					// todo: use gauss map to check if edges build face of minkowski diff
+					// check for overlap between edges on gauss map
+					// triangle uses other side as second face
 					// find box support point
 					let dist = -Infinity;
 					for (let s = 0; s < box.vertices.length; ++s) {
@@ -196,6 +206,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 				// allow moves that de-penetrate
 				if (vec3.dot(seperatingAxis, moveDir) < 0) {
 					dist = d;
+					normal = seperatingAxis;
 					drawLine(triVerts[0].position, triVerts[1].position, [1, 0, 0, 1]);
 					drawLine(triVerts[1].position, triVerts[2].position, [1, 0, 0, 1]);
 					drawLine(triVerts[2].position, triVerts[0].position, [1, 0, 0, 1]);
@@ -204,7 +215,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 		}
 
 	}
-	return dist;
+	return { dist: dist, normal: normal };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {

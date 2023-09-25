@@ -21,9 +21,9 @@ export class LocalPlayer {
 		wishDir.normalise();
 		const goal = this.camPosition.add(wishDir.mult(Time.deltaTime * 3));
 
-		const dist = castAABB(new vec3(1, 1, 1), this.camPosition, goal);
+		const cast = castAABB(new vec3(1, 1, 1), this.camPosition, goal);
 
-		this.camPosition = this.camPosition.add(wishDir.mult(dist));
+		this.camPosition = this.camPosition.add(wishDir.mult(cast.dist));
 	}
 }
 
