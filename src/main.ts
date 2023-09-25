@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 	await init();
 	await drawInit();
 
-	await setLevel("./data/levels/_collisiontest");
+	await setLevel("./data/levels/_wedge");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
 }

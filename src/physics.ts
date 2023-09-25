@@ -111,9 +111,9 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 				for (let j = 0; j < box.edges.length; ++j) {
 					const boxEdge = box.halfEdges[box.edges[j].halfEdge];
 					const boxPos = vec3.origin();
-					boxPos.copy(level.vertices[boxEdge.vert].position);
+					boxPos.copy(box.vertices[boxEdge.vert].position);
 					const boxEdgeDir = boxPos.sub(
-						level.vertices[level.halfEdges[boxEdge.next].vert].position);
+						box.vertices[box.halfEdges[boxEdge.next].vert].position);
 
 					let normal = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
 					let dist = -Infinity;
@@ -176,10 +176,6 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 
 			// clip dist to axis
 			if (seperation <= dist) {
-				if (seperation == edgeSeperation) {
-					continue;
-				}
-
 				// make normal point towards player center
 				const s = seperation - epsilon;
 				const d = s > 0 ? s : 0;
