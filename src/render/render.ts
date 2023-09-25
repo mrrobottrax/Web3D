@@ -46,7 +46,9 @@ export function drawFrame(): void {
 
 	let mat = mat4.identity();
 	mat.rotate(player.camRotation);
-	mat.translate(player.camPosition.inverse());
+	const playerPosCopy = vec3.origin();
+	playerPosCopy.copy(player.position);
+	mat.translate(playerPosCopy.inverse());
 
 	drawModel(webModel, mat);
 
@@ -80,7 +82,7 @@ export function drawLine(start: vec3, end: vec3, color: number[]) {
 
 	let mat = mat4.identity();
 	mat.rotate(player.camRotation);
-	mat.translate(player.camPosition.inverse());
+	mat.translate(player.position.inverse());
 
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
 	gl.uniform4fv(solidShader.colorUnif, color);

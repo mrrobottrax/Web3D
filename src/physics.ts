@@ -7,16 +7,18 @@ import { drawLine } from "./render/render.js";
 interface CastResult {
 	dist: number;
 	normal: vec3;
-	hit: boolean;
+	fract: number;
 	dir: vec3;
+	startSolid: boolean;
 }
 
 const epsilon = 0.001;
 export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
-	const moveDir = end.sub(start).normalised();
+	const move = end.sub(start);
+	const moveDir = move.normalised();
 
 	if (moveDir.sqrMagnitude() == 0) {
-		return { dist: 0, normal: vec3.origin(), hit: false, dir: vec3.origin() };
+		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin(), startSolid: false };
 	}
 
 	// check aabb of start and end
@@ -47,6 +49,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let dist = end.sub(start).magnitide();
 	let normal = vec3.origin();
 	let hit = false;
+	let startSolid = false;
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
 		let triVerts: Array<Vertex> = new Array(3);
@@ -219,7 +222,11 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 		}
 
 	}
-	return { dist: dist, normal: normal, hit: hit, dir: moveDir };
+	let fract = 1;
+	if (hit) {
+		fract = dist / move.magnitide();
+	}
+	return { dist: dist, normal: normal, fract: fract, dir: moveDir, startSolid: true };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {

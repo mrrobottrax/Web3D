@@ -38,6 +38,16 @@ export class vec3 {
 		this.z = v.z;
 	}
 
+	static copy(v: vec3): vec3 {
+		let vec = new vec3(0, 0, 0);
+
+		vec.x = v.x;
+		vec.y = v.y;
+		vec.z = v.z;
+
+		return vec;
+	}
+
 	rotateYaw(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 
