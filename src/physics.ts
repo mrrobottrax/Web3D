@@ -16,6 +16,7 @@ interface EdgeQuery {
 	normal: vec3;
 }
 
+const epsilon = 0.001;
 export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	const moveDir = end.sub(start).normalised();
 
@@ -36,7 +37,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	const level = currentLevel.collision;
 	let tris: Face[] = [];
 	// temp: just do first tri
-	for (let i = 0; i < 1; ++i) {
+	for (let i = 0; i < level.faces.length; ++i) {
 		// ignore faces we are moving behind
 		if (vec3.dot(level.faces[i].normal, moveDir) < 0) {
 			tris.push(level.faces[i]);
@@ -83,18 +84,48 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 			triSeperation = triSeperation / Math.abs(vec3.dot(tri.normal, moveDir));
 
 			// check cube faces
+			let boxSeperation = -Infinity;
+			let boxNormal = vec3.origin();
+			for (let f = 0; f < box.faces.length; ++f) {
+				const face = box.faces[f];
+
+				// find point with least seperation
+				let sep = Infinity;
+				for (let j = 0; j < 3; ++j) {
+					const p = triVerts[j].position;
+
+					const dot = vec3.dot(face.normal, p) - face.distance;
+
+					if (dot <= sep) {
+						sep = dot;
+					}
+				}
+
+				if (sep >= boxSeperation) {
+					boxSeperation = sep;
+					boxNormal = face.normal;
+				}
+			}
+			boxSeperation = boxSeperation / Math.abs(vec3.dot(boxNormal, moveDir));
+
 			// check edge combos
 
 			// pick face with most seperation along move dir
-			seperation = triSeperation;
-			seperatingAxis = tri.normal;
+			if (boxSeperation > triSeperation) {
+				seperation = boxSeperation;
+				seperatingAxis = boxNormal;
+			} else {
+				seperation = triSeperation;
+				seperatingAxis = tri.normal;
+			}
 
 			// clip dist to axis
 			if (seperation <= 0) {
 				dist = 0;
 			}
-			else if (seperation < dist) {
-				dist = seperation;
+			else if (seperation <= dist) {
+				const s = seperation - epsilon;
+				dist = s;
 			}
 		}
 
