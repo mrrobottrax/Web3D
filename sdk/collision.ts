@@ -49,10 +49,10 @@ function generateCollisionData(json: any, buffers: Uint8Array[]): HalfEdgeMesh {
 }
 
 export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[]) {
-	for (let i = 0; i < mesh.halfEdges.length; ++i) {
+	for (let i = 0; i < mesh.edges.length; ++i) {
 		drawLine(
-			mesh.vertices[mesh.halfEdges[i].vert].position,
-			mesh.vertices[mesh.halfEdges[mesh.halfEdges[i].next].vert].position,
+			mesh.vertices[mesh.halfEdges[mesh.edges[i].halfEdge].vert].position,
+			mesh.vertices[mesh.halfEdges[mesh.halfEdges[mesh.edges[i].halfEdge].next].vert].position,
 			color
 		);
 	}

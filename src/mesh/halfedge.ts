@@ -15,6 +15,10 @@ export interface HalfEdge {
 	vert: number;
 }
 
+export interface Edge {
+	halfEdge: number;
+}
+
 export interface Face {
 	normal: vec3;
 	distance: number;
@@ -24,6 +28,7 @@ export interface Face {
 export class HalfEdgeMesh {
 	vertices: Array<Vertex> = [];
 	halfEdges: Array<HalfEdge> = [];
+	edges: Array<Edge> = [];
 	faces: Array<Face> = [];
 
 	clear() {
@@ -154,6 +159,8 @@ export class HalfEdgeMesh {
 			}
 		}
 
+		let edges: Edge[] = [];
+
 		// find twins
 		for (let i = 0; i < halfEdges.length; ++i) {
 			const he0 = halfEdges[i];
@@ -165,10 +172,19 @@ export class HalfEdgeMesh {
 
 				// check if twin
 				if (he0Next.vert == he1.vert && he0.vert == he1Next.vert) {
+					edges.push({
+						halfEdge: i
+					});
 					he0.twin = j;
 					he1.twin = i;
 					break;
 				}
+			}
+
+			if (he0.twin < 0) {
+				edges.push({
+					halfEdge: i
+				});
 			}
 		}
 
@@ -177,6 +193,7 @@ export class HalfEdgeMesh {
 		mesh.vertices = vertices;
 		mesh.halfEdges = halfEdges;
 		mesh.faces = faces;
+		mesh.edges = edges;
 
 		// let order1: vec3[] = [];
 		// for (let i = 0; i < halfEdges.length; ++i) {

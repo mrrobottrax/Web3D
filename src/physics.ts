@@ -4,18 +4,6 @@ import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
 import { drawLine } from "./render/render.js";
 
-interface FaceQuery {
-	face: Face;
-	seperation: number;
-}
-
-interface EdgeQuery {
-	EdgeA: HalfEdge;
-	EdgeB: HalfEdge;
-	seperation: number;
-	normal: vec3;
-}
-
 const epsilon = 0.001;
 export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	const moveDir = end.sub(start).normalised();
@@ -112,13 +100,75 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 			boxSeperation = boxSeperation / Math.abs(vec3.dot(boxNormal, moveDir));
 
 			// check edge combos
+			let edgeSeperation = -Infinity;
+			let edgeNormal = vec3.origin();
+			let edgeDist = 0;
+			for (let i = 0; i < 3; ++i) {
+				const triEdge: HalfEdge = level.halfEdges[triVerts[i].halfEdge];
+				const triPos = vec3.origin();
+				triPos.copy(level.vertices[triEdge.vert].position);
+				const triEdgeDir = triPos.sub(level.vertices[level.halfEdges[triEdge.next].vert].position);
+				for (let j = 0; j < box.edges.length; ++j) {
+					const boxEdge = box.halfEdges[box.edges[j].halfEdge];
+					const boxPos = vec3.origin();
+					boxPos.copy(level.vertices[boxEdge.vert].position);
+					const boxEdgeDir = boxPos.sub(
+						level.vertices[level.halfEdges[boxEdge.next].vert].position);
+
+					let normal = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
+					let dist = -Infinity;
+
+					// make normal align against box edge
+					{
+						const pos = boxPos.sub(start);
+
+						if (vec3.dot(pos, normal) > 0) {
+							normal = normal.inverse();
+						}
+					}
+
+					// find box support point
+					for (let s = 0; s < box.vertices.length; ++s) {
+						const point = box.vertices[s].position;
+						const dot = vec3.dot(normal, point);
+
+						if (dot > dist) {
+							dist = dot;
+						}
+					}
+
+					// find point with least seperation
+					let sep = Infinity;
+					for (let j = 0; j < 3; ++j) {
+						const p = triVerts[j].position;
+
+						const dot = vec3.dot(normal, p) - dist;
+
+						if (dot <= sep) {
+							sep = dot;
+						}
+					}
+
+					if (sep >= edgeSeperation) {
+						edgeSeperation = sep;
+						edgeNormal = normal;
+						edgeDist = dist;
+					}
+				}
+			}
 
 			// pick face with most seperation along move dir
-			if (boxSeperation > triSeperation) {
+			if (boxSeperation > seperation) {
 				seperation = boxSeperation;
 				seperatingAxis.copy(boxNormal);
 				seperatingDist = boxDist;
-			} else {
+			}
+			if (edgeSeperation > seperation) {
+				seperation = edgeSeperation;
+				seperatingAxis.copy(edgeNormal);
+				seperatingDist = edgeDist;
+			}
+			if (triSeperation > seperation) {
 				seperation = triSeperation;
 				seperatingAxis.copy(tri.normal);
 				seperatingDist = tri.distance;
@@ -204,5 +254,19 @@ function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
 		{ normal: new vec3(0, 0, 1), halfEdge: 16, distance: max.z },
 		{ normal: new vec3(0, 0, -1), halfEdge: 20, distance: -min.z },
 	];
+	boxMesh.edges = [
+		{ halfEdge: 0 },
+		{ halfEdge: 1 },
+		{ halfEdge: 2 },
+		{ halfEdge: 3 },
+		{ halfEdge: 4 },
+		{ halfEdge: 5 },
+		{ halfEdge: 6 },
+		{ halfEdge: 7 },
+		{ halfEdge: 9 },
+		{ halfEdge: 11 },
+		{ halfEdge: 13 },
+		{ halfEdge: 15 },
+	]
 	return boxMesh;
 }
