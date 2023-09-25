@@ -1,7 +1,7 @@
 import { drawHalfEdgeMesh } from "../sdk/collision.js";
 import { currentLevel } from "./level.js";
 import { vec3 } from "./math/vector.js";
-import { Face, HalfEdge, HalfEdgeMesh } from "./mesh/halfedge.js";
+import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
 import { drawLine } from "./render/render.js";
 
 interface FaceQuery {
@@ -25,10 +25,20 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	let totalMin = vec3.min(minA, end.sub(v));
 	let totalMax = vec3.max(maxA, end.sub(v));
 
+	const dir = end.sub(start);
+	if (dir.sqrMagnitude() == 0) {
+		return 0;
+	}
+
 	// find all tris in totalMin/totalMax
+	// temp: get all tris everywhere
+	const level = currentLevel.collision;
 	let tris: Face[] = [];
-	for (let i = 0; i < currentLevel.collision.faces.length; ++i) {
-		tris.push(currentLevel.collision.faces[i]);
+	for (let i = 0; i < level.faces.length; ++i) {
+		// ignore faces we are moving behind
+		if (vec3.dot(level.faces[i].normal, dir) < 0) {
+			tris.push(level.faces[i]);
+		}
 	}
 
 	// box mesh
@@ -36,10 +46,53 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	drawHalfEdgeMesh(box, [0, 0, 1, 1]);
 
 	// check each tri for collision
-	for (let i = 0; i < tris.length; ++i) {
+	let dist1 = Infinity;
+	for (let t = 0; t < tris.length; ++t) {
+		const tri = tris[t];
+		let triVerts: Vertex[] = []
+		triVerts.push(level.vertices[level.halfEdges[tri.halfEdge].vert]);
+		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].next].vert]);
+		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].prev].vert]);
+
 		// check faces of the cube
+		// find face with biggest distance
+		let dist0 = -Infinity;
+		for (let f = 0; f < box.faces.length; ++f) {
+			const face = box.faces[f];
+
+			// only check if normals point into eachother
+			if (vec3.dot(face.normal, tri.normal) > 0) {
+				continue;
+			}
+
+			// get tri support point
+			let dot = Infinity;
+			let support = 0;
+			for (let p = 0; p < 3; ++p) {
+				const pos = triVerts[p].position
+
+				const _dot = vec3.dot(face.normal, pos);
+				if (_dot <= dot) {
+					support = p;
+					dot = _dot;
+				}
+			}
+
+			// get dist to face
+			const _dist = dot - face.distance;
+
+			if (_dist >= dist0) {
+				dist0 = _dist;
+			}
+		}
+
+		if (dist0 <= dist1) {
+			dist1 = dist0;
+		}
 		// check the tris face
+		// check edge combinations
 	}
+	console.log(dist1);
 
 	return start.dist(end);
 }
