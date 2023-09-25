@@ -17,6 +17,12 @@ interface EdgeQuery {
 }
 
 export function castAABB(size: vec3, start: vec3, end: vec3): number {
+	const moveDir = end.sub(start).normalised();
+
+	if (moveDir.sqrMagnitude() == 0) {
+		return 0;
+	}
+
 	// check aabb of start and end
 	let v = size.mult(0.5);
 	let minA = start.sub(v);
@@ -25,18 +31,14 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	let totalMin = vec3.min(minA, end.sub(v));
 	let totalMax = vec3.max(maxA, end.sub(v));
 
-	const dir = end.sub(start);
-	if (dir.sqrMagnitude() == 0) {
-		return 0;
-	}
-
 	// find all tris in totalMin/totalMax
 	// temp: get all tris everywhere
 	const level = currentLevel.collision;
 	let tris: Face[] = [];
-	for (let i = 0; i < level.faces.length; ++i) {
+	// temp: just do first tri
+	for (let i = 0; i < 1; ++i) {
 		// ignore faces we are moving behind
-		if (vec3.dot(level.faces[i].normal, dir) < 0) {
+		if (vec3.dot(level.faces[i].normal, moveDir) < 0) {
 			tris.push(level.faces[i]);
 		}
 	}
@@ -45,8 +47,8 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 	let box = createBoxMesh(minA, maxA);
 	drawHalfEdgeMesh(box, [0, 0, 1, 1]);
 
-	// check each tri for collision
-	let dist1 = Infinity;
+	// clip to each tri
+	let dist = end.sub(start).magnitide();
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
 		let triVerts: Vertex[] = []
@@ -54,51 +56,50 @@ export function castAABB(size: vec3, start: vec3, end: vec3): number {
 		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].next].vert]);
 		triVerts.push(level.vertices[level.halfEdges[level.halfEdges[tri.halfEdge].prev].vert]);
 
-		// check faces of the cube
-		// find face with biggest distance
-		let dist0 = -Infinity;
-		for (let f = 0; f < box.faces.length; ++f) {
-			const face = box.faces[f];
+		// find axis with most seperation along move dir
+		let seperation = -Infinity;
+		let seperatingAxis: vec3 = vec3.origin();
+		{
+			// check tri face
+			// use side with most seperation
+			let triSeperation = -Infinity;
+			for (let i = 0; i < 2; ++i) {
+				// find point with least seperation
+				let sep = Infinity;
+				for (let j = 0; j < box.vertices.length; ++j) {
+					const p = box.vertices[j].position;
 
-			// only check if normals point into eachother
-			if (vec3.dot(face.normal, tri.normal) > 0) {
-				continue;
-			}
+					const dot = (vec3.dot(tri.normal, p) - tri.distance) * (i > 0 ? -1 : 1);
 
-			// get tri support point
-			let dot = Infinity;
-			let support = 0;
-			for (let p = 0; p < 3; ++p) {
-				const pos = triVerts[p].position
+					if (dot <= sep) {
+						sep = dot;
+					}
+				}
 
-				const _dot = vec3.dot(face.normal, pos);
-				if (_dot <= dot) {
-					support = p;
-					dot = _dot;
+				if (sep >= triSeperation) {
+					triSeperation = sep;
 				}
 			}
+			triSeperation = triSeperation / Math.abs(vec3.dot(tri.normal, moveDir));
 
-			// get dist to face
-			const _dist = dot - face.distance;
+			// check cube faces
+			// check edge combos
 
-			if (_dist >= dist0) {
-				dist0 = _dist;
+			// pick face with most seperation along move dir
+			seperation = triSeperation;
+			seperatingAxis = tri.normal;
+
+			// clip dist to axis
+			if (seperation <= 0) {
+				dist = 0;
+			}
+			else if (seperation < dist) {
+				dist = seperation;
 			}
 		}
 
-		if (dist0 <= dist1) {
-			dist1 = dist0;
-		}
-		// check the tris face
-		// check edge combinations
 	}
-	console.log(dist1);
-
-	return start.dist(end);
-}
-
-function satFaceTest() {
-
+	return dist;
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
