@@ -15,7 +15,7 @@ function exit(): void {
 async function main(): Promise<void> {
 	await init();
 	await drawInit();
-	
+
 	await setLevel("./data/levels/_collisiontest");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
@@ -33,8 +33,9 @@ function gameLoop(): void {
 	window.requestAnimationFrame(gameLoop);
 	updateTime();
 
-	updateInput();
-
+	// todo: draw last
 	resizeCanvas();
 	drawFrame();
+
+	updateInput();
 }

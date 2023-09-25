@@ -16,18 +16,6 @@ export class vec3 {
 		return new vec3(-this.x, -this.y, -this.z);
 	}
 
-	static origin(): vec3 {
-		return new vec3(0, 0, 0);
-	}
-
-	static cross(a: vec3, b: vec3): vec3 {
-		return new vec3(
-			a.y * b.z - a.z * b.y,
-			a.z * b.x - a.x * b.z,
-			a.x * b.y - a.y * b.x,
-		);
-	}
-
 	equals(v: vec3): boolean {
 		return this.x == v.x && this.y == v.y && this.z == v.z;
 	}
@@ -66,6 +54,8 @@ export class vec3 {
 
 	normalise() {
 		const m = this.magnitide();
+		if (m == 0)
+			return;
 
 		this.x /= m;
 		this.y /= m;
@@ -74,32 +64,34 @@ export class vec3 {
 
 	normalised(): vec3 {
 		const m = this.magnitide();
+		if (m == 0)
+			return this;
 
-		return this.mult(1/m);
+		return this.mult(1 / m);
 	}
 
 	multMat4(mat: mat4): vec3 {
 		let result = vec3.origin();
 
 		result.x = (
-			this.x * mat.getValue(0, 0) + 
-			this.y * mat.getValue(1, 0) + 
+			this.x * mat.getValue(0, 0) +
+			this.y * mat.getValue(1, 0) +
 			this.z * mat.getValue(2, 0) +
 			mat.getValue(3, 0)
 		);
 		result.y = (
-			this.x * mat.getValue(0, 1) + 
-			this.y * mat.getValue(1, 1) + 
+			this.x * mat.getValue(0, 1) +
+			this.y * mat.getValue(1, 1) +
 			this.z * mat.getValue(2, 1) +
 			mat.getValue(3, 1)
 		);
 		result.z = (
-			this.x * mat.getValue(0, 2) + 
-			this.y * mat.getValue(1, 2) + 
+			this.x * mat.getValue(0, 2) +
+			this.y * mat.getValue(1, 2) +
 			this.z * mat.getValue(2, 2) +
 			mat.getValue(3, 2)
 		);
-		
+
 		return result;
 	}
 
@@ -109,6 +101,38 @@ export class vec3 {
 
 	dist(v: vec3): number {
 		return this.sub(v).magnitide();
+	}
+
+	static dot(a: vec3, b: vec3): number {
+		return a.x * b.x + a.y * b.y + a.z * b.z;
+	}
+
+	static origin(): vec3 {
+		return new vec3(0, 0, 0);
+	}
+
+	static cross(a: vec3, b: vec3): vec3 {
+		return new vec3(
+			a.y * b.z - a.z * b.y,
+			a.z * b.x - a.x * b.z,
+			a.x * b.y - a.y * b.x,
+		);
+	}
+
+	static min(a: vec3, b: vec3): vec3 {
+		return new vec3(
+			Math.min(a.x, b.x),
+			Math.min(a.y, b.y),
+			Math.min(a.z, b.z)
+		);
+	}
+
+	static max(a: vec3, b: vec3): vec3 {
+		return new vec3(
+			Math.max(a.x, b.x),
+			Math.max(a.y, b.y),
+			Math.max(a.z, b.z)
+		);
 	}
 }
 

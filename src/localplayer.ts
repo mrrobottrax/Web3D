@@ -1,4 +1,5 @@
 import { quaternion, vec3 } from "./math/vector.js";
+import { castAABB } from "./physics.js";
 import { Time } from "./time.js";
 
 export class LocalPlayer {
@@ -17,8 +18,12 @@ export class LocalPlayer {
 
 	move(moveVector: vec3): void {
 		const wishDir = moveVector.rotateYaw(this.yaw);
+		wishDir.normalise();
+		const goal = this.camPosition.add(wishDir.mult(Time.deltaTime * 3));
 
-		this.camPosition = this.camPosition.add(wishDir.mult(Time.deltaTime));
+		const dist = castAABB(new vec3(1, 1, 1), this.camPosition, goal);
+
+		this.camPosition = this.camPosition.add(wishDir.mult(dist));
 	}
 }
 

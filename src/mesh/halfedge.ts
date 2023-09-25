@@ -2,12 +2,12 @@ import { mat4 } from "../math/matrix.js";
 import { vec3 } from "../math/vector.js";
 import { MeshData } from "./primitive.js";
 
-interface Vertex {
+export interface Vertex {
 	position: vec3;
 	halfEdge: number;
 }
 
-interface HalfEdge {
+export interface HalfEdge {
 	prev: number;
 	next: number;
 	twin: number;
@@ -15,8 +15,9 @@ interface HalfEdge {
 	vert: number;
 }
 
-interface Face {
+export interface Face {
 	normal: vec3;
+	distance: number;
 	halfEdge: number;
 }
 
@@ -107,9 +108,11 @@ export class HalfEdgeMesh {
 
 					let dir0 = vertices[vert1].position.sub(vertices[vert0].position);
 					let dir1 = vertices[vert2].position.sub(vertices[vert0].position);
+					const normal = vec3.cross(dir0, dir1).normalised();
 					faces[faceIndex] = {
 						halfEdge: edgeIndex,
-						normal: vec3.cross(dir0, dir1).normalised()
+						normal: normal,
+						distance: vec3.dot(vertices[vert1].position, normal)
 					};
 				}
 
