@@ -29,7 +29,7 @@ export interface PositionData {
 
 export class PlayerUtil {
 
-	static flyMove(start: vec3, velocity: vec3, delta: number): {
+	static flyMove(start: vec3, velocity: vec3, delta: number, debug: boolean = false): {
 		endPos: vec3,
 		blocked: number,
 		endVel: vec3
@@ -44,13 +44,14 @@ export class PlayerUtil {
 		let planes = new Array<vec3>(maxClipPlanes);
 
 		let blocked = 0;
-		for (let i = 0; i < maxBumps; ++i) {
+		for (let bumpCount = 0; bumpCount < maxBumps; ++bumpCount) {
 			const add = vel.mult(timeStep);
-			add.y -= 0.0000001; // HACK: for some reason this fixes collision bugs
+			add.y += 0.0000001; // HACK: for some reason this fixes collision bugs
 			const cast = castAABB(hullSize, pos, pos.add(add));
 
 			if (cast.fract > 0) {
 				pos = pos.add(cast.dir.mult(cast.dist));
+				numplanes = 0;
 			}
 
 			if (cast.fract == 1) {
@@ -64,6 +65,8 @@ export class PlayerUtil {
 				blocked |= BlockedBits.stepBit;
 			}
 
+			timeStep -= timeStep * cast.fract;
+
 			if (numplanes >= maxClipPlanes) {
 				console.log("clip planes exceeded");
 				vel = vec3.origin();
@@ -73,45 +76,47 @@ export class PlayerUtil {
 			planes[numplanes] = cast.normal;
 			numplanes++;
 
-			let j;
-			for (j = 0; j < numplanes; ++j) {
+			let i;
+			for (i = 0; i < numplanes; ++i) {
 				// clip vel
 				vel = vel.add(cast.normal.mult(-vec3.dot(cast.normal, vel)));
 
 				// dont move back into previous planes
-				let k
-				for (k = 0; k < numplanes; ++k) {
-					if (k != j) {
-						if (vec3.dot(vel, planes[k]) < 0)
+				let j
+				for (j = 0; j < numplanes; ++j) {
+					if (j != i) {
+						if (vec3.dot(vel, planes[j]) < 0)
 							break;
 					}
-
-					if (k == numplanes)
-						break;
 				}
 
-				if (j == numplanes) {
-					// go along the crease
-					if (numplanes != 2) {
-						vel = vec3.origin();
-						break;
-					}
-					let dir = vec3.cross(planes[0], planes[1]);
-					let d = vec3.dot(dir, vel);
-					vel = dir.mult(d);
-				}
+				if (j == numplanes)
+					break;
 
-				//
-				// if velocity is against the original velocity, stop dead
-				// to avoid tiny occilations in sloping corners
-				//
-				if (vec3.dot(vel, primalVel) <= 0) {
+			}
+
+			if (i != numplanes) {
+
+			}
+			else {
+				// go along the crease
+				if (numplanes != 2) {
 					vel = vec3.origin();
 					break;
 				}
+				const dir = vec3.cross(planes[0], planes[1]);
+				const d = vec3.dot(dir, vel);
+				vel = dir.mult(d);
 			}
 
-			timeStep -= timeStep * cast.fract;
+			//
+			// if velocity is against the original velocity, stop dead
+			// to avoid tiny occilations in sloping corners
+			//
+			if (vec3.dot(vel, primalVel) <= 0) {
+				vel = vec3.origin();
+				break;
+			}
 		}
 
 		return { endPos: pos, endVel: vel, blocked: blocked };
@@ -160,7 +165,7 @@ export class PlayerUtil {
 			data.onground = -1;
 		} else {
 			// cast down
-			const cast = castAABB(hullSize, position, position.add(new vec3(0, -0.002, 0)));
+			const cast = castAABB(hullSize, position, position.add(new vec3(0, -0.003, 0)));
 			if (cast.normal.y < minWalkableY) {
 				data.onground = -1;
 			} else {
@@ -179,10 +184,10 @@ export class PlayerUtil {
 	static groundMove(position: vec3, velocity: vec3, wishDir: vec3, delta: number): void {
 		velocity.copy(this.friction(velocity, delta));
 		velocity.copy(this.accel(velocity, wishDir, moveSpeed, acceleration, delta));
-		
+
 		// try regular move
 		const move = this.flyMove(position, velocity, delta);
-		
+
 		// try higher move
 		const castUp = castAABB(hullSize, position, position.add(new vec3(0, maxStepHeight, 0)));
 		const stepMove = this.flyMove(position.add(new vec3(0, castUp.dist, 0)), velocity, delta);
@@ -212,7 +217,7 @@ export class PlayerUtil {
 
 		velocity.copy(this.accel(velocity, wishDir, airSpeed, airAccel, delta));
 
-		const move = this.flyMove(position, velocity, delta);
+		const move = this.flyMove(position, velocity, delta, true);
 		position.copy(move.endPos);
 		velocity.copy(move.endVel);
 

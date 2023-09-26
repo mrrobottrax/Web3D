@@ -1,3 +1,3 @@
 export let config = {
-	sensitivity: 5,
+	sensitivity: 2,
 }
