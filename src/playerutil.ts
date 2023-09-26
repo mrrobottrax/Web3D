@@ -10,22 +10,31 @@ const friction = 3;
 const frictControl = 0.5;
 const acceleration = 5;
 const moveSpeed = 3;
+const airAccel = 80;
+const airSpeed = 0.5;
+const trimpThreshold = 4.7;
+const gravity = 9;
+const maxStepHeight = 0.5;
 
 enum BlockedBits {
 	floorBit = 1,
 	stepBit = 2,
 }
 
+export interface PositionData {
+	onground: number;
+}
+
 export class PlayerUtil {
 
-	static flyMove(start: vec3, vel: vec3, delta: number): {
+	static flyMove(start: vec3, velocity: vec3, delta: number): {
 		endPos: vec3,
 		blocked: number,
 		endVel: vec3
 	} {
 		let timeStep = delta;
-		const primalVel = vec3.origin();
-		primalVel.copy(vel);
+		const primalVel = vec3.copy(velocity);
+		let vel = vec3.copy(velocity);
 		let pos = vec3.origin();
 		pos.copy(start);
 
@@ -35,6 +44,7 @@ export class PlayerUtil {
 		let blocked = 0;
 		for (let i = 0; i < maxBumps; ++i) {
 			const add = vel.mult(timeStep);
+			add.y -= 0.0000001; // HACK: for some reason this fixes collision bugs
 			const cast = castAABB(hullSize, pos, pos.add(add));
 
 			if (cast.fract > 0) {
@@ -45,7 +55,7 @@ export class PlayerUtil {
 				break;
 			}
 
-			if (cast.normal.y > minWalkableY) {
+			if (cast.normal.y >= minWalkableY) {
 				blocked |= BlockedBits.floorBit;
 			}
 			if (!cast.normal.y) {
@@ -138,28 +148,84 @@ export class PlayerUtil {
 		return curVel.add(wishDir.mult(accelSpeed));
 	}
 
-	static groundMove(start: vec3, wishDir: vec3, delta: number) {
+	static catagorizePosition(position: vec3, velocity: vec3): PositionData {
+		let data: PositionData = {
+			onground: -1
+		}
 
+		// trimping
+		if (velocity.y > trimpThreshold) {
+			data.onground = -1;
+		} else {
+			// cast down
+			const cast = castAABB(hullSize, position, position.add(new vec3(0, -0.001, 0)));
+			if (cast.normal.y < minWalkableY) {
+				data.onground = -1;
+			} else {
+				data.onground = 1;
+			}
+
+			if (data.onground != -1) {
+				// move down
+				position.copy(position.add(cast.dir.mult(cast.dist)));
+			}
+		}
+
+		return data;
 	}
 
-	static move(position: vec3, velocity: vec3, wishDir: vec3, delta: number): {
-		position: vec3,
-		velocity: vec3
-	} {
-
-		let vel = vec3.copy(velocity);
-		let pos = vec3.copy(position);
-
-		vel = this.friction(vel, delta);
-		vel = this.accel(vel, wishDir, moveSpeed, acceleration, delta);
+	static groundMove(position: vec3, velocity: vec3, wishDir: vec3, delta: number): void {
+		velocity.copy(this.friction(velocity, delta));
+		velocity.copy(this.accel(velocity, wishDir, moveSpeed, acceleration, delta));
 		
-		const move = this.flyMove(pos, vel, delta);
-		pos = move.endPos;
-		vel = move.endVel;
+		// try regular move
+		const move = this.flyMove(position, velocity, delta);
+		
+		// try higher move
+		const castUp = castAABB(hullSize, position, position.add(new vec3(0, maxStepHeight, 0)));
+		const stepMove = this.flyMove(position.add(new vec3(0, castUp.dist, 0)), velocity, delta);
+		const castDown = castAABB(hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 2, 0)));
+		const stepPos = stepMove.endPos.add(new vec3(0, -castDown.dist, 0));
 
-		return {
-			position: pos,
-			velocity: vel
+		if (castDown.fract == 0 || castDown.fract == 1 || castDown.normal.y < minWalkableY) {
+			position.copy(move.endPos);
+			velocity.copy(move.endVel);
+			return;
+		}
+
+		const moveDist = move.endPos.sqrDist(position);
+		const stepDist = stepPos.sqrDist(position);
+
+		//if (castDown.normal.y < minWalkableY || moveDist > stepDist) {
+		if (false) {
+			position.copy(move.endPos);
+			velocity.copy(move.endVel);
+		} else {
+			position.copy(stepPos);
+			velocity.copy(stepMove.endVel);
+		}
+	}
+
+	static airMove(position: vec3, velocity: vec3, wishDir: vec3, delta: number): void {
+		velocity.y -= gravity * delta * 0.5;
+
+		velocity.copy(this.accel(velocity, wishDir, airSpeed, airAccel, delta));
+
+		const move = this.flyMove(position, velocity, delta);
+		position.copy(move.endPos);
+		velocity.copy(move.endVel);
+
+		velocity.y -= gravity * delta * 0.5;
+	}
+
+	static move(position: vec3, velocity: vec3, wishDir: vec3, positionData: PositionData, delta: number): void {
+		positionData.onground = this.catagorizePosition(position, velocity).onground;
+
+		//if (positionData.onground > 0) {
+		if (true) {
+			this.groundMove(position, velocity, wishDir, delta);
+		} else {
+			this.airMove(position, velocity, wishDir, delta);
 		}
 	}
 }

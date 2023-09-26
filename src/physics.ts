@@ -4,7 +4,7 @@ import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
 import { drawLine } from "./render/render.js";
 
-interface CastResult {
+export interface CastResult {
 	dist: number;
 	normal: vec3;
 	fract: number;
@@ -14,12 +14,13 @@ interface CastResult {
 
 const epsilon = 0.001;
 export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
-	const move = end.sub(start);
-	const moveDir = move.normalised();
-
-	if (moveDir.sqrMagnitude() == 0) {
+	let move = end.sub(start);
+	let dist = move.magnitide();
+	if (dist == 0) {
 		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin(), startSolid: false };
 	}
+
+	const moveDir = move.normalised();
 
 	// check aabb of start and end
 	let v = size.mult(0.5);
@@ -43,13 +44,10 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 
 	// box mesh
 	let box = createBoxMesh(minA, maxA);
-	drawHalfEdgeMesh(box, [0, 0, 1, 1]);
 
 	// clip to each tri
-	let dist = end.sub(start).magnitide();
 	let normal = vec3.origin();
 	let hit = false;
-	let startSolid = false;
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
 		let triVerts: Array<Vertex> = new Array(3);
@@ -75,18 +73,18 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				for (let j = 0; j < box.vertices.length; ++j) {
 					const p = box.vertices[j].position;
 
-					const dot = (vec3.dot(tri.normal, p) - tri.distance) * (i > 0 ? -1 : 1);
+					let dot = ((vec3.dot(tri.normal, p) - tri.distance) * (i > 0 ? -1 : 1));
 
 					if (dot <= sep) {
 						sep = dot;
 					}
 				}
+				sep /= Math.abs(vec3.dot(tri.normal, moveDir));
 
 				if (sep >= triSeperation) {
 					triSeperation = sep;
 				}
 			}
-			triSeperation = triSeperation / Math.abs(vec3.dot(tri.normal, moveDir));
 
 			// check cube faces
 			let boxSeperation = -Infinity;
@@ -100,12 +98,14 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				for (let j = 0; j < 3; ++j) {
 					const p = triVerts[j].position;
 
-					const dot = vec3.dot(face.normal, p) - face.distance;
+					// todo: optimize, along with the other appearances of this code
+					let dot = vec3.dot(face.normal, p) - face.distance;
 
 					if (dot <= sep) {
 						sep = dot;
 					}
 				}
+				sep /= Math.abs(vec3.dot(face.normal, moveDir));
 
 				if (sep >= boxSeperation) {
 					boxSeperation = sep;
@@ -113,7 +113,6 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 					boxDist = face.distance;
 				}
 			}
-			boxSeperation = boxSeperation / Math.abs(vec3.dot(boxNormal, moveDir));
 
 			// check edge combos
 			let edgeSeperation = -Infinity;
@@ -162,12 +161,13 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 					for (let k = 0; k < 3; ++k) {
 						const p = triVerts[k].position;
 
-						const dot = vec3.dot(normal, p) - dist;
+						let dot = vec3.dot(normal, p) - dist;
 
 						if (dot <= sep) {
 							sep = dot;
 						}
 					}
+					sep /= Math.abs(vec3.dot(normal, moveDir));
 
 					if (sep >= edgeSeperation) {
 						edgeSeperation = sep;
@@ -176,7 +176,6 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 					}
 				}
 			}
-			edgeSeperation = edgeSeperation / Math.abs(vec3.dot(edgeNormal, moveDir));
 
 			// pick face with most seperation along move dir
 			if (boxSeperation > seperation) {
@@ -214,13 +213,9 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 					dist = d;
 					normal = seperatingAxis;
 					hit = true;
-					drawLine(triVerts[0].position, triVerts[1].position, [1, 0, 0, 1]);
-					drawLine(triVerts[1].position, triVerts[2].position, [1, 0, 0, 1]);
-					drawLine(triVerts[2].position, triVerts[0].position, [1, 0, 0, 1]);
 				}
 			}
 		}
-
 	}
 	let fract = 1;
 	if (hit) {
