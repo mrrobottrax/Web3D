@@ -196,8 +196,7 @@ export class PlayerUtil {
 		const moveDist = move.endPos.sqrDist(position);
 		const stepDist = stepPos.sqrDist(position);
 
-		//if (castDown.normal.y < minWalkableY || moveDist > stepDist) {
-		if (false) {
+		if (castDown.normal.y < minWalkableY || moveDist > stepDist) {
 			position.copy(move.endPos);
 			velocity.copy(move.endVel);
 		} else {
