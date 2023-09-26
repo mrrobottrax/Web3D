@@ -11,9 +11,9 @@ const maxClipPlanes = 5;
 const friction = 4;
 const frictControl = 2;
 const acceleration = 10;
-const moveSpeed = 5.5;
-const airAccel = 80;
-const airSpeed = 0.5;
+const moveSpeed = 10;
+const airAccel = 200;
+const airSpeed = 2;
 const trimpThreshold = 4.7;
 const gravity = 9;
 const maxStepHeight = 0.5;
@@ -228,11 +228,12 @@ export class PlayerUtil {
 		let wish = vec3.copy(cmd.wishDir);
 		wish.y = 0;
 
+		positionData.onground = this.catagorizePosition(position, velocity).onground;
+
 		if (cmd.buttons[Buttons.jump] && positionData.onground != -1) {
 			velocity.y = 4;
+			positionData.onground = -1;
 		}
-
-		positionData.onground = this.catagorizePosition(position, velocity).onground;
 
 		if (positionData.onground > 0) {
 			this.groundMove(position, velocity, wish, delta);

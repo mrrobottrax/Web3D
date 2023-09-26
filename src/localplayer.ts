@@ -9,6 +9,7 @@ export class LocalPlayer {
 	pitch: number;
 	yaw: number;
 
+	lastPosition: vec3;
 	position: vec3;
 	velocity: vec3;
 
@@ -16,6 +17,7 @@ export class LocalPlayer {
 
 	constructor(pos: vec3, pitch: number, yaw: number) {
 		this.position = pos;
+		this.lastPosition = vec3.copy(this.position);
 		this.pitch = pitch;
 		this.yaw = yaw;
 
@@ -30,9 +32,8 @@ export class LocalPlayer {
 	}
 
 	move(cmd: Cmd): void {
-		PlayerUtil.move(this.position, this.velocity, cmd, this.positionData, Time.deltaTime);
-
-		this.camPosition = this.position.add(new vec3(0, 0.9, 0));
+		this.lastPosition.copy(this.position);
+		PlayerUtil.move(this.position, this.velocity, cmd, this.positionData, Time.fixedDeltaTime);
 	}
 }
 

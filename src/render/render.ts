@@ -7,6 +7,7 @@ import { mat4 } from "../math/matrix.js";
 import { Primitive } from "../mesh/primitive.js";
 import { player } from "../localplayer.js";
 import { currentLevel } from "../level.js";
+import { Time } from "../time.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -28,6 +29,11 @@ export function initProjection() {
 	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, proj);
 
 	gl.useProgram(null);
+}
+
+export function updateInterp() {
+	const pos = vec3.lerp(player.lastPosition, player.position, Time.fract);
+	player.camPosition = pos.add(new vec3(0, 0.9, 0));
 }
 
 export function drawFrame(): void {

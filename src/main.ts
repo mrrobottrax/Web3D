@@ -1,8 +1,8 @@
 import { initInput, updateInput } from "./input.js";
 import { setLevel } from "./level.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
-import { drawFrame, drawInit } from "./render/render.js";
-import { updateTime } from "./time.js";
+import { drawFrame, drawInit, updateInterp } from "./render/render.js";
+import { Time, startTicking, updateTime } from "./time.js";
 
 let running: boolean = false;
 
@@ -24,6 +24,8 @@ async function main(): Promise<void> {
 async function init(): Promise<void> {
 	await initGl();
 	initInput();
+
+	startTicking();
 }
 
 function gameLoop(): void {
@@ -33,9 +35,17 @@ function gameLoop(): void {
 	window.requestAnimationFrame(gameLoop);
 	updateTime();
 
+	if (Time.canTick) {
+		tick();
+	}
+
+	updateInterp();
+
 	// todo: draw last
 	resizeCanvas();
 	drawFrame();
+}
 
+function tick(): void {
 	updateInput();
 }
