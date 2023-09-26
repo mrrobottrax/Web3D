@@ -158,7 +158,7 @@ export class PlayerUtil {
 			data.onground = -1;
 		} else {
 			// cast down
-			const cast = castAABB(hullSize, position, position.add(new vec3(0, -0.001, 0)));
+			const cast = castAABB(hullSize, position, position.add(new vec3(0, -0.002, 0)));
 			if (cast.normal.y < minWalkableY) {
 				data.onground = -1;
 			} else {
@@ -221,8 +221,7 @@ export class PlayerUtil {
 	static move(position: vec3, velocity: vec3, wishDir: vec3, positionData: PositionData, delta: number): void {
 		positionData.onground = this.catagorizePosition(position, velocity).onground;
 
-		//if (positionData.onground > 0) {
-		if (true) {
+		if (positionData.onground > 0) {
 			this.groundMove(position, velocity, wishDir, delta);
 		} else {
 			this.airMove(position, velocity, wishDir, delta);
