@@ -10,7 +10,7 @@ export interface CastResult {
 	startSolid: boolean;
 }
 
-const epsilon = 0.001;
+const epsilon = 0.00001;
 export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let move = end.sub(start);
 	let dist = move.magnitide();
@@ -289,4 +289,39 @@ function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
 		{ halfEdge: 15 },
 	]
 	return boxMesh;
+}
+
+function verifyMesh(mesh: HalfEdgeMesh): boolean {
+	// verify half edges
+	for (let i = 0; i < mesh.halfEdges.length; ++i) {
+		const he = mesh.halfEdges[i];
+		if (he.twin != -1) {
+			const twin = mesh.halfEdges[he.twin];
+
+			if (twin.twin != i)
+				return false;
+		}
+		const next = mesh.halfEdges[he.next];
+		const prev = mesh.halfEdges[he.prev];
+
+		if (prev.next != i)
+			return false;
+
+		if (next.prev != i)
+			return false;
+	}
+
+	// verify edges
+	let edgesList: number[] = [];
+	for (let i = 0; i < mesh.edges.length; ++i) {
+		const edge = mesh.edges[i];
+
+		if (edgesList.includes(edge.halfEdge)) {
+			return false;
+		}
+
+		edgesList.push(edge.halfEdge);
+	}
+
+	return true;
 }

@@ -41,7 +41,7 @@ export function updateTime(): void {
 		Time.canTick = false;
 	}
 
-	if (!pause || advance) {
+	if (!pause) {
 		Time.fract = 1 - ((Time.nextTick - time) / (Time.fixedDeltaTime * 1000));
 		Time.fract = Math.max(Time.fract, 0);
 		Time.fract = Math.min(Time.fract, 1);

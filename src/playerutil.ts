@@ -6,6 +6,7 @@ import { castAABB } from "./physics.js";
 const minWalkableY = 0.7;
 const hullSize = new vec3(1, 2, 1);
 const stopSpeed = 0.01;
+const stopEpsilon = 0.001;
 const maxBumps = 4;
 const maxClipPlanes = 5;
 const friction = 4;
@@ -16,7 +17,7 @@ const airAccel = 80;
 const airSpeed = 1;
 const trimpThreshold = 4.7;
 const gravity = 9;
-const maxStepHeight = 0.5;
+const maxStepHeight = 0.51;
 
 enum BlockedBits {
 	floorBit = 1,
@@ -46,7 +47,6 @@ export class PlayerUtil {
 		let blocked = 0;
 		for (let bumpCount = 0; bumpCount < maxBumps; ++bumpCount) {
 			const add = vel.mult(timeStep);
-			add.y += 0.0000001; // HACK: for some reason this fixes collision bugs
 			const cast = castAABB(hullSize, pos, pos.add(add));
 
 			if (cast.fract > 0) {
@@ -68,25 +68,29 @@ export class PlayerUtil {
 			timeStep -= timeStep * cast.fract;
 
 			if (numplanes >= maxClipPlanes) {
-				console.log("clip planes exceeded");
+				console.error("clip planes exceeded");
 				vel = vec3.origin();
 				break;
 			}
 
-			planes[numplanes] = cast.normal;
+			planes[numplanes] = vec3.copy(cast.normal);
 			numplanes++;
 
 			let i;
 			for (i = 0; i < numplanes; ++i) {
 				// clip vel
-				vel = vel.add(cast.normal.mult(-vec3.dot(cast.normal, vel)));
+				vel.copy(primalVel.add(cast.normal.mult(-vec3.dot(cast.normal, primalVel))));
+				vel.x = vel.x > -stopEpsilon && vel.x < stopEpsilon ? 0 : vel.x;
+				vel.y = vel.y > -stopEpsilon && vel.y < stopEpsilon ? 0 : vel.y;
+				vel.z = vel.z > -stopEpsilon && vel.z < stopEpsilon ? 0 : vel.z;
 
 				// dont move back into previous planes
 				let j
 				for (j = 0; j < numplanes; ++j) {
 					if (j != i) {
-						if (vec3.dot(vel, planes[j]) < 0)
+						if (vec3.dot(vel, planes[j]) < 0.000001) {
 							break;
+						}
 					}
 				}
 
@@ -105,6 +109,7 @@ export class PlayerUtil {
 					break;
 				}
 				const dir = vec3.cross(planes[0], planes[1]);
+				dir.normalise();
 				const d = vec3.dot(dir, vel);
 				vel = dir.mult(d);
 			}
@@ -190,20 +195,23 @@ export class PlayerUtil {
 
 		// try higher move
 		const castUp = castAABB(hullSize, position, position.add(new vec3(0, maxStepHeight, 0)));
+		velocity.y -= 0.1;
 		const stepMove = this.flyMove(position.add(new vec3(0, castUp.dist, 0)), velocity, delta);
-		const castDown = castAABB(hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 2, 0)));
-		const stepPos = stepMove.endPos.add(new vec3(0, -castDown.dist, 0));
+		const castDown = castAABB(hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 3, 0)));
+		console.log(castDown);
 
-		if (castDown.fract == 0 || castDown.fract == 1 || castDown.normal.y < minWalkableY) {
+		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
 			position.copy(move.endPos);
 			velocity.copy(move.endVel);
 			return;
 		}
 
+		const stepPos = stepMove.endPos.add(new vec3(0, -castDown.dist, 0));
+
 		const moveDist = move.endPos.sqrDist(position);
 		const stepDist = stepPos.sqrDist(position);
 
-		if (castDown.normal.y < minWalkableY || moveDist > stepDist) {
+		if (moveDist > stepDist) {
 			position.copy(move.endPos);
 			velocity.copy(move.endVel);
 		} else {
