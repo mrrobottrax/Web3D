@@ -30,7 +30,7 @@ export interface PositionData {
 
 export class PlayerUtil {
 
-	static flyMove(start: vec3, velocity: vec3, delta: number, debug: boolean = false): {
+	static flyMove(start: vec3, velocity: vec3, delta: number): {
 		endPos: vec3,
 		blocked: number,
 		endVel: vec3
@@ -198,7 +198,6 @@ export class PlayerUtil {
 		velocity.y -= 0.1;
 		const stepMove = this.flyMove(position.add(new vec3(0, castUp.dist, 0)), velocity, delta);
 		const castDown = castAABB(hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 3, 0)));
-		console.log(castDown);
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
 			position.copy(move.endPos);
@@ -225,7 +224,7 @@ export class PlayerUtil {
 
 		velocity.copy(this.accel(velocity, wishDir, airSpeed, airAccel, delta));
 
-		const move = this.flyMove(position, velocity, delta, true);
+		const move = this.flyMove(position, velocity, delta);
 		position.copy(move.endPos);
 		velocity.copy(move.endVel);
 

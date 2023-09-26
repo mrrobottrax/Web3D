@@ -36,7 +36,15 @@ export function updateInterp() {
 	player.camPosition = pos.add(new vec3(0, 0.9, 0));
 }
 
+let drawLevel = true;
+export function toggleDraw() {
+	drawLevel = !drawLevel;
+}
+
 export function drawFrame(): void {
+	if (!drawLevel)
+		return;
+
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	gl.useProgram(defaultShader.program);

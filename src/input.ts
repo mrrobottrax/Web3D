@@ -2,6 +2,7 @@ import { config } from "./config.js";
 import { player } from "./localplayer.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
+import { toggleDraw } from "./render/render.js";
 import { advanceGame, pauseGame } from "./time.js";
 
 export let moveVector = vec3.origin();
@@ -107,6 +108,9 @@ function keyDown(name: string, code: string) {
 			break;
 		case "KeyO":
 			advanceGame();
+			break;
+		case "KeyR":
+			toggleDraw();
 			break;
 		default:
 			console.log(code);

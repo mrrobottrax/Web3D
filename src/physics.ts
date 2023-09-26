@@ -1,13 +1,14 @@
 import { currentLevel } from "./level.js";
 import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
+import { gl } from "./render/gl.js";
+import { drawLine } from "./render/render.js";
 
 export interface CastResult {
 	dist: number;
 	normal: vec3;
 	fract: number;
 	dir: vec3;
-	startSolid: boolean;
 }
 
 const epsilon = 0.00001;
@@ -15,7 +16,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let move = end.sub(start);
 	let dist = move.magnitide();
 	if (dist == 0) {
-		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin(), startSolid: false };
+		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin() };
 	}
 
 	const moveDir = move.normalised();
@@ -65,6 +66,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 			// check tri face
 			// use side with most seperation
 			let triSeperation = -Infinity;
+			let triDist = 0;
 			for (let i = 0; i < 2; ++i) {
 				// find point with least seperation
 				let sep = Infinity;
@@ -81,6 +83,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 
 				if (sep >= triSeperation) {
 					triSeperation = sep;
+					triDist = tri.distance * (i > 0 ? -1 : 1);
 				}
 			}
 
@@ -178,13 +181,13 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 			// pick face with most seperation along move dir
 			if (boxSeperation > seperation) {
 				seperation = boxSeperation;
-				seperatingAxis.copy(boxNormal);
-				seperatingDist = boxDist;
+				seperatingAxis.copy(boxNormal.inverse());
+				seperatingDist = -boxDist;
 			}
 			if (triSeperation > seperation) {
 				seperation = triSeperation;
 				seperatingAxis.copy(tri.normal);
-				seperatingDist = tri.distance;
+				seperatingDist = triDist;
 			}
 			if (edgeSeperation > seperation) {
 				seperation = edgeSeperation;
@@ -197,7 +200,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				// make normal point towards player center
 				const s = seperation - epsilon;
 				const d = s > 0 ? s : 0;
-				const p = start.add(moveDir.mult(d));
+				const p = vec3.copy(start);
 				const dot = vec3.dot(seperatingAxis, p) - seperatingDist;
 
 				// flip normal
@@ -219,7 +222,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	if (hit) {
 		fract = dist / move.magnitide();
 	}
-	return { dist: dist, normal: normal, fract: fract, dir: moveDir, startSolid: true };
+	return { dist: dist, normal: normal, fract: fract, dir: moveDir };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
