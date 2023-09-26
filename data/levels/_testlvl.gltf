@@ -18,12 +18,7 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Plane",
-			"scale":[
-				10,
-				10,
-				10
-			]
+			"name":"Plane"
 		},
 		{
 			"mesh":1,
@@ -45,12 +40,7 @@
 		},
 		{
 			"mesh":3,
-			"name":"Plane.001",
-			"scale":[
-				10,
-				10,
-				10
-			]
+			"name":"Plane.001"
 		}
 	],
 	"materials":[
@@ -140,14 +130,14 @@
 			"componentType":5126,
 			"count":36,
 			"max":[
-				2.8000001907348633,
-				0.6000000238418579,
-				1
+				28.000001907348633,
+				6,
+				10
 			],
 			"min":[
-				-1,
+				-10,
 				0,
-				-1
+				-10
 			],
 			"type":"VEC3"
 		},
@@ -240,35 +230,35 @@
 		{
 			"bufferView":12,
 			"componentType":5126,
-			"count":20,
+			"count":50,
 			"max":[
-				2.799999952316284,
-				0.6000000238418579,
-				1
+				28.000001907348633,
+				6,
+				24
 			],
 			"min":[
-				1,
+				10,
 				0,
-				-0.27000704407691956
+				-2.700070381164551
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":13,
 			"componentType":5126,
-			"count":20,
+			"count":50,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":14,
 			"componentType":5126,
-			"count":20,
+			"count":50,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":15,
 			"componentType":5123,
-			"count":30,
+			"count":87,
 			"type":"SCALAR"
 		}
 	],
@@ -347,26 +337,26 @@
 		},
 		{
 			"buffer":0,
-			"byteLength":240,
+			"byteLength":600,
 			"byteOffset":10292,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":240,
-			"byteOffset":10532,
+			"byteLength":600,
+			"byteOffset":10892,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":160,
-			"byteOffset":10772,
+			"byteLength":400,
+			"byteOffset":11492,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":60,
-			"byteOffset":10932,
+			"byteLength":174,
+			"byteOffset":11892,
 			"target":34963
 		}
 	],
@@ -378,7 +368,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":10992,
+			"byteLength":12068,
 			"uri":"_testlvl.bin"
 		}
 	]

@@ -1,5 +1,3 @@
-import { advance, pause } from "./main.js";
-
 export let Time =
 {
 	deltaTime: 0,
@@ -15,6 +13,17 @@ export function startTicking(): void {
 	Time.nextTick = Date.now();
 }
 
+let pause: boolean = false;
+let advance: boolean = false;
+
+export function pauseGame() {
+	pause = !pause;
+}
+
+export function advanceGame() {
+	advance = true;
+}
+
 export function updateTime(): void {
 	const time = Date.now();
 
@@ -22,10 +31,12 @@ export function updateTime(): void {
 
 	lastTime = time;
 
-
 	if (time >= Time.nextTick) {
-		Time.canTick = true;
 		Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
+		if (!pause || advance) {
+			Time.canTick = true;
+			advance = false;
+		}
 	} else {
 		Time.canTick = false;
 	}

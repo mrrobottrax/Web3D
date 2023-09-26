@@ -1,8 +1,8 @@
 import { config } from "./config.js";
 import { player } from "./localplayer.js";
-import { advanceGame, pauseGame } from "./main.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
+import { advanceGame, pauseGame } from "./time.js";
 
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;
