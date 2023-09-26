@@ -1,3 +1,5 @@
+import { advance, pause } from "./main.js";
+
 export let Time =
 {
 	deltaTime: 0,
@@ -20,6 +22,7 @@ export function updateTime(): void {
 
 	lastTime = time;
 
+
 	if (time >= Time.nextTick) {
 		Time.canTick = true;
 		Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
@@ -27,7 +30,9 @@ export function updateTime(): void {
 		Time.canTick = false;
 	}
 
-	Time.fract = 1 - ((Time.nextTick - time) / (Time.fixedDeltaTime * 1000));
-	Time.fract = Math.max(Time.fract, 0);
-	Time.fract = Math.min(Time.fract, 1);
+	if (!pause || advance) {
+		Time.fract = 1 - ((Time.nextTick - time) / (Time.fixedDeltaTime * 1000));
+		Time.fract = Math.max(Time.fract, 0);
+		Time.fract = Math.min(Time.fract, 1);
+	}
 }

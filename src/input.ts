@@ -1,5 +1,6 @@
 import { config } from "./config.js";
 import { player } from "./localplayer.js";
+import { advanceGame, pauseGame } from "./main.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
 
@@ -100,6 +101,12 @@ function keyDown(name: string, code: string) {
 			break;
 		case "ShiftLeft":
 			buttons[Buttons.movedown] = true;
+			break;
+		case "KeyP":
+			pauseGame();
+			break;
+		case "KeyO":
+			advanceGame();
 			break;
 		default:
 			console.log(code);

@@ -28,6 +28,17 @@ async function init(): Promise<void> {
 	startTicking();
 }
 
+export let pause: boolean = false;
+export let advance: boolean = false;
+
+export function pauseGame() {
+	pause = !pause;
+}
+
+export function advanceGame() {
+	advance = true;
+}
+
 function gameLoop(): void {
 	if (!running)
 		return;
@@ -35,8 +46,11 @@ function gameLoop(): void {
 	window.requestAnimationFrame(gameLoop);
 	updateTime();
 
-	if (Time.canTick) {
-		tick();
+	if (!pause || advance) {
+		if (Time.canTick) {
+			tick();
+			advance = false;
+		}
 	}
 
 	updateInterp();
