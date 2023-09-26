@@ -1,8 +1,10 @@
+import { Cmd } from "./cmd.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { PlayerUtil, PositionData } from "./playerutil.js";
 import { Time } from "./time.js";
 
 export class LocalPlayer {
+	camPosition: vec3;
 	camRotation: quaternion;
 	pitch: number;
 	yaw: number;
@@ -23,13 +25,14 @@ export class LocalPlayer {
 		this.positionData = {
 			onground: -1,
 		};
+
+		this.camPosition = this.position;
 	}
 
-	move(moveVector: vec3): void {
-		const wishDir = moveVector.rotateYaw(this.yaw);
-		wishDir.normalise();
+	move(cmd: Cmd): void {
+		PlayerUtil.move(this.position, this.velocity, cmd, this.positionData, Time.deltaTime);
 
-		PlayerUtil.move(this.position, this.velocity, wishDir, this.positionData, Time.deltaTime);
+		this.camPosition = this.position.add(new vec3(0, 0.9, 0));
 	}
 }
 

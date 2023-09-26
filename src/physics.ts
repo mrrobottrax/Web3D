@@ -1,8 +1,6 @@
-import { drawHalfEdgeMesh } from "../sdk/collision.js";
 import { currentLevel } from "./level.js";
 import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
-import { drawLine } from "./render/render.js";
 
 export interface CastResult {
 	dist: number;

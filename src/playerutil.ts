@@ -1,15 +1,17 @@
+import { Cmd } from "./cmd.js";
+import { Buttons } from "./input.js";
 import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
 
 const minWalkableY = 0.7;
-const hullSize = new vec3(1, 1, 1);
+const hullSize = new vec3(1, 2, 1);
 const stopSpeed = 0.01;
 const maxBumps = 4;
 const maxClipPlanes = 5;
-const friction = 3;
-const frictControl = 0.5;
-const acceleration = 5;
-const moveSpeed = 3;
+const friction = 4;
+const frictControl = 2;
+const acceleration = 10;
+const moveSpeed = 5.5;
 const airAccel = 80;
 const airSpeed = 0.5;
 const trimpThreshold = 4.7;
@@ -217,13 +219,22 @@ export class PlayerUtil {
 		velocity.y -= gravity * delta * 0.5;
 	}
 
-	static move(position: vec3, velocity: vec3, wishDir: vec3, positionData: PositionData, delta: number): void {
+	static move(position: vec3, velocity: vec3, cmd: Cmd, positionData: PositionData, delta: number): void {
+		let wish = vec3.copy(cmd.wishDir);
+		wish.y = 0;
+
+		if (cmd.buttons[Buttons.jump] && positionData.onground != -1) {
+			velocity.y = 4;
+		}
+
 		positionData.onground = this.catagorizePosition(position, velocity).onground;
 
 		if (positionData.onground > 0) {
-			this.groundMove(position, velocity, wishDir, delta);
+			this.groundMove(position, velocity, wish, delta);
 		} else {
-			this.airMove(position, velocity, wishDir, delta);
+			this.airMove(position, velocity, wish, delta);
 		}
+
+		positionData.onground = this.catagorizePosition(position, velocity).onground;
 	}
 }

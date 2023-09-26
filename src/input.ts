@@ -6,13 +6,14 @@ import { lockCursor, unlockCursor } from "./pointerlock.js"
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;
 
-enum Buttons {
+export enum Buttons {
 	forward,
 	backward,
 	moveleft,
 	moveright,
 	moveup,
 	movedown,
+	jump,
 
 	MAX_BUTTONS
 }
@@ -55,7 +56,10 @@ export function updateInput() {
 	moveVector.y += buttons[Buttons.moveup] ? 1 : 0;
 	moveVector.y -= buttons[Buttons.movedown] ? 1 : 0;
 
-	player.move(moveVector);
+	player.move({
+		wishDir: moveVector.rotateYaw(player.yaw).normalised(),
+		buttons: buttons
+	});
 }
 
 function clearButtons() {
@@ -92,7 +96,7 @@ function keyDown(name: string, code: string) {
 			buttons[Buttons.moveright] = true;
 			break;
 		case "Space":
-			buttons[Buttons.moveup] = true;
+			buttons[Buttons.jump] = true;
 			break;
 		case "ShiftLeft":
 			buttons[Buttons.movedown] = true;
@@ -118,7 +122,7 @@ function keyUp(name: string, code: string) {
 			buttons[Buttons.moveright] = false;
 			break;
 		case "Space":
-			buttons[Buttons.moveup] = false;
+			buttons[Buttons.jump] = false;
 			break;
 		case "ShiftLeft":
 			buttons[Buttons.movedown] = false;

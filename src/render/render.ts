@@ -4,21 +4,15 @@ import { quaternion, vec3 } from "../math/vector.js";
 import { Mesh } from "../mesh/mesh.js";
 import { Model } from "../mesh/model.js";
 import { mat4 } from "../math/matrix.js";
-import { Time } from "../time.js";
 import { Primitive } from "../mesh/primitive.js";
-import { loadGlTFFromWeb } from "../mesh/gltfloader.js";
 import { player } from "../localplayer.js";
 import { currentLevel } from "../level.js";
-import { drawHalfEdgeMesh } from "../../sdk/collision.js";
 
-const nearClip = 0.3;
+const nearClip = 0.015;
 const farClip = 1000;
 
-let webModel: Model;
-
 export async function drawInit(): Promise<void> {
-	webModel = (await loadGlTFFromWeb("./data/models/texCube"))[0];
-	webModel.position = new vec3(0, -2, -5);
+
 }
 
 export function initProjection() {
@@ -36,9 +30,6 @@ export function initProjection() {
 	gl.useProgram(null);
 }
 
-let r1 = 0;
-let r2 = 0;
-let r3 = 0;
 export function drawFrame(): void {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -46,25 +37,15 @@ export function drawFrame(): void {
 
 	let mat = mat4.identity();
 	mat.rotate(player.camRotation);
-	const playerPosCopy = vec3.origin();
-	playerPosCopy.copy(player.position);
-	mat.translate(playerPosCopy.inverse());
-
-	drawModel(webModel, mat);
+	mat.translate(player.camPosition.inverse());
 
 	if (currentLevel != undefined) {
 		for (let i = 0; i < currentLevel.models.length; ++i) {
 			drawModel(currentLevel.models[i], mat);
 		}
-		drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1]);
 	}
 
 	gl.useProgram(null);
-
-	webModel.rotation = quaternion.euler(r1, r2, r3);
-	r1 += Time.deltaTime * 0;
-	r2 += Time.deltaTime * 0;
-	r3 += Time.deltaTime * 0;
 }
 
 function drawModel(model: Model, mat: mat4) {
@@ -82,7 +63,7 @@ export function drawLine(start: vec3, end: vec3, color: number[]) {
 
 	let mat = mat4.identity();
 	mat.rotate(player.camRotation);
-	mat.translate(player.position.inverse());
+	mat.translate(player.camPosition.inverse());
 
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
 	gl.uniform4fv(solidShader.colorUnif, color);
