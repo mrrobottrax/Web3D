@@ -125,6 +125,9 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				triPos.copy(level.vertices[triEdge.vert].position);
 				const triEdgeDir = triPos.sub(
 					level.vertices[level.halfEdges[triEdge.next].vert].position);
+				const triEdgeDir2 = triPos.sub(
+					level.vertices[level.halfEdges[triEdge.prev].vert].position).inverse();
+
 				for (let j = 0; j < box.edges.length; ++j) {
 					const boxEdge = box.halfEdges[box.edges[j].halfEdge];
 					const boxPos = vec3.origin();
@@ -132,30 +135,56 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 					const boxEdgeDir = boxPos.sub(
 						box.vertices[box.halfEdges[boxEdge.next].vert].position);
 
+					// check if edges build face on minkowski diff
+					const buildsFace = () => {
+						const boxNormal0 = box.faces[boxEdge.face].normal;
+						const boxNormal1 = box.faces[box.halfEdges[boxEdge.twin].face].normal;
+
+						// todo: normalization needed?
+						const triPlaneNormal = triEdgeDir.normalised();
+						const triPlaneDist = vec3.dot(tri.normal, triPlaneNormal);
+
+						// check for cross
+						{
+							const sideA = vec3.dot(boxNormal0, triPlaneNormal) - triPlaneDist;
+							const sideB = vec3.dot(boxNormal1, triPlaneNormal) - triPlaneDist;
+
+							if (Math.sign(sideA) == Math.sign(sideB))
+								return false;
+						}
+
+						// check for different hemispheres
+						const hemispherePlaneNormal = triEdgeDir2.normalised();
+						const hemispherePlaneDist = vec3.dot(tri.normal, triPlaneNormal);
+
+						// check for both on positive side
+						{
+							const sideA = vec3.dot(boxNormal0, triPlaneNormal) - triPlaneDist;
+							const sideB = vec3.dot(boxNormal1, triPlaneNormal) - triPlaneDist;
+
+							if (Math.sign(sideA) > 0 && Math.sign(sideB) > 0)
+								return false;
+						}
+
+						return true;
+					}
+
+					if (!buildsFace())
+						continue;
+
 					let normal = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
 
 					// make normal align with box edge
 					{
-						const pos = boxPos.sub(start);
+						const p = vec3.copy(boxPos.sub(start));
+						const dot = vec3.dot(normal, p) - seperatingDist;
 
-						if (vec3.dot(pos, normal) < 0) {
-							normal = normal.inverse();
+						if (dot < 0) {
+							normal.copy(normal.inverse());
 						}
 					}
 
-					// todo: use gauss map to check if edges build face of minkowski diff
-					// check for overlap between edges on gauss map
-					// triangle uses other side as second face
-					// find box support point
-					let dist = -Infinity;
-					for (let s = 0; s < box.vertices.length; ++s) {
-						const point = box.vertices[s].position;
-						const dot = vec3.dot(normal, point);
-
-						if (dot >= dist) {
-							dist = dot;
-						}
-					}
+					const dist = vec3.dot(normal, boxPos);
 
 					// find point with least seperation
 					let sep = Infinity;
