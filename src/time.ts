@@ -32,6 +32,10 @@ export function updateTime(): void {
 	lastTime = time;
 
 	if (time >= Time.nextTick) {
+		if (time - Time.nextTick > Time.fixedDeltaTime * 1000 * 5) {
+			console.log("more than 5 ticks behind, starting over");
+			Time.nextTick = Date.now();
+		}
 		Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
 		if (!pause || advance) {
 			Time.canTick = true;
