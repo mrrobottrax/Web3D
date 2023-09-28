@@ -286,7 +286,6 @@ export class PlayerUtil {
 
 						if (cast1.fract == 1) {
 							// movement tech???
-							player.velocity.y *= 1.1;
 							const playerSpeed = player.velocity.magnitide();
 							player.velocity.y = 0;
 							player.velocity.normalise();
