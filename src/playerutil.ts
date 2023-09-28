@@ -20,7 +20,7 @@ const duckAccel = 8;
 const duckMoveSpeed = 6;
 const airAccel = 200;
 const airSpeed = 1.5;
-const trimpThreshold = 4.7;
+const trimpThreshold = 6;
 const gravity = 9;
 const maxStepHeight = 0.51;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
@@ -209,6 +209,7 @@ export class PlayerUtil {
 		player.velocity.copy(this.friction(player.velocity, delta));
 		player.velocity.copy(this.accel(player.velocity, cmd.wishDir,
 			player.isDucked ? duckMoveSpeed : moveSpeed, player.isDucked ? duckAccel : acceleration, delta));
+		player.velocity.y = 0;
 
 		// try regular move
 		const move = this.flyMove(player.position, player.velocity, delta);
@@ -234,8 +235,9 @@ export class PlayerUtil {
 			player.position.copy(move.endPos);
 			player.velocity.copy(move.endVel);
 		} else {
-			player.position.copy(stepPos);
 			player.velocity.copy(stepMove.endVel);
+			player.position.copy(stepPos);
+			player.velocity.y = move.endVel.y;
 		}
 	}
 
@@ -350,12 +352,12 @@ export class PlayerUtil {
 
 		// jump
 		if (cmd.buttons[Buttons.jump] && player.positionData.groundEnt != -1) {
-			player.velocity.y = 4;
+			player.velocity.y += 4;
 			player.positionData.groundEnt = -1;
 		}
 
 		// move
-		if (player.positionData.groundEnt > 0) {
+		if (player.positionData.groundEnt >= 0) {
 			this.groundMove(player, cmd, delta);
 		} else {
 			this.airMove(player, cmd, delta);
