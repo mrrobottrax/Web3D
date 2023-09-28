@@ -21,11 +21,12 @@ const duckMoveSpeed = 6;
 const airAccel = 200;
 const airSpeed = 1.5;
 const trimpThreshold = 6;
-const gravity = 9;
+const gravity = 12;
 const maxStepHeight = 0.51;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
 const duckSpeed = 8;
 const duckGlitch = 0.2; // shift play view by this amount when ducking in the air
+const jumpBoost = 5;
 
 enum BlockedBits {
 	floorBit = 1,
@@ -352,7 +353,7 @@ export class PlayerUtil {
 
 		// jump
 		if (cmd.buttons[Buttons.jump] && player.positionData.groundEnt != -1) {
-			player.velocity.y += 4;
+			player.velocity.y += jumpBoost;
 			player.positionData.groundEnt = -1;
 		}
 
