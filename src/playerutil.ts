@@ -286,7 +286,12 @@ export class PlayerUtil {
 
 						if (cast1.fract == 1) {
 							// movement tech???
-							player.velocity = player.velocity.mult(1.2);
+							player.velocity.y *= 1.1;
+							const playerSpeed = player.velocity.magnitide();
+							player.velocity.y = 0;
+							player.velocity.normalise();
+							player.velocity = player.velocity.mult(playerSpeed);
+
 							player.position = newPos;
 
 							player.duckProg = 0;
