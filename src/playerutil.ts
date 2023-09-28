@@ -4,7 +4,6 @@ import { LocalPlayer, player } from "./localplayer.js";
 import gMath from "./math/gmath.js";
 import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
-import { Time } from "./time.js";
 
 const minWalkableY = 0.7;
 const hullSize = new vec3(1, 2, 1);
@@ -17,13 +16,15 @@ const friction = 4;
 const frictControl = 2;
 const acceleration = 10;
 const moveSpeed = 10;
+const duckAccel = 8;
+const duckMoveSpeed = 6;
 const airAccel = 80;
-const airSpeed = 1;
+const airSpeed = 1.5;
 const trimpThreshold = 4.7;
 const gravity = 9;
 const maxStepHeight = 0.51;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
-const duckSpeed = 10;
+const duckSpeed = 8;
 const duckGlitch = 0.2; // shift play view by this amount when ducking in the air
 
 enum BlockedBits {
@@ -206,7 +207,8 @@ export class PlayerUtil {
 
 	static groundMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
 		player.velocity.copy(this.friction(player.velocity, delta));
-		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, moveSpeed, acceleration, delta));
+		player.velocity.copy(this.accel(player.velocity, cmd.wishDir,
+			player.isDucked ? duckMoveSpeed : moveSpeed, player.isDucked ? duckAccel : acceleration, delta));
 
 		// try regular move
 		const move = this.flyMove(player.position, player.velocity, delta);
