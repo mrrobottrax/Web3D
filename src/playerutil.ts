@@ -23,6 +23,8 @@ const trimpThreshold = 4.7;
 const gravity = 9;
 const maxStepHeight = 0.51;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
+const duckSpeed = 10;
+const duckGlitch = 0.2; // shift play view by this amount when ducking in the air
 
 enum BlockedBits {
 	floorBit = 1,
@@ -275,11 +277,11 @@ export class PlayerUtil {
 				} else {
 					// cast down to ground
 					const cast0 = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, -duckOffset * 2 + 0.1, 0)));
+						player.position.add(new vec3(0, -duckOffset * 2 + duckGlitch, 0)));
 
 					if (cast0.fract == 1) {
 						player.wishDuck = false;
-						player.position.y -= duckOffset + 0.1;
+						player.position.y -= duckOffset + duckGlitch;
 					} else {
 						// move down to ground
 						let newPos = vec3.copy(player.position);
@@ -318,27 +320,25 @@ export class PlayerUtil {
 
 		// update duck prog
 		if (player.wishDuck) {
-			if (player.duckProg < 1) {
-				player.duckProg += delta;
-			} else {
+			player.duckProg += delta * duckSpeed;
+			if (player.duckProg > 1) {
 				player.duckProg = 1;
 			}
 
-			if (player.duckProg > 0.5) {
+			if (player.duckProg > 0.95) {
 				if (!player.isDucked) {
 					if (player.positionData.groundEnt != -1) {
 						player.position.y -= duckOffset;
 					} else {
-						player.position.y += duckOffset - 0.1;
+						player.position.y += duckOffset - duckGlitch;
 					}
 				}
 
 				player.isDucked = true;
 			}
 		} else {
-			if (player.duckProg > 0) {
-				player.duckProg -= delta;
-			} else {
+			player.duckProg -= delta * duckSpeed;
+			if (player.duckProg < 0) {
 				player.duckProg = 0;
 			}
 
