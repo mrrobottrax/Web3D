@@ -287,7 +287,8 @@ export class PlayerUtil {
 						if (cast1.fract == 1) {
 							// movement tech???
 							const playerSpeed = player.velocity.magnitide();
-							player.velocity.y = 0;
+							player.velocity = player.velocity.sub(
+								cast0.normal.mult(vec3.dot(player.velocity, cast0.normal)));
 							player.velocity.normalise();
 							player.velocity = player.velocity.mult(playerSpeed);
 
