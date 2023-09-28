@@ -1,7 +1,8 @@
 import { initInput, updateInput } from "./input.js";
 import { setLevel } from "./level.js";
+import { player } from "./localplayer.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
-import { drawFrame, drawInit, updateInterp } from "./render/render.js";
+import { drawFrame, drawInit, lastCamPos, updateInterp } from "./render/render.js";
 import { Time, startTicking, updateTime } from "./time.js";
 
 let running: boolean = false;
@@ -36,6 +37,7 @@ function gameLoop(): void {
 	updateTime();
 	
 	if (Time.canTick) {
+		lastCamPos.copy(player.camPosition);
 		tick();
 	}
 	updateInterp();

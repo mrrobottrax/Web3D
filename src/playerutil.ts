@@ -1,12 +1,14 @@
 import { Cmd } from "./cmd.js";
 import { Buttons } from "./input.js";
 import { LocalPlayer, player } from "./localplayer.js";
+import gMath from "./math/gmath.js";
 import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
+import { Time } from "./time.js";
 
 const minWalkableY = 0.7;
-export const hullSize = new vec3(1, 2, 1);
-export const hullDuckSize = new vec3(1, 1, 1);
+const hullSize = new vec3(1, 2, 1);
+const hullDuckSize = new vec3(1, 1, 1);
 const stopSpeed = 0.01;
 const stopEpsilon = 0.001;
 const maxBumps = 4;
@@ -20,6 +22,7 @@ const airSpeed = 1;
 const trimpThreshold = 4.7;
 const gravity = 9;
 const maxStepHeight = 0.51;
+const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
 
 enum BlockedBits {
 	floorBit = 1,
@@ -31,6 +34,17 @@ export interface PositionData {
 }
 
 export class PlayerUtil {
+	static getViewOffset(player: LocalPlayer): number {
+		if (player.wishDuck) {
+			if (player.isDucked) {
+				return gMath.lerp(hullSize.y / 2 + duckOffset, hullDuckSize.y / 2, player.duckProg);
+			} else {
+				return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset, player.duckProg);
+			}
+		} else {
+			return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset, player.duckProg);
+		}
+	}
 
 	static flyMove(start: vec3, velocity: vec3, delta: number): {
 		endPos: vec3,
@@ -241,40 +255,31 @@ export class PlayerUtil {
 
 		// duck / unduck
 		if (!player.isDucked) {
-			const duckAmt = (hullSize.y - hullDuckSize.y) / 2;
 			if (cmd.buttons[Buttons.duck]) {
-				player.isDucked = true;
-				if (player.positionData.groundEnt != -1) {
-					player.duckProg = 1;
-					player.position.y -= duckAmt;
-				} else {
-					player.duckProg = 1;
-					player.position.y += duckAmt - 0.1;
-				}
+				player.wishDuck = true;
+			} else {
+				player.wishDuck = false;
 			}
 		} else {
-			const duckAmt = (hullSize.y - hullDuckSize.y) / 2;
 			if (!cmd.buttons[Buttons.duck]) {
 				// check if can unduck
 				if (player.positionData.groundEnt != -1) {
 					// cast up
 					const cast = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, 2 * duckAmt, 0)));
+						player.position.add(new vec3(0, 2 * duckOffset, 0)));
 
 					if (cast.fract == 1) {
-						player.isDucked = false;
-						player.duckProg = 0;
-						player.position.y += duckAmt;
+						player.wishDuck = false;
+						player.position.y += duckOffset;
 					}
 				} else {
 					// cast down to ground
 					const cast0 = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, -duckAmt * 2 + 0.1, 0)));
+						player.position.add(new vec3(0, -duckOffset * 2 + 0.1, 0)));
 
 					if (cast0.fract == 1) {
-						player.isDucked = false;
-						player.duckProg = 0;
-						player.position.y -= duckAmt + 0.1;
+						player.wishDuck = false;
+						player.position.y -= duckOffset + 0.1;
 					} else {
 						// move down to ground
 						let newPos = vec3.copy(player.position);
@@ -282,7 +287,7 @@ export class PlayerUtil {
 
 						// check if we can unduck
 						const cast1 = castAABB(hullDuckSize, newPos,
-							newPos.add(new vec3(0, 2 * duckAmt, 0)));
+							newPos.add(new vec3(0, 2 * duckOffset, 0)));
 
 						if (cast1.fract == 1) {
 							// movement tech???
@@ -294,13 +299,50 @@ export class PlayerUtil {
 
 							player.position = newPos;
 
-							player.duckProg = 0;
-							player.isDucked = false;
-							player.position.y += duckAmt
+							player.wishDuck = false;
+							player.position.y += duckOffset
 						}
 					}
 				}
 			}
+		}
+
+		// instant duck / unduck in the air
+		if (player.positionData.groundEnt == -1) {
+			if (player.wishDuck) {
+				player.duckProg = 1;
+			} else {
+				player.duckProg = 0;
+			}
+		}
+
+		// update duck prog
+		if (player.wishDuck) {
+			if (player.duckProg < 1) {
+				player.duckProg += delta;
+			} else {
+				player.duckProg = 1;
+			}
+
+			if (player.duckProg > 0.5) {
+				if (!player.isDucked) {
+					if (player.positionData.groundEnt != -1) {
+						player.position.y -= duckOffset;
+					} else {
+						player.position.y += duckOffset - 0.1;
+					}
+				}
+
+				player.isDucked = true;
+			}
+		} else {
+			if (player.duckProg > 0) {
+				player.duckProg -= delta;
+			} else {
+				player.duckProg = 0;
+			}
+
+			player.isDucked = false;
 		}
 
 		// jump
@@ -317,5 +359,7 @@ export class PlayerUtil {
 		}
 
 		player.positionData = this.catagorizePosition(player);
+
+		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
 	}
 }

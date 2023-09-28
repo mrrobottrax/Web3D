@@ -8,7 +8,7 @@ import { Primitive } from "../mesh/primitive.js";
 import { player } from "../localplayer.js";
 import { currentLevel } from "../level.js";
 import { Time } from "../time.js";
-import { hullDuckSize, hullSize } from "../playerutil.js";
+import { PlayerUtil } from "../playerutil.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -32,10 +32,10 @@ export function initProjection() {
 	gl.useProgram(null);
 }
 
+export let lastCamPos: vec3 = vec3.origin();
+export let camPos: vec3;
 export function updateInterp() {
-	const pos = vec3.lerp(player.lastPosition, player.position, Time.fract);
-	const duckProg = gMath.lerp(player.lastDuckProg, player.duckProg, Time.fract);
-	player.camPosition = pos.add(new vec3(0, gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2, duckProg), 0));
+	camPos = vec3.lerp(lastCamPos, player.camPosition, Time.fract);
 }
 
 let drawLevel = true;
@@ -53,7 +53,7 @@ export function drawFrame(): void {
 
 	let mat = mat4.identity();
 	mat.rotate(player.camRotation);
-	mat.translate(player.camPosition.inverse());
+	mat.translate(camPos.inverse());
 
 	if (currentLevel != undefined) {
 		for (let i = 0; i < currentLevel.models.length; ++i) {
@@ -79,7 +79,7 @@ export function drawLine(start: vec3, end: vec3, color: number[]) {
 
 	let mat = mat4.identity();
 	mat.rotate(player.camRotation);
-	mat.translate(player.camPosition.inverse());
+	mat.translate(camPos.inverse());
 
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
 	gl.uniform4fv(solidShader.colorUnif, color);
