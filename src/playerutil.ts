@@ -279,7 +279,7 @@ export class PlayerUtil {
 				} else {
 					// cast down to ground
 					const cast0 = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, -duckOffset * 2 + duckGlitch, 0)));
+						player.position.add(new vec3(0, -duckOffset * 2 - duckGlitch, 0)));
 
 					if (cast0.fract == 1) {
 						player.wishDuck = false;
@@ -292,6 +292,7 @@ export class PlayerUtil {
 						// check if we can unduck
 						const cast1 = castAABB(hullDuckSize, newPos,
 							newPos.add(new vec3(0, 2 * duckOffset, 0)));
+
 
 						if (cast1.fract == 1) {
 							// movement tech???
