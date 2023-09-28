@@ -15,6 +15,10 @@ export class LocalPlayer {
 
 	positionData: PositionData;
 
+	isDucked: boolean;
+	lastDuckProg: number;
+	duckProg: number;
+
 	constructor(pos: vec3, pitch: number, yaw: number) {
 		this.position = pos;
 		this.lastPosition = vec3.copy(this.position);
@@ -25,15 +29,19 @@ export class LocalPlayer {
 		this.velocity = vec3.origin();
 
 		this.positionData = {
-			onground: -1,
+			groundEnt: -1,
 		};
 
 		this.camPosition = this.position;
+		this.isDucked = false;
+		this.duckProg = 0;
+		this.lastDuckProg = this.duckProg;
 	}
 
 	move(cmd: Cmd): void {
 		this.lastPosition.copy(this.position);
-		PlayerUtil.move(this.position, this.velocity, cmd, this.positionData, Time.fixedDeltaTime);
+		this.lastDuckProg = this.duckProg;
+		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 	}
 }
 

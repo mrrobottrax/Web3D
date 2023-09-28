@@ -6,4 +6,8 @@ export default class gMath {
 	static rad2Deg(angle: number): number {
 		return (angle * 180) / Math.PI;
 	}
+
+	static lerp(a: number, b: number, t: number): number {
+		return a + (b - a) * t;
+	}
 }

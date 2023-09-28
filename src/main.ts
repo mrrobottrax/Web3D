@@ -35,14 +35,13 @@ function gameLoop(): void {
 	window.requestAnimationFrame(gameLoop);
 	updateTime();
 	
-	// todo: draw last
-	resizeCanvas();
-	drawFrame();
-	
 	if (Time.canTick) {
 		tick();
 	}
 	updateInterp();
+	
+	resizeCanvas();
+	drawFrame();
 }
 
 function tick(): void {

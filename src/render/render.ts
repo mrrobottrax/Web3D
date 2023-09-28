@@ -8,6 +8,7 @@ import { Primitive } from "../mesh/primitive.js";
 import { player } from "../localplayer.js";
 import { currentLevel } from "../level.js";
 import { Time } from "../time.js";
+import { hullDuckSize, hullSize } from "../playerutil.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -33,7 +34,8 @@ export function initProjection() {
 
 export function updateInterp() {
 	const pos = vec3.lerp(player.lastPosition, player.position, Time.fract);
-	player.camPosition = pos.add(new vec3(0, 0.9, 0));
+	const duckProg = gMath.lerp(player.lastDuckProg, player.duckProg, Time.fract);
+	player.camPosition = pos.add(new vec3(0, gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2, duckProg), 0));
 }
 
 let drawLevel = true;

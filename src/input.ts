@@ -16,6 +16,7 @@ export enum Buttons {
 	moveup,
 	movedown,
 	jump,
+	duck,
 
 	MAX_BUTTONS
 }
@@ -101,7 +102,7 @@ function keyDown(name: string, code: string) {
 			buttons[Buttons.jump] = true;
 			break;
 		case "ShiftLeft":
-			buttons[Buttons.movedown] = true;
+			buttons[Buttons.duck] = true;
 			break;
 		case "KeyP":
 			pauseGame();
@@ -136,7 +137,7 @@ function keyUp(name: string, code: string) {
 			buttons[Buttons.jump] = false;
 			break;
 		case "ShiftLeft":
-			buttons[Buttons.movedown] = false;
+			buttons[Buttons.duck] = false;
 			break;
 		default:
 			console.log(code);

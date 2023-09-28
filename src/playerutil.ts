@@ -1,10 +1,12 @@
 import { Cmd } from "./cmd.js";
 import { Buttons } from "./input.js";
+import { LocalPlayer, player } from "./localplayer.js";
 import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
 
 const minWalkableY = 0.7;
-const hullSize = new vec3(1, 2, 1);
+export const hullSize = new vec3(1, 2, 1);
+export const hullDuckSize = new vec3(1, 1, 1);
 const stopSpeed = 0.01;
 const stopEpsilon = 0.001;
 const maxBumps = 4;
@@ -25,7 +27,7 @@ enum BlockedBits {
 }
 
 export interface PositionData {
-	onground: number;
+	groundEnt: number;
 }
 
 export class PlayerUtil {
@@ -47,7 +49,7 @@ export class PlayerUtil {
 		let blocked = 0;
 		for (let bumpCount = 0; bumpCount < maxBumps; ++bumpCount) {
 			const add = vel.mult(timeStep);
-			const cast = castAABB(hullSize, pos, pos.add(add));
+			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, pos, pos.add(add));
 
 			if (cast.fract > 0) {
 				pos = pos.add(cast.dir.mult(cast.dist));
@@ -160,94 +162,155 @@ export class PlayerUtil {
 		return curVel.add(wishDir.mult(accelSpeed));
 	}
 
-	static catagorizePosition(position: vec3, velocity: vec3): PositionData {
+	static catagorizePosition(player: LocalPlayer): PositionData {
 		let data: PositionData = {
-			onground: -1
+			groundEnt: -1
 		}
 
 		// trimping
-		if (velocity.y > trimpThreshold) {
-			data.onground = -1;
+		if (player.velocity.y > trimpThreshold) {
+			data.groundEnt = -1;
 		} else {
 			// cast down
-			const cast = castAABB(hullSize, position, position.add(new vec3(0, -0.003, 0)));
+			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, player.position.add(new vec3(0, -0.003, 0)));
 			if (cast.normal.y < minWalkableY) {
-				data.onground = -1;
+				data.groundEnt = -1;
 			} else {
-				data.onground = 1;
+				data.groundEnt = 1;
 			}
 
-			if (data.onground != -1) {
+			if (data.groundEnt != -1) {
 				// move down
-				position.copy(position.add(cast.dir.mult(cast.dist)));
+				player.position.copy(player.position.add(cast.dir.mult(cast.dist)));
 			}
 		}
 
 		return data;
 	}
 
-	static groundMove(position: vec3, velocity: vec3, wishDir: vec3, delta: number): void {
-		velocity.copy(this.friction(velocity, delta));
-		velocity.copy(this.accel(velocity, wishDir, moveSpeed, acceleration, delta));
+	static groundMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
+		player.velocity.copy(this.friction(player.velocity, delta));
+		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, moveSpeed, acceleration, delta));
 
 		// try regular move
-		const move = this.flyMove(position, velocity, delta);
+		const move = this.flyMove(player.position, player.velocity, delta);
 
 		// try higher move
-		const castUp = castAABB(hullSize, position, position.add(new vec3(0, maxStepHeight, 0)));
-		velocity.y -= 0.1;
-		const stepMove = this.flyMove(position.add(new vec3(0, castUp.dist, 0)), velocity, delta);
-		const castDown = castAABB(hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 3, 0)));
+		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, player.position.add(new vec3(0, maxStepHeight, 0)));
+		// player.velocity.y -= 0.1; // this fixes movement bugs?
+		const stepMove = this.flyMove(player.position.add(new vec3(0, castUp.dist, 0)), player.velocity, delta);
+		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 3, 0)));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
-			position.copy(move.endPos);
-			velocity.copy(move.endVel);
+			player.position.copy(move.endPos);
+			player.velocity.copy(move.endVel);
 			return;
 		}
 
 		const stepPos = stepMove.endPos.add(new vec3(0, -castDown.dist, 0));
 
-		const moveDist = move.endPos.sqrDist(position);
-		const stepDist = stepPos.sqrDist(position);
+		const moveDist = move.endPos.sqrDist(player.position);
+		const stepDist = stepPos.sqrDist(player.position);
 
 		if (moveDist > stepDist) {
-			position.copy(move.endPos);
-			velocity.copy(move.endVel);
+			player.position.copy(move.endPos);
+			player.velocity.copy(move.endVel);
 		} else {
-			position.copy(stepPos);
-			velocity.copy(stepMove.endVel);
+			player.position.copy(stepPos);
+			player.velocity.copy(stepMove.endVel);
 		}
 	}
 
-	static airMove(position: vec3, velocity: vec3, wishDir: vec3, delta: number): void {
-		velocity.y -= gravity * delta * 0.5;
+	static airMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
+		player.velocity.y -= gravity * delta * 0.5;
 
-		velocity.copy(this.accel(velocity, wishDir, airSpeed, airAccel, delta));
+		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, airSpeed, airAccel, delta));
 
-		const move = this.flyMove(position, velocity, delta);
-		position.copy(move.endPos);
-		velocity.copy(move.endVel);
+		const move = this.flyMove(player.position, player.velocity, delta);
+		player.position.copy(move.endPos);
+		player.velocity.copy(move.endVel);
 
-		velocity.y -= gravity * delta * 0.5;
+		player.velocity.y -= gravity * delta * 0.5;
 	}
 
-	static move(position: vec3, velocity: vec3, cmd: Cmd, positionData: PositionData, delta: number): void {
+	static move(player: LocalPlayer, cmd: Cmd, delta: number): void {
 		let wish = vec3.copy(cmd.wishDir);
 		wish.y = 0;
 
-		positionData.onground = this.catagorizePosition(position, velocity).onground;
+		player.positionData = this.catagorizePosition(player);
 
-		if (cmd.buttons[Buttons.jump] && positionData.onground != -1) {
-			velocity.y = 4;
-			positionData.onground = -1;
-		}
-
-		if (positionData.onground > 0) {
-			this.groundMove(position, velocity, wish, delta);
+		// duck / unduck
+		if (!player.isDucked) {
+			const duckAmt = (hullSize.y - hullDuckSize.y) / 2;
+			if (cmd.buttons[Buttons.duck]) {
+				player.isDucked = true;
+				if (player.positionData.groundEnt != -1) {
+					player.duckProg = 1;
+					player.position.y -= duckAmt;
+				} else {
+					player.duckProg = 1;
+					player.position.y += duckAmt - 0.1;
+				}
+			}
 		} else {
-			this.airMove(position, velocity, wish, delta);
+			const duckAmt = (hullSize.y - hullDuckSize.y) / 2;
+			if (!cmd.buttons[Buttons.duck]) {
+				// check if can unduck
+				if (player.positionData.groundEnt != -1) {
+					// cast up
+					const cast = castAABB(hullDuckSize, player.position,
+						player.position.add(new vec3(0, 2 * duckAmt, 0)));
+
+					if (cast.fract == 1) {
+						player.isDucked = false;
+						player.duckProg = 0;
+						player.position.y += duckAmt;
+					}
+				} else {
+					// cast down to ground
+					const cast0 = castAABB(hullDuckSize, player.position,
+						player.position.add(new vec3(0, -duckAmt * 2 + 0.1, 0)));
+
+					if (cast0.fract == 1) {
+						player.isDucked = false;
+						player.duckProg = 0;
+						player.position.y -= duckAmt + 0.1;
+					} else {
+						// move down to ground
+						let newPos = vec3.copy(player.position);
+						newPos.y -= cast0.dist;
+
+						// check if we can unduck
+						const cast1 = castAABB(hullDuckSize, newPos,
+							newPos.add(new vec3(0, 2 * duckAmt, 0)));
+
+						if (cast1.fract == 1) {
+							// movement tech???
+							player.velocity = player.velocity.mult(1.2);
+							player.position = newPos;
+
+							player.duckProg = 0;
+							player.isDucked = false;
+							player.position.y += duckAmt
+						}
+					}
+				}
+			}
 		}
 
-		positionData.onground = this.catagorizePosition(position, velocity).onground;
+		// jump
+		if (cmd.buttons[Buttons.jump] && player.positionData.groundEnt != -1) {
+			player.velocity.y = 4;
+			player.positionData.groundEnt = -1;
+		}
+
+		// move
+		if (player.positionData.groundEnt > 0) {
+			this.groundMove(player, cmd, delta);
+		} else {
+			this.airMove(player, cmd, delta);
+		}
+
+		player.positionData = this.catagorizePosition(player);
 	}
 }
