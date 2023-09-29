@@ -6,7 +6,7 @@ import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
 
 const minWalkableY = 0.7;
-const hullSize = new vec3(1, 2, 1);
+const hullSize = new vec3(1, 1.8, 1);
 const hullDuckSize = new vec3(1, 1, 1);
 const stopSpeed = 0.01;
 const stopEpsilon = 0.001;
@@ -39,14 +39,15 @@ export interface PositionData {
 
 export class PlayerUtil {
 	static getViewOffset(player: LocalPlayer): number {
+		const offset = 0.1;
 		if (player.wishDuck) {
 			if (player.isDucked) {
-				return gMath.lerp(hullSize.y / 2 + duckOffset, hullDuckSize.y / 2, player.duckProg);
+				return gMath.lerp(hullSize.y / 2 + duckOffset, hullDuckSize.y / 2 - offset, player.duckProg);
 			} else {
 				return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset, player.duckProg);
 			}
 		} else {
-			return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset, player.duckProg);
+			return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset - offset, player.duckProg);
 		}
 	}
 
