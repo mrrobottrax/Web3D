@@ -24,8 +24,8 @@ const trimpThreshold = 6;
 const gravity = 12;
 const maxStepHeight = 0.51;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
+const duckGlitch = 0.1;
 const duckSpeed = 8;
-const duckGlitch = 0.2; // shift play view by this amount when ducking in the air
 const jumpBoost = 5;
 
 enum BlockedBits {
@@ -39,15 +39,15 @@ export interface PositionData {
 
 export class PlayerUtil {
 	static getViewOffset(player: LocalPlayer): number {
-		const offset = 0.1;
+		const offset = 0.05;
 		if (player.wishDuck) {
 			if (player.isDucked) {
-				return gMath.lerp(hullSize.y / 2 + duckOffset, hullDuckSize.y / 2 - offset, player.duckProg);
+				return gMath.lerp(hullSize.y / 2 + duckOffset, hullDuckSize.y / 2 - duckGlitch, player.duckProg) - offset;
 			} else {
-				return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset, player.duckProg);
+				return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset - duckGlitch, player.duckProg) - offset;
 			}
 		} else {
-			return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset - offset, player.duckProg);
+			return gMath.lerp(hullSize.y / 2, hullDuckSize.y / 2 - duckOffset, player.duckProg) - offset;
 		}
 	}
 
@@ -283,11 +283,11 @@ export class PlayerUtil {
 				} else {
 					// cast down to ground
 					const cast0 = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, -duckOffset * 2 - duckGlitch, 0)));
+						player.position.add(new vec3(0, -duckOffset * 2, 0)));
 
 					if (cast0.fract == 1) {
 						player.wishDuck = false;
-						player.position.y -= duckOffset + duckGlitch;
+						player.position.y -= duckOffset;
 					} else {
 						// move down to ground
 						let newPos = vec3.copy(player.position);
@@ -337,7 +337,7 @@ export class PlayerUtil {
 					if (player.positionData.groundEnt != -1) {
 						player.position.y -= duckOffset;
 					} else {
-						player.position.y += duckOffset - duckGlitch;
+						player.position.y += duckOffset;
 					}
 				}
 
