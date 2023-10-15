@@ -35,7 +35,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let tris: Face[] = [];
 	for (let i = 0; i < level.faces.length; ++i) {
 		// ignore faces we are moving behind
-		if (vec3.dot(level.faces[i].normal, moveDir) <= 0) {
+		if (vec3.dot(level.faces[i].normal, moveDir) < 0) {
 			tris.push(level.faces[i]);
 		}
 	}
