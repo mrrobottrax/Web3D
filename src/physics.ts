@@ -11,15 +11,14 @@ export interface CastResult {
 	dir: vec3;
 }
 
-const epsilon = 0.00001;
 export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let move = end.sub(start);
-	let dist = move.magnitide();
-	if (dist == 0) {
+	let moveDist = move.magnitide();
+	if (moveDist == 0) {
 		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin() };
 	}
 
-	const moveDir = move.normalised();
+	const moveDir = move.mult(1 / moveDist);
 
 	// check aabb of start and end
 	let v = size.mult(0.5);
@@ -36,7 +35,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let tris: Face[] = [];
 	for (let i = 0; i < level.faces.length; ++i) {
 		// ignore faces we are moving behind
-		if (vec3.dot(level.faces[i].normal, moveDir) < 0) {
+		if (vec3.dot(level.faces[i].normal, moveDir) <= 0) {
 			tris.push(level.faces[i]);
 		}
 	}
@@ -44,214 +43,258 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	// box mesh
 	let box = createBoxMesh(minA, maxA);
 
-	// clip to each tri
+	// find tFirst and tLast
 	let normal = vec3.origin();
-	let hit = false;
+	let fract = Infinity;
+	let minPen = Infinity;
 	for (let t = 0; t < tris.length; ++t) {
 		const tri = tris[t];
-		let triVerts: Array<Vertex> = new Array(3);
-		let triEdges: Array<HalfEdge> = new Array(3);
-		triEdges[0] = (level.halfEdges[tri.halfEdge]);
-		triEdges[1] = (level.halfEdges[level.halfEdges[tri.halfEdge].next]);
-		triEdges[2] = (level.halfEdges[level.halfEdges[tri.halfEdge].prev]);
-		triVerts[0] = (level.vertices[triEdges[0].vert]);
-		triVerts[1] = (level.vertices[triEdges[1].vert]);
-		triVerts[2] = (level.vertices[triEdges[2].vert]);
+		let tFirst = -Infinity;
+		let tLast = Infinity;
+		let pen = Infinity;
+		let _normal = vec3.origin();
+		let _stuckNormal = vec3.origin();
 
-		// find axis with most seperation along move dir
-		let seperation: number = -Infinity;
-		let seperatingAxis: vec3 = new vec3(0, 0, 0);
-		let seperatingDist: number = 0;
-		{
-			// check tri face
-			// use side with most seperation
-			let triSeperation = -Infinity;
-			let triDist = 0;
-			for (let i = 0; i < 2; ++i) {
-				// find point with least seperation
-				let sep = Infinity;
-				for (let j = 0; j < box.vertices.length; ++j) {
-					const p = box.vertices[j].position;
+		const checkCollision = () => {
+			let triEdges: Array<HalfEdge> = new Array(3);
+			let triVerts: Array<Vertex> = new Array(3);
+			triEdges[0] = (level.halfEdges[tri.halfEdge]);
+			triEdges[1] = (level.halfEdges[level.halfEdges[tri.halfEdge].next]);
+			triEdges[2] = (level.halfEdges[level.halfEdges[tri.halfEdge].prev]);
+			triVerts[0] = level.vertices[triEdges[0].vert];
+			triVerts[1] = level.vertices[triEdges[1].vert];
+			triVerts[2] = level.vertices[triEdges[2].vert];
 
-					let dot = ((vec3.dot(tri.normal, p) - tri.distance) * (i > 0 ? -1 : 1));
+			// update tFirst and tLast
+			{
+				const checkAxis = (axis: vec3, bias: number = 0) => {
+					let minTri = Infinity;
+					let maxTri = -Infinity;
+					let minBox = Infinity;
+					let maxBox = -Infinity;
 
-					if (dot <= sep) {
-						sep = dot;
+					for (let vert = 0; vert < box.vertices.length; ++vert) {
+						const d = vec3.dot(box.vertices[vert].position, axis);
+						if (d < minBox) {
+							minBox = d;
+						}
+						if (d > maxBox) {
+							maxBox = d;
+						}
 					}
-				}
-				sep /= Math.abs(vec3.dot(tri.normal, moveDir));
 
-				if (sep >= triSeperation) {
-					triSeperation = sep;
-					triDist = tri.distance * (i > 0 ? -1 : 1);
-				}
-			}
-
-			// check cube faces
-			let boxSeperation = -Infinity;
-			let boxNormal = vec3.origin();
-			let boxDist = 0;
-			for (let f = 0; f < box.faces.length; ++f) {
-				const face = box.faces[f];
-
-				// find point with least seperation
-				let sep = Infinity;
-				for (let j = 0; j < 3; ++j) {
-					const p = triVerts[j].position;
-
-					// todo: optimize, along with the other appearances of this code
-					let dot = vec3.dot(face.normal, p) - face.distance;
-
-					if (dot <= sep) {
-						sep = dot;
+					for (let vert = 0; vert < triVerts.length; ++vert) {
+						const d = vec3.dot(triVerts[vert].position, axis);
+						if (d < minTri) {
+							minTri = d;
+						}
+						if (d > maxTri) {
+							maxTri = d;
+						}
 					}
+
+					const speed = vec3.dot(axis, move);
+
+					if (maxBox < minTri) {
+						// box is in on the left
+
+						if (speed <= 0) {
+							return false;
+						}
+
+						let t = (minTri - maxBox) / speed;
+						if (t > tFirst + bias) {
+							tFirst = t;
+							_normal.copy(axis.inverse());
+						}
+
+						t = (maxTri - minBox) / speed;
+						if (t < tLast) {
+							tLast = t;
+						}
+
+						if (tFirst > tLast) {
+							return false;
+						}
+					} else if (maxTri < minBox) {
+						// box is in on the right
+
+						if (speed >= 0) {
+							return false;
+						}
+
+						let t = (maxTri - minBox) / speed;
+						if (t > tFirst + bias) {
+							tFirst = t;
+							_normal.copy(axis);
+						}
+
+						t = (minTri - maxBox) / speed;
+						if (t < tLast) {
+							tLast = t;
+						}
+
+						if (tFirst > tLast) {
+							return false;
+						}
+					} else {
+						// intersection
+
+						if (speed > 0) {
+							const t = (maxTri - minBox) / speed;
+							if (t < tLast) {
+								tLast = t;
+							}
+
+							if (tFirst > tLast) {
+								return false;
+							}
+
+							const p = maxBox - minTri;
+							if (p < pen) {
+								pen = p;
+								_stuckNormal.copy(axis.inverse());
+							}
+						} else if (speed < 0) {
+							const t = (minTri - maxBox) / speed;
+							if (t < tLast) {
+								tLast = t;
+							}
+
+							if (tFirst > tLast) {
+								return false;
+							}
+
+							const p = maxTri - minBox;
+							if (p < pen) {
+								pen = p;
+								_stuckNormal.copy(axis);
+							}
+						}
+					}
+
+					return true;
 				}
-				sep /= Math.abs(vec3.dot(face.normal, moveDir));
 
-				if (sep >= boxSeperation) {
-					boxSeperation = sep;
-					boxNormal = face.normal;
-					boxDist = face.distance;
+				// check both sides of tri face
+				for (let i = 0; i < 2; ++i) {
+					let axis = vec3.copy(tri.normal);
+					if (i == 1) {
+						axis = axis.inverse();
+					}
+					if (!checkAxis(axis))
+						return false;
 				}
-			}
 
-			// check edge combos
-			let edgeSeperation = -Infinity;
-			let edgeNormal = vec3.origin();
-			let edgeDist = 0;
-			for (let i = 0; i < 3; ++i) {
-				const triEdge: HalfEdge = triEdges[i];
-				const triPos = vec3.origin();
-				triPos.copy(level.vertices[triEdge.vert].position);
-				const triEdgeDir = triPos.sub(
-					level.vertices[level.halfEdges[triEdge.next].vert].position);
-				const triEdgeDir2 = triPos.sub(
-					level.vertices[level.halfEdges[triEdge.prev].vert].position).inverse();
+				// check box faces
+				for (let f = 0; f < box.faces.length; ++f) {
+					const axis = box.faces[f].normal;
+					if (!checkAxis(axis))
+						return false;
+				}
 
-				for (let j = 0; j < box.edges.length; ++j) {
-					const boxEdge = box.halfEdges[box.edges[j].halfEdge];
-					const boxPos = vec3.origin();
-					boxPos.copy(box.vertices[boxEdge.vert].position);
-					const boxEdgeDir = boxPos.sub(
-						box.vertices[box.halfEdges[boxEdge.next].vert].position);
+				// check edge combos
+				for (let i = 0; i < 3; ++i) {
+					const triEdge: HalfEdge = triEdges[i];
+					const triPos = vec3.origin();
+					triPos.copy(level.vertices[triEdge.vert].position);
+					const triEdgeDir = triPos.sub(
+						level.vertices[level.halfEdges[triEdge.next].vert].position);
 
-					// check if edges build face on minkowski diff
-					const buildsFace = () => {
-						const boxNormal0 = box.faces[boxEdge.face].normal;
-						const boxNormal1 = box.faces[box.halfEdges[boxEdge.twin].face].normal;
+					for (let j = 0; j < box.edges.length; ++j) {
+						const boxEdge = box.halfEdges[box.edges[j].halfEdge];
+						const boxPos = vec3.copy(box.vertices[boxEdge.vert].position);
+						const boxEdgeDir = boxPos.sub(
+							box.vertices[box.halfEdges[boxEdge.next].vert].position);
 
-						// todo: normalization needed?
-						const triPlaneNormal = triEdgeDir.normalised();
-						const triPlaneDist = vec3.dot(tri.normal, triPlaneNormal);
+						// check if edges build face on minkowski diff
+						const buildsFace = () => {
+							const boxNormal0 = box.faces[boxEdge.face].normal;
+							const boxNormal1 = box.faces[box.halfEdges[boxEdge.twin].face].normal;
 
-						// check for cross
-						{
-							const sideA = vec3.dot(boxNormal0, triPlaneNormal) - triPlaneDist;
-							const sideB = vec3.dot(boxNormal1, triPlaneNormal) - triPlaneDist;
+							// todo: normalization needed?
+							const triPlaneNormal = triEdgeDir.normalised();
+							const triPlaneDist = vec3.dot(tri.normal, triPlaneNormal);
 
-							if (Math.sign(sideA) == Math.sign(sideB))
+							// check for cross
+							{
+								const sideA = vec3.dot(boxNormal0, triPlaneNormal) - triPlaneDist;
+								const sideB = vec3.dot(boxNormal1, triPlaneNormal) - triPlaneDist;
+
+								if (Math.sign(sideA) == Math.sign(sideB))
+									return false;
+							}
+
+							// check for both on positive side
+							{
+								const sideA = vec3.dot(boxNormal0, triPlaneNormal) - triPlaneDist;
+								const sideB = vec3.dot(boxNormal1, triPlaneNormal) - triPlaneDist;
+
+								if (Math.sign(sideA) > 0 && Math.sign(sideB) > 0)
+									return false;
+							}
+
+							return true;
+						}
+
+						if (buildsFace()) {
+							let axis = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
+
+							// snap to face normal when close enough
+							const dot = vec3.dot(axis, tri.normal);
+
+							if (dot > 0.95) {
+								axis = tri.normal;
+							} else if (dot < -0.95) {
+								axis.copy(tri.normal);
+								axis.copy(axis.inverse());
+							} else {
+								if (vec3.dot(axis, boxPos.sub(start)) > 0) {
+									axis = axis.inverse();
+								}
+							}
+
+							if (!checkAxis(axis))
 								return false;
 						}
-
-						// check for different hemispheres
-						const hemispherePlaneNormal = triEdgeDir2.normalised();
-						const hemispherePlaneDist = vec3.dot(tri.normal, triPlaneNormal);
-
-						// check for both on positive side
-						{
-							const sideA = vec3.dot(boxNormal0, triPlaneNormal) - triPlaneDist;
-							const sideB = vec3.dot(boxNormal1, triPlaneNormal) - triPlaneDist;
-
-							if (Math.sign(sideA) > 0 && Math.sign(sideB) > 0)
-								return false;
-						}
-
-						return true;
-					}
-
-					if (!buildsFace())
-						continue;
-
-					let normal = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
-
-					// make normal align with box edge
-					{
-						const p = vec3.copy(boxPos.sub(start));
-						const dot = vec3.dot(normal, p) - seperatingDist;
-
-						if (dot < 0) {
-							normal.copy(normal.inverse());
-						}
-					}
-
-					const dist = vec3.dot(normal, boxPos);
-
-					// find point with least seperation
-					let sep = Infinity;
-					for (let k = 0; k < 3; ++k) {
-						const p = triVerts[k].position;
-
-						let dot = vec3.dot(normal, p) - dist;
-
-						if (dot <= sep) {
-							sep = dot;
-						}
-					}
-					sep /= Math.abs(vec3.dot(normal, moveDir));
-
-					if (sep >= edgeSeperation) {
-						edgeSeperation = sep;
-						edgeNormal = normal;
-						edgeDist = dist;
 					}
 				}
 			}
 
-			// pick face with most seperation along move dir
-			if (boxSeperation > seperation) {
-				seperation = boxSeperation;
-				seperatingAxis.copy(boxNormal.inverse());
-				seperatingDist = -boxDist;
-			}
-			if (triSeperation > seperation) {
-				seperation = triSeperation;
-				seperatingAxis.copy(tri.normal);
-				seperatingDist = triDist;
-			}
-			if (edgeSeperation > seperation) {
-				seperation = edgeSeperation;
-				seperatingAxis.copy(edgeNormal);
-				seperatingDist = edgeDist;
-			}
+			return true;
+		}
 
-			// clip dist
-			if (seperation < dist) {
-				// make normal point towards player center
-				const s = seperation - epsilon;
-				const d = s > 0 ? s : 0;
-				const p = vec3.copy(start);
-				const dot = vec3.dot(seperatingAxis, p) - seperatingDist;
+		if (checkCollision()) {
+			if (tLast > 0.0000001) {
+				if (tFirst <= fract) {
+					fract = tFirst;
+					if (fract <= 0) {
+						fract = 0;
 
-				// flip normal
-				if (dot < 0) {
-					seperatingAxis = seperatingAxis.inverse();
-					seperatingDist *= -1;
-				}
-
-				// allow moves that de-penetrate
-				if (vec3.dot(seperatingAxis, moveDir) < 0) {
-					dist = d;
-					normal = seperatingAxis;
-					hit = true;
+						// check if least penetration
+						if (pen < minPen) {
+							minPen = pen;
+							normal.copy(_stuckNormal);
+						}
+					} else {
+						normal.copy(_normal);
+					}
 				}
 			}
 		}
 	}
-	let fract = 1;
-	if (hit) {
-		fract = dist / move.magnitide();
+
+	if (fract >= 1) {
+		fract = 1;
+		normal = vec3.origin();
 	}
-	return { dist: dist, normal: normal, fract: fract, dir: moveDir };
+	else
+		fract -= 0.001;
+
+	if (fract < 0)
+		fract = 0;
+
+	return { dist: fract * moveDist, normal: normal, fract: fract, dir: moveDir };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {

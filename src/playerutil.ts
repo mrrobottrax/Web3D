@@ -369,4 +369,10 @@ export class PlayerUtil {
 
 		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
 	}
+
+	static debugMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
+		const cast = castAABB(hullSize, player.position, player.position.add(cmd.wishDir.mult(delta * 10)));
+		player.position = player.position.add(cast.dir.mult(cast.dist));
+		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
+	}
 }
