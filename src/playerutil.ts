@@ -51,7 +51,7 @@ export class PlayerUtil {
 		}
 	}
 
-	static flyMove(start: vec3, velocity: vec3, delta: number, debug: boolean = false): {
+	static flyMove(start: vec3, velocity: vec3, delta: number): {
 		endPos: vec3,
 		blocked: number,
 		endVel: vec3
@@ -69,10 +69,6 @@ export class PlayerUtil {
 		for (let bumpCount = 0; bumpCount < maxBumps; ++bumpCount) {
 			const add = vel.mult(timeStep);
 			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, pos, pos.add(add));
-			if (debug)
-			{
-				console.log(cast);
-			}
 
 			if (cast.fract > 0) {
 				pos = pos.add(cast.dir.mult(cast.dist));
@@ -252,7 +248,7 @@ export class PlayerUtil {
 
 		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, airSpeed, airAccel, delta));
 
-		const move = this.flyMove(player.position, player.velocity, delta, true);
+		const move = this.flyMove(player.position, player.velocity, delta);
 		player.position.copy(move.endPos);
 		player.velocity.copy(move.endVel);
 
