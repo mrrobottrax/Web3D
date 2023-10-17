@@ -104,7 +104,7 @@ export class PlayerUtil {
 			let i;
 			for (i = 0; i < numplanes; ++i) {
 				// clip vel
-				vel.copy(primalVel.add(cast.normal.mult(-vec3.dot(cast.normal, primalVel))));
+				vel.copy(primalVel.add(cast.normal.mult(-vec3.dot(cast.normal, primalVel) + 0.001)));
 				vel.x = vel.x > -stopEpsilon && vel.x < stopEpsilon ? 0 : vel.x;
 				vel.y = vel.y > -stopEpsilon && vel.y < stopEpsilon ? 0 : vel.y;
 				vel.z = vel.z > -stopEpsilon && vel.z < stopEpsilon ? 0 : vel.z;
@@ -113,7 +113,7 @@ export class PlayerUtil {
 				let j
 				for (j = 0; j < numplanes; ++j) {
 					if (j != i) {
-						if (vec3.dot(vel, planes[j]) < 0.000001) {
+						if (vec3.dot(vel, planes[j]) < 0.002) {
 							break;
 						}
 					}

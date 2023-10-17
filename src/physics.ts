@@ -177,7 +177,9 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 				}
 
 				// check both sides of tri face
-				for (let i = 0; i < 2; ++i) {
+				// is this even needed with new algorithm????
+				//for (let i = 0; i < 2; ++i) {
+				for (let i = 0; i < 1; ++i) {
 					let axis = vec3.copy(tri.normal);
 					if (i == 1) {
 						axis = axis.inverse();
@@ -209,6 +211,8 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 
 						// check if edges build face on minkowski diff
 						const buildsFace = () => {
+							// uses gauss map
+
 							const boxNormal0 = box.faces[boxEdge.face].normal;
 							const boxNormal1 = box.faces[box.halfEdges[boxEdge.twin].face].normal;
 
@@ -238,20 +242,12 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 						}
 
 						if (buildsFace()) {
+						//if (true) {
 							let axis = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
 
-							// snap to face normal when close enough
-							const dot = vec3.dot(axis, tri.normal);
-
-							if (dot > 0.95) {
-								axis = tri.normal;
-							} else if (dot < -0.95) {
-								axis.copy(tri.normal);
-								axis.copy(axis.inverse());
-							} else {
-								if (vec3.dot(axis, boxPos.sub(start)) > 0) {
-									axis = axis.inverse();
-								}
+							// align
+							if (vec3.dot(axis, boxPos.sub(start)) > 0) {
+								axis = axis.inverse();
 							}
 
 							if (!checkAxis(axis))
@@ -265,36 +261,40 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 		}
 
 		if (checkCollision()) {
-			if (tLast > 0.0000001) {
-				if (tFirst <= fract) {
-					fract = tFirst;
-					if (fract <= 0) {
-						fract = 0;
+			if (tFirst <= fract) {
+				fract = tFirst;
+				if (fract <= 0) {
+					fract = 0;
 
-						// check if least penetration
-						if (pen < minPen) {
-							minPen = pen;
-							normal.copy(_stuckNormal);
-						}
-					} else {
-						normal.copy(_normal);
+					// check if least penetration
+					if (pen < minPen) {
+						minPen = pen;
+						normal.copy(_stuckNormal);
 					}
+				} else {
+					normal.copy(_normal);
 				}
 			}
 		}
 	}
 
+	let dist;
+
 	if (fract >= 1) {
 		fract = 1;
+		dist = moveDist;
 		normal = vec3.origin();
+	} else {
+		// move back a bit
+		dist = fract * moveDist - 0.001;
+
+		if (dist < 0)
+			dist = 0;
+
+		fract = dist / moveDist;
 	}
-	else
-		fract -= 0.001;
 
-	if (fract < 0)
-		fract = 0;
-
-	return { dist: fract * moveDist, normal: normal, fract: fract, dir: moveDir };
+	return { dist: dist, normal: normal, fract: fract, dir: moveDir };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
