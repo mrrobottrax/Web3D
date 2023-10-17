@@ -8,26 +8,26 @@ import { Primitive } from "../mesh/primitive.js";
 import { player } from "../localplayer.js";
 import { currentLevel } from "../level.js";
 import { Time } from "../time.js";
-import { PlayerUtil } from "../playerutil.js";
+import { drawUi } from "./ui.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
 
-export async function drawInit(): Promise<void> {
-
-}
+let perspectiveMatrix: mat4;
+export let uiMatrix: mat4;
 
 export function initProjection() {
-	let proj = calcPerspectiveMatrix(90, glProperties.width, glProperties.height).getData()
+	perspectiveMatrix = calcPerspectiveMatrix(90, glProperties.width, glProperties.height);
+	uiMatrix = calcUiMatrix(glProperties.width, glProperties.height);
 
 	gl.useProgram(fallbackShader.program);
-	gl.uniformMatrix4fv(fallbackShader.projectionMatrixUnif, false, proj);
+	gl.uniformMatrix4fv(fallbackShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 
 	gl.useProgram(defaultShader.program);
-	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, proj);
+	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 
 	gl.useProgram(solidShader.program);
-	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, proj);
+	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 
 	gl.useProgram(null);
 }
@@ -38,17 +38,22 @@ export function updateInterp() {
 	camPos = vec3.lerp(lastCamPos, player.camPosition, Time.fract);
 }
 
-let drawLevel = true;
+let shouldDrawLevel = true;
 export function toggleDraw() {
-	drawLevel = !drawLevel;
+	shouldDrawLevel = !shouldDrawLevel;
 }
 
 export function drawFrame(): void {
-	if (!drawLevel)
+	if (!shouldDrawLevel)
 		return;
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+	drawLevel();
+	drawUi();
+}
+
+function drawLevel() {
 	gl.useProgram(defaultShader.program);
 
 	let mat = mat4.identity();
@@ -130,6 +135,15 @@ function calcPerspectiveMatrix(fov: number, width: number, height: number): mat4
 	matrix.setValue(2, 2, (farClip + nearClip) / (nearClip - farClip));
 	matrix.setValue(3, 2, (2 * farClip * nearClip) / (nearClip - farClip));
 	matrix.setValue(2, 3, -1);
+
+	return matrix;
+}
+
+function calcUiMatrix(width: number, height: number): mat4 {
+	let matrix = mat4.identity();
+
+	matrix.setValue(0, 0, (height / width));
+	matrix.setValue(2, 2, 0.01);
 
 	return matrix;
 }

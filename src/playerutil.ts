@@ -1,4 +1,4 @@
-import { Cmd } from "./cmd.js";
+import { UserCmd } from "./usercmd.js";
 import { Buttons } from "./input.js";
 import { LocalPlayer, player } from "./localplayer.js";
 import gMath from "./math/gmath.js";
@@ -207,7 +207,7 @@ export class PlayerUtil {
 		return data;
 	}
 
-	static groundMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
+	static groundMove(player: LocalPlayer, cmd: UserCmd, delta: number): void {
 		player.velocity.copy(this.friction(player.velocity, delta));
 		player.velocity.copy(this.accel(player.velocity, cmd.wishDir,
 			player.isDucked ? duckMoveSpeed : moveSpeed, player.isDucked ? duckAccel : acceleration, delta));
@@ -243,7 +243,7 @@ export class PlayerUtil {
 		}
 	}
 
-	static airMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
+	static airMove(player: LocalPlayer, cmd: UserCmd, delta: number): void {
 		player.velocity.y -= gravity * delta * 0.5;
 
 		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, airSpeed, airAccel, delta));
@@ -255,7 +255,7 @@ export class PlayerUtil {
 		player.velocity.y -= gravity * delta * 0.5;
 	}
 
-	static move(player: LocalPlayer, cmd: Cmd, delta: number): void {
+	static move(player: LocalPlayer, cmd: UserCmd, delta: number): void {
 		let wish = vec3.copy(cmd.wishDir);
 		wish.y = 0;
 
@@ -370,7 +370,7 @@ export class PlayerUtil {
 		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
 	}
 
-	static debugMove(player: LocalPlayer, cmd: Cmd, delta: number): void {
+	static debugMove(player: LocalPlayer, cmd: UserCmd, delta: number): void {
 		const cast = castAABB(hullSize, player.position, player.position.add(cmd.wishDir.mult(delta * 10)));
 		player.position = player.position.add(cast.dir.mult(cast.dist));
 		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));

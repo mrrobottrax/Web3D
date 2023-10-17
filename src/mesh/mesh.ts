@@ -1,4 +1,4 @@
-import { gl, loadTexture, solidTex } from "../render/gl.js";
+import { gl, loadTexture, solidTex, SharedAttribs } from "../render/gl.js";
 import { Primitive, PrimitiveData } from "./primitive.js";
 import { textures } from "./textures.js";
 
@@ -74,11 +74,11 @@ export class Mesh {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
 			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data[i].elements, gl.STATIC_DRAW);
 
-			gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-			gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+			gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
+			gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
 
-			gl.enableVertexAttribArray(0);
-			gl.enableVertexAttribArray(1);
+			gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
+			gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
 			gl.bindVertexArray(null);
 		}

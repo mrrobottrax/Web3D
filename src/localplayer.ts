@@ -1,4 +1,4 @@
-import { Cmd } from "./cmd.js";
+import { UserCmd } from "./usercmd.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
 import { PlayerUtil, PositionData } from "./playerutil.js";
@@ -37,7 +37,7 @@ export class LocalPlayer {
 		this.duckProg = 0;
 	}
 
-	move(cmd: Cmd): void {
+	move(cmd: UserCmd): void {
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 	}
 }

@@ -6,7 +6,7 @@ export let glProperties = {
 }
 export let gl: WebGL2RenderingContext;
 
-enum SharedAttribs {
+export enum SharedAttribs {
 	positionAttrib,
 	texCoordAttrib
 }
@@ -15,13 +15,24 @@ enum SharedAttribs {
 
 interface ShaderBase {
 	program: WebGLProgram | null;
+}
+
+interface UninstancedShaderBase extends ShaderBase {
+	program: WebGLProgram | null;
 	modelViewMatrixUnif: WebGLUniformLocation | null;
 	projectionMatrixUnif: WebGLUniformLocation | null;
 	samplerUnif: WebGLUniformLocation | null;
 	colorUnif: WebGLUniformLocation | null;
 }
 
-export let solidShader: ShaderBase = {
+interface InstancedShaderBase extends ShaderBase {
+	program: WebGLProgram | null;
+	modelViewMatrixAttrib: number | null;
+	samplerAttrib: number | null;
+	projectionMatrixUnif: WebGLUniformLocation | null;
+}
+
+export let solidShader: UninstancedShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
@@ -29,7 +40,7 @@ export let solidShader: ShaderBase = {
 	colorUnif: null
 };
 
-export let fallbackShader: ShaderBase = {
+export let fallbackShader: UninstancedShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
@@ -37,13 +48,23 @@ export let fallbackShader: ShaderBase = {
 	colorUnif: null
 };
 
-interface DefaultShader extends ShaderBase {
+interface DefaultShader extends UninstancedShaderBase {
 }
 export let defaultShader: DefaultShader = {
 	program: null,
 	modelViewMatrixUnif: null,
 	samplerUnif: null,
 	projectionMatrixUnif: null,
+	colorUnif: null
+};
+
+interface UiShader extends UninstancedShaderBase {
+}
+export let uiShader: UiShader = {
+	program: null,
+	modelViewMatrixUnif: null,
+	projectionMatrixUnif: null,
+	samplerUnif: null,
 	colorUnif: null
 };
 
@@ -143,6 +164,7 @@ export async function initGl(): Promise<void> {
 	solidShader.program = solidProgram;
 
 	defaultShader.program = fallbackShader.program;
+	uiShader.program = fallbackShader.program;
 
 	// create default solid texture
 	createSolidTexture();
@@ -150,8 +172,10 @@ export async function initGl(): Promise<void> {
 	// create remaining shader programs
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
+		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
+		uiShader.program = results[1];
 	});
 
 	// get shader locations
@@ -166,6 +190,11 @@ export async function initGl(): Promise<void> {
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
 	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
 	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+
+	uiShader.modelViewMatrixUnif = gl.getUniformLocation(uiShader.program, "uModelViewMatrix");
+	uiShader.projectionMatrixUnif = gl.getUniformLocation(uiShader.program, "uProjectionMatrix");
+	uiShader.samplerUnif = gl.getUniformLocation(uiShader.program, "uSampler");
+	uiShader.colorUnif = gl.getUniformLocation(uiShader.program, "uColor");
 
 	lineBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);

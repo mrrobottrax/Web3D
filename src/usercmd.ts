@@ -1,6 +1,6 @@
 import { vec3 } from "./math/vector";
 
-export interface Cmd {
+export interface UserCmd {
 	wishDir: vec3;
 	buttons: Array<boolean>;
 }

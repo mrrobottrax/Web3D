@@ -2,7 +2,8 @@ import { initInput, updateInput } from "./input.js";
 import { setLevel } from "./level.js";
 import { player } from "./localplayer.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
-import { drawFrame, drawInit, lastCamPos, updateInterp } from "./render/render.js";
+import { drawFrame, lastCamPos, updateInterp } from "./render/render.js";
+import { initUi } from "./render/ui.js";
 import { Time, startTicking, updateTime } from "./time.js";
 
 let running: boolean = false;
@@ -15,7 +16,6 @@ function exit(): void {
 
 async function main(): Promise<void> {
 	await init();
-	await drawInit();
 
 	await setLevel("./data/levels/_testlvl");
 	running = true;
@@ -25,6 +25,7 @@ async function main(): Promise<void> {
 async function init(): Promise<void> {
 	await initGl();
 	initInput();
+	initUi();
 
 	startTicking();
 }
