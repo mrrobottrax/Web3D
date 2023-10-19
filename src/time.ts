@@ -2,6 +2,7 @@ export let Time =
 {
 	deltaTime: 0,
 	fixedDeltaTime: 1 / 32,
+	elapsed: 0,
 	canTick: false,
 	nextTick: 0,
 	fract: 0,
@@ -28,6 +29,7 @@ export function updateTime(): void {
 	const time = Date.now();
 
 	Time.deltaTime = (time - lastTime) / 1000;
+	Time.elapsed += Time.deltaTime;
 
 	lastTime = time;
 

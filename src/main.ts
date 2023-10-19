@@ -4,6 +4,7 @@ import { player } from "./localplayer.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
 import { drawFrame, lastCamPos, updateInterp } from "./render/render.js";
 import { initUi } from "./render/ui.js";
+import { tickViewmodel } from "./render/viewmodel.js";
 import { Time, startTicking, updateTime } from "./time.js";
 
 let running: boolean = false;
@@ -49,4 +50,5 @@ function gameLoop(): void {
 
 function tick(): void {
 	updateInput();
+	tickViewmodel();
 }
