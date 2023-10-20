@@ -19,7 +19,6 @@ let nextBobOffset = new vec3(0, 0, 0);
 const bobAmt = 0.05;
 const bobSpeed = 0.5;
 const maxBobSpeed = 30;
-const blendThreshold = 3;
 
 export function initViewmodel() {
 	loadTexture("data/textures/fire0.png").then(
