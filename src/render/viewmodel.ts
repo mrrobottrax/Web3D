@@ -11,11 +11,16 @@ let viewModelScale = new vec3(0.75, 0.75, 0.75);
 let gunTex: WebGLTexture;
 
 let cycle = 0;
+let blend = 0;
 
-let bobOffset = new vec3(0, 0, 0);
+let lastBobOffset = new vec3(0, 0, 0);
+let nextBobOffset = new vec3(0, 0, 0);
 
 const bobAmt = 0.05;
-const bobSpeed = 1;
+const bobSpeed = 0.5;
+const maxBobSpeed = 30;
+const blendThreshold = 3;
+const blendSpeed = 0.1;
 
 export function initViewmodel() {
 	loadTexture("data/textures/fire0.png").then(
@@ -27,24 +32,29 @@ export function initViewmodel() {
 	);
 }
 
-let lastSpeed = 0;
-let playerSpeed = 0;
-let speed = 0;
 export function tickViewmodel() {
-	lastSpeed = playerSpeed;
-	playerSpeed = player.velocity.magnitide();
+	lastBobOffset.copy(nextBobOffset);
+
+	let playerSpeed = player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z;
+	playerSpeed = Math.sqrt(playerSpeed);
+
+	if (playerSpeed > maxBobSpeed) {
+		playerSpeed = maxBobSpeed;
+	}
+
+	const targetBlend = playerSpeed > blendThreshold ? 1 : 0;
+	blend = gMath.lerp(blend, targetBlend, blendSpeed);
+
+	cycle += playerSpeed * bobSpeed * Time.fixedDeltaTime;
+	cycle = cycle % (Math.PI * 2);
+
+	nextBobOffset.y = -(Math.cos(cycle * 2) + 1) * bobAmt * blend;
+	nextBobOffset.x = Math.sin(cycle) * bobAmt * 2 * blend;
 }
 
 export function drawViewmodel() {
-	speed = gMath.lerp(lastSpeed, playerSpeed, Time.fract);
+	const bobOffset = vec3.lerp(lastBobOffset, nextBobOffset, Time.fract);
 
-	if (player.positionData.groundEnt != -1) {
-		// loop
-		cycle += (speed * bobSpeed * Time.deltaTime);
-		cycle = cycle % (Math.PI * 2);
-		bobOffset.y = -(Math.cos(cycle) + 1) * bobAmt;
-	}
-	
 	let mat;
 
 	gl.activeTexture(gl.TEXTURE0);
