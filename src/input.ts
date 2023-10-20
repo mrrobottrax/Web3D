@@ -25,14 +25,15 @@ let buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 
 export function initInput() {
 	document.addEventListener('keydown', event => {
-		keyDown(event.key, event.code);
+		keyDown(event.code);
 	});
 	document.addEventListener('keyup', event => {
-		keyUp(event.key, event.code);
+		keyUp(event.code);
 	});
 
 	document.addEventListener("click", event => {
 		lockCursor();
+		mouseClick(event.button);
 	});
 
 	document.addEventListener("mousemove", event => {
@@ -71,6 +72,14 @@ function clearButtons() {
 	}
 }
 
+function mouseClick(button: number) {
+	switch (button) {
+		case 0:
+			console.log("Fire");
+			break;
+	}
+}
+
 const quakeSens = (1 / 16385) * 2 * Math.PI;
 function mouseLook(x: number, y: number) {
 	if (!pointerLocked)
@@ -81,7 +90,7 @@ function mouseLook(x: number, y: number) {
 	player.camRotation = quaternion.eulerRad(player.pitch, player.yaw, 0);
 }
 
-function keyDown(name: string, code: string) {
+function keyDown(code: string) {
 	switch (code) {
 		case "Escape":
 			unlockCursor();
@@ -119,7 +128,7 @@ function keyDown(name: string, code: string) {
 	}
 }
 
-function keyUp(name: string, code: string) {
+function keyUp(code: string) {
 	switch (code) {
 		case "KeyW":
 			buttons[Buttons.forward] = false;

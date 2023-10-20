@@ -9,6 +9,7 @@ let viewModelLocation = new vec3(0.8, -0.65, 0);
 let viewModelScale = new vec3(0.75, 0.75, 0.75);
 
 let gunTex: WebGLTexture;
+let gunFire: WebGLTexture[] = [];
 
 let cycle = 0;
 let blend = 0;
@@ -25,6 +26,13 @@ export function initViewmodel() {
 		(value) => {
 			if (value.tex) {
 				gunTex = value.tex;
+			}
+		}
+	);
+	loadTexture("data/textures/fire2.png").then(
+		(value) => {
+			if (value.tex) {
+				gunFire.push(value.tex);
 			}
 		}
 	);
