@@ -142,7 +142,7 @@ function calcPerspectiveMatrix(fov: number, width: number, height: number): mat4
 function calcUiMatrix(width: number, height: number): mat4 {
 	let matrix = mat4.identity();
 
-	matrix.setValue(0, 0, (height / width));
+	matrix.setValue(0, 0, height / width);
 	matrix.setValue(2, 2, 0.01);
 
 	return matrix;

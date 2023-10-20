@@ -23,8 +23,8 @@ const maxBobSpeed = 30;
 export function initViewmodel() {
 	loadTexture("data/textures/fire0.png").then(
 		(value) => {
-			if (value) {
-				gunTex = value;
+			if (value.tex) {
+				gunTex = value.tex;
 			}
 		}
 	);

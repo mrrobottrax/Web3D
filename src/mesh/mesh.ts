@@ -39,11 +39,11 @@ export class Mesh {
 						t[j] = textures[url];
 					} else {
 						loadTexture(url).then((result) => {
-							textures[url] = result;
-							if (!result) {
-								return
+							textures[url] = result.tex;
+							if (!result.tex) {
+								return;
 							}
-							this.primitives[i].textures[j] = result;
+							this.primitives[i].textures[j] = result.tex;
 						});
 					}
 				}

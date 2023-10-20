@@ -371,12 +371,12 @@ function createSolidTexture(): void {
 
 // ~~~~~~~~~~~~~ load a texture from url ~~~~~~~~~~~~~~
 
-export async function loadTexture(url: string): Promise<WebGLTexture | null> {
+export async function loadTexture(url: string): Promise<{tex: WebGLTexture | null, image: HTMLImageElement}> {
 	// create texture
 	const texture = gl.createTexture();
 	if (!texture) {
 		console.error("Failed to create texture: " + url);
-		return null
+		return {tex: null, image: new Image()};
 	}
 
 	// set to fallback texture
@@ -429,7 +429,7 @@ export async function loadTexture(url: string): Promise<WebGLTexture | null> {
 	};
 	image.src = url;
 
-	return texture;
+	return {tex: texture, image: image};
 }
 
 function isPowerOf2(value: number): boolean {

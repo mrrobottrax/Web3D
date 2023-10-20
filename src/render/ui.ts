@@ -1,6 +1,6 @@
 import { mat4 } from "../math/matrix.js";
 import { vec3 } from "../math/vector.js";
-import { SharedAttribs, gl, loadTexture, uiShader } from "./gl.js";
+import { SharedAttribs, gl, glProperties, loadTexture, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
 
@@ -15,6 +15,8 @@ const squareVerts: number[] = [
 ];
 
 let crossTex: WebGLTexture;
+let crossSizeX = 1;
+let crossSizeY = 1;
 
 export function initUi() {
 	vao = gl.createVertexArray();
@@ -36,8 +38,20 @@ export function initUi() {
 	initViewmodel();
 
 	loadTexture("data/textures/cross.png").then((result) => {
-		if (result)
-			crossTex = result;
+		if (result.tex) {
+			crossTex = result.tex;
+			let oldOnload = result.image.onload;
+
+			result.image.onload = function (ev) {
+				if (oldOnload) {
+					oldOnload.call(this, ev);
+				}
+				crossSizeX = result.image.width;
+				crossSizeY = result.image.height;
+			};
+
+
+		}
 	});
 }
 
@@ -64,7 +78,7 @@ function drawCrosshair() {
 
 	mat = mat4.identity();
 
-	mat.scale(new vec3(0.1, 0.1, 1));
+	mat.scale(new vec3(2 * crossSizeX / glProperties.height, 2 * crossSizeY / glProperties.height, 1));
 
 	gl.uniformMatrix4fv(uiShader.modelViewMatrixUnif, false, mat.getData());
 	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
