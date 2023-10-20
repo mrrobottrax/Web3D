@@ -1,4 +1,6 @@
-import { SharedAttribs, gl, uiShader } from "./gl.js";
+import { mat4 } from "../math/matrix.js";
+import { vec3 } from "../math/vector.js";
+import { SharedAttribs, gl, loadTexture, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
 
@@ -11,6 +13,8 @@ const squareVerts: number[] = [
 	0.5, 0.5, 1, 1, 0,
 	-0.5, 0.5, 1, 0, 0,
 ];
+
+let crossTex: WebGLTexture;
 
 export function initUi() {
 	vao = gl.createVertexArray();
@@ -30,18 +34,40 @@ export function initUi() {
 	gl.bindVertexArray(null);
 
 	initViewmodel();
+
+	loadTexture("data/textures/cross.png").then((result) => {
+		if (result)
+			crossTex = result;
+	});
 }
 
 export function drawUi() {
 	gl.useProgram(uiShader.program);
 	gl.bindVertexArray(vao);
-	
+
 	gl.uniformMatrix4fv(uiShader.projectionMatrixUnif, false, uiMatrix.getData());
 	gl.uniform4f(uiShader.colorUnif, 1, 1, 1, 1);
 	gl.uniform1i(uiShader.samplerUnif, 0);
-	
+
 	drawViewmodel();
+	drawCrosshair();
 
 	gl.bindVertexArray(null);
 	gl.useProgram(null);
+}
+
+function drawCrosshair() {
+	let mat;
+
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, crossTex);
+
+	mat = mat4.identity();
+
+	mat.scale(new vec3(0.1, 0.1, 1));
+
+	gl.uniformMatrix4fv(uiShader.modelViewMatrixUnif, false, mat.getData());
+	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+	gl.bindTexture(gl.TEXTURE_2D, null);
 }
