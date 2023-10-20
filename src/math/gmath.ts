@@ -10,4 +10,13 @@ export default class gMath {
 	static lerp(a: number, b: number, t: number): number {
 		return a + (b - a) * t;
 	}
+
+	static easeInOut(t: number) {
+		if (t < 0.5) {
+			return 4 * t * t * t;
+		} else {
+			const f = ((2 * t) - 2);
+			return 0.5 * f * f * f + 1;
+		}
+	}
 }

@@ -20,7 +20,6 @@ const bobAmt = 0.05;
 const bobSpeed = 0.5;
 const maxBobSpeed = 30;
 const blendThreshold = 3;
-const blendSpeed = 0.1;
 
 export function initViewmodel() {
 	loadTexture("data/textures/fire0.png").then(
@@ -42,8 +41,15 @@ export function tickViewmodel() {
 		playerSpeed = maxBobSpeed;
 	}
 
-	const targetBlend = playerSpeed > blendThreshold ? 1 : 0;
-	blend = gMath.lerp(blend, targetBlend, blendSpeed);
+	blend = playerSpeed / 9;
+	if (blend > 1) {
+		blend = 1;
+	} else {
+		if (blend < 0) {
+			blend = 0;
+			cycle = 0;
+		}
+	}
 
 	cycle += playerSpeed * bobSpeed * Time.fixedDeltaTime;
 	cycle = cycle % (Math.PI * 2);
