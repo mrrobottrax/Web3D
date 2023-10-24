@@ -1,12 +1,11 @@
 import { player } from "../localplayer.js";
-import gMath from "../math/gmath.js";
 import { mat4 } from "../math/matrix.js";
 import { vec3 } from "../math/vector.js";
 import { Time } from "../time.js";
 import { gl, loadTexture, uiShader } from "./gl.js";
 
 let viewModelLocation = new vec3(0.8, -0.65, 0);
-let viewModelScale = new vec3(0.75, 0.75, 0.75);
+let viewModelScale = new vec3(0.75, 0.75, 1);
 
 let gunTex: WebGLTexture;
 let gunFire: WebGLTexture[] = [];
@@ -70,7 +69,7 @@ export function tickViewmodel() {
 	}
 
 	cycle += playerSpeed * bobSpeed * Time.fixedDeltaTime;
-	cycle = cycle % (Math.PI * 2);
+	cycle %= Math.PI * 2;
 
 	nextBobOffset.y = -(Math.cos(cycle * 2) + 1) * bobAmt * blend;
 	nextBobOffset.x = Math.sin(cycle) * bobAmt * 2 * blend;

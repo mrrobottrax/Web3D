@@ -59,6 +59,8 @@ export function drawUi() {
 	gl.useProgram(uiShader.program);
 	gl.bindVertexArray(vao);
 
+	gl.clear(gl.DEPTH_BUFFER_BIT);
+
 	gl.uniformMatrix4fv(uiShader.projectionMatrixUnif, false, uiMatrix.getData());
 	gl.uniform4f(uiShader.colorUnif, 1, 1, 1, 1);
 	gl.uniform1i(uiShader.samplerUnif, 0);
