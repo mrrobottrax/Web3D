@@ -20,6 +20,7 @@ let nextBobOffset = new vec3(0, 0, 0);
 const bobAmt = 0.05;
 const bobSpeed = 0.5;
 const maxBobSpeed = 30;
+const blendUp = 3;
 
 export function initViewmodel() {
 	loadTexture("data/textures/fire0.png").then(
@@ -48,7 +49,17 @@ export function tickViewmodel() {
 		playerSpeed = maxBobSpeed;
 	}
 
-	blend = playerSpeed / 9;
+	const blendGoal = playerSpeed / 9;
+
+	if (blend < blendGoal)
+	{
+		blend += Time.fixedDeltaTime * blendUp;
+	}
+	else if (blend > blendGoal)
+	{
+		blend = blendGoal;
+	}
+
 	if (blend > 1) {
 		blend = 1;
 	} else {
