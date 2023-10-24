@@ -17,6 +17,7 @@ export enum Buttons {
 	movedown,
 	jump,
 	duck,
+	fire1,
 
 	MAX_BUTTONS
 }
@@ -25,15 +26,19 @@ let buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 
 export function initInput() {
 	document.addEventListener('keydown', event => {
-		keyDown(event.code);
+		key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
-		keyUp(event.code);
+		key(event.code, false);
 	});
 
-	document.addEventListener("click", event => {
+	document.addEventListener("mousedown", event => {
 		lockCursor();
-		mouseClick(event.button);
+		mouse(event.button, true);
+	});
+
+	document.addEventListener("mouseup", event => {
+		mouse(event.button, false);
 	});
 
 	document.addEventListener("mousemove", event => {
@@ -72,10 +77,10 @@ function clearButtons() {
 	}
 }
 
-function mouseClick(button: number) {
+function mouse(button: number, down: boolean) {
 	switch (button) {
 		case 0:
-			console.log("Fire");
+			buttons[Buttons.fire1] = down;
 			break;
 	}
 }
@@ -90,63 +95,41 @@ function mouseLook(x: number, y: number) {
 	player.camRotation = quaternion.eulerRad(player.pitch, player.yaw, 0);
 }
 
-function keyDown(code: string) {
+function key(code: string, down: boolean) {
 	switch (code) {
 		case "Escape":
-			unlockCursor();
+			if (down)
+				unlockCursor();
 			break;
 		case "KeyW":
-			buttons[Buttons.forward] = true;
+			buttons[Buttons.forward] = down;
 			break;
 		case "KeyA":
-			buttons[Buttons.moveleft] = true;
+			buttons[Buttons.moveleft] = down;
 			break;
 		case "KeyS":
-			buttons[Buttons.backward] = true;
+			buttons[Buttons.backward] = down;
 			break;
 		case "KeyD":
-			buttons[Buttons.moveright] = true;
+			buttons[Buttons.moveright] = down;
 			break;
 		case "Space":
-			buttons[Buttons.jump] = true;
+			buttons[Buttons.jump] = down;
 			break;
 		case "ShiftLeft":
-			buttons[Buttons.duck] = true;
+			buttons[Buttons.duck] = down;
 			break;
 		case "KeyP":
-			pauseGame();
+			if (down)
+				pauseGame();
 			break;
 		case "KeyO":
-			advanceGame();
+			if (down)
+				advanceGame();
 			break;
 		case "KeyR":
-			toggleDraw();
-			break;
-		default:
-			console.log(code);
-			break;
-	}
-}
-
-function keyUp(code: string) {
-	switch (code) {
-		case "KeyW":
-			buttons[Buttons.forward] = false;
-			break;
-		case "KeyA":
-			buttons[Buttons.moveleft] = false;
-			break;
-		case "KeyS":
-			buttons[Buttons.backward] = false;
-			break;
-		case "KeyD":
-			buttons[Buttons.moveright] = false;
-			break;
-		case "Space":
-			buttons[Buttons.jump] = false;
-			break;
-		case "ShiftLeft":
-			buttons[Buttons.duck] = false;
+			if (down)
+				toggleDraw();
 			break;
 		default:
 			console.log(code);

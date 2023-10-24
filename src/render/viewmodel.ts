@@ -53,6 +53,9 @@ export function tickViewmodel() {
 	if (blend < blendGoal)
 	{
 		blend += Time.fixedDeltaTime * blendUp;
+
+		if (blend > blendGoal)
+			blend = blendGoal
 	}
 	else if (blend > blendGoal)
 	{
