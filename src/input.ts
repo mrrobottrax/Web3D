@@ -1,6 +1,7 @@
 import { config } from "./config.js";
 import { player } from "./localplayer.js";
 import { quaternion, vec3 } from "./math/vector.js";
+import { castRay } from "./physics.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
 import { toggleDraw } from "./render/render.js";
 import { advanceGame, pauseGame } from "./time.js";
@@ -65,22 +66,23 @@ export function updateInput() {
 	moveVector.y += buttons[Buttons.moveup] ? 1 : 0;
 	moveVector.y -= buttons[Buttons.movedown] ? 1 : 0;
 
-	player.move({
-		wishDir: moveVector.rotateYaw(player.yaw).normalised(),
-		buttons: buttons
-	});
-
 	if (buttons[Buttons.fire1]) {
 		if (player.canFire) {
 			// fire tracer from player face
 			console.log("fire1");
-
+			const result = castRay(player.camPosition, new vec3(0, 0, 1).rotatePitch(player.pitch).rotateYaw(player.yaw).mult(1000));
+			
 			player.canFire = false;
 		}
 	}
 	else {
 		player.canFire = true;
 	}
+	
+	player.move({
+		wishDir: moveVector.rotateYaw(player.yaw).normalised(),
+		buttons: buttons
+	});
 }
 
 function clearButtons() {

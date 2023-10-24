@@ -296,8 +296,73 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	return { dist: dist, normal: normal, fract: fract, dir: moveDir };
 }
 
-export function castRay(start: vec3, end: vec3): CastResult {
-	return {dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin()};
+export function castRay(start: vec3, move: vec3): CastResult {
+	const maxDist = move.magnitide();
+	let dist = maxDist;
+	const dir = move.mult(1 / dist);
+
+	// find all tris with aabb that intersects ray
+	// temp: get all tris everywhere
+	// todo: aabb tree
+	const level = currentLevel.collision;
+	let tris: Face[] = [];
+	for (let i = 0; i < level.faces.length; ++i) {
+		// ignore faces we are moving behind
+		if (vec3.dot(level.faces[i].normal, move) < 0) {
+			tris.push(level.faces[i]);
+		}
+	}
+
+	let normal = vec3.origin();
+
+	for (let i = 0; i < tris.length; ++i) {
+		const tri = tris[i];
+
+		// find intersection with plane
+		const denom = vec3.dot(tri.normal, dir);
+
+		if (Math.abs(denom) == 0)
+			continue;
+
+		const t = (vec3.dot(tri.normal, start) - tri.distance) / denom;
+
+		const point = start.add(dir.mult(t));
+
+		let triEdges: Array<HalfEdge> = new Array(3);
+		let triVerts: Array<Vertex> = new Array(3);
+		triEdges[0] = (level.halfEdges[tri.halfEdge]);
+		triEdges[1] = (level.halfEdges[level.halfEdges[tri.halfEdge].next]);
+		triEdges[2] = (level.halfEdges[level.halfEdges[tri.halfEdge].prev]);
+		triVerts[0] = level.vertices[triEdges[0].vert];
+		triVerts[1] = level.vertices[triEdges[1].vert];
+		triVerts[2] = level.vertices[triEdges[2].vert];
+
+		const x = vec3.copy(triVerts[0].position).sub(triVerts[1].position).normalised();
+		const y = vec3.cross(x, tri.normal);
+
+		let test = true;
+
+		// for each edge
+		for (let i = 0; i < 3; ++i) {
+			// check if point is on right side
+			const nextPoint = vec3.copy(triVerts[(i + 1) % 3].position);
+			const edgeDir = nextPoint.sub(triVerts[i].position);
+			const edgeDirTrans = new vec3(vec3.dot(edgeDir, x), vec3.dot(edgeDir, y), 0);
+			const edgeRight = new vec3(edgeDirTrans.x, -edgeDirTrans.y, 0);
+
+			test &&= vec3.dot(edgeRight, point) >= vec3.dot(edgeRight, triVerts[i].position);
+		}
+
+		if (test && t < dist)
+		{
+			dist = t;
+			normal = normal;
+		}
+	}
+
+	console.log(start.add(dir.mult(dist)));
+
+	return { dist: dist, normal: normal, fract: dist / maxDist, dir: dir };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {

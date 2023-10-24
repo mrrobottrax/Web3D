@@ -60,6 +60,18 @@ export class vec3 {
 		return v;
 	}
 
+	rotatePitch(angle: number): vec3 {
+		let v = new vec3(0, this.y, 0);
+
+		const s = Math.sin(angle);
+		const c = Math.cos(angle);
+
+		v.y = this.z * s + this.y * c;
+		v.z = this.z * c - this.x * s;
+
+		return v;
+	}
+
 	sqrMagnitude(): number {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
