@@ -69,6 +69,18 @@ export function updateInput() {
 		wishDir: moveVector.rotateYaw(player.yaw).normalised(),
 		buttons: buttons
 	});
+
+	if (buttons[Buttons.fire1]) {
+		if (player.canFire) {
+			// fire tracer from player face
+			console.log("fire1");
+
+			player.canFire = false;
+		}
+	}
+	else {
+		player.canFire = true;
+	}
 }
 
 function clearButtons() {

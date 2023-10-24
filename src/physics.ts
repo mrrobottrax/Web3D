@@ -1,8 +1,6 @@
 import { currentLevel } from "./level.js";
 import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
-import { gl } from "./render/gl.js";
-import { drawLine } from "./render/render.js";
 
 export interface CastResult {
 	dist: number;
@@ -11,8 +9,7 @@ export interface CastResult {
 	dir: vec3;
 }
 
-export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
-	let move = end.sub(start);
+export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	let moveDist = move.magnitide();
 	if (moveDist == 0) {
 		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin() };
@@ -25,8 +22,10 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	let minA = start.sub(v);
 	let maxA = start.add(v);
 
-	let totalMin = vec3.min(minA, end.sub(v));
-	let totalMax = vec3.max(maxA, end.sub(v));
+	const end: vec3 = start.add(move);
+
+	let totalMin = vec3.min(start.sub(v), end.sub(v));
+	let totalMax = vec3.max(start.add(v), end.add(v));
 
 	// find all tris in totalMin/totalMax
 	// temp: get all tris everywhere
@@ -242,7 +241,7 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 						}
 
 						if (buildsFace()) {
-						//if (true) {
+							//if (true) {
 							let axis = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
 
 							// align
@@ -295,6 +294,10 @@ export function castAABB(size: vec3, start: vec3, end: vec3): CastResult {
 	}
 
 	return { dist: dist, normal: normal, fract: fract, dir: moveDir };
+}
+
+export function castRay(start: vec3, end: vec3): CastResult {
+	return {dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin()};
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {

@@ -67,8 +67,7 @@ export class PlayerUtil {
 
 		let blocked = 0;
 		for (let bumpCount = 0; bumpCount < maxBumps; ++bumpCount) {
-			const add = vel.mult(timeStep);
-			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, pos, pos.add(add));
+			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, pos, vel.mult(timeStep));
 
 			if (cast.fract > 0) {
 				pos = pos.add(cast.dir.mult(cast.dist));
@@ -191,7 +190,7 @@ export class PlayerUtil {
 			data.groundEnt = -1;
 		} else {
 			// cast down
-			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, player.position.add(new vec3(0, -0.003, 0)));
+			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, -0.003, 0));
 			if (cast.normal.y < minWalkableY) {
 				data.groundEnt = -1;
 			} else {
@@ -217,10 +216,10 @@ export class PlayerUtil {
 		const move = this.flyMove(player.position, player.velocity, delta);
 
 		// try higher move
-		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, player.position.add(new vec3(0, maxStepHeight, 0)));
+		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, maxStepHeight, 0));
 		// player.velocity.y -= 0.1; // this fixes movement bugs?
 		const stepMove = this.flyMove(player.position.add(new vec3(0, castUp.dist, 0)), player.velocity, delta);
-		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, stepMove.endPos.add(new vec3(0, -maxStepHeight * 3, 0)));
+		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 3, 0));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
 			player.position.copy(move.endPos);
@@ -273,8 +272,7 @@ export class PlayerUtil {
 				// check if can unduck
 				if (player.positionData.groundEnt != -1) {
 					// cast up
-					const cast = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, 2 * duckOffset, 0)));
+					const cast = castAABB(hullDuckSize, player.position, new vec3(0, 2 * duckOffset, 0));
 
 					if (cast.fract == 1) {
 						player.wishDuck = false;
@@ -282,8 +280,7 @@ export class PlayerUtil {
 					}
 				} else {
 					// cast down to ground
-					const cast0 = castAABB(hullDuckSize, player.position,
-						player.position.add(new vec3(0, -duckOffset * 2, 0)));
+					const cast0 = castAABB(hullDuckSize, player.position, new vec3(0, -duckOffset * 2, 0));
 
 					if (cast0.fract == 1) {
 						player.wishDuck = false;
@@ -294,8 +291,7 @@ export class PlayerUtil {
 						newPos.y -= cast0.dist;
 
 						// check if we can unduck
-						const cast1 = castAABB(hullDuckSize, newPos,
-							newPos.add(new vec3(0, 2 * duckOffset, 0)));
+						const cast1 = castAABB(hullDuckSize, newPos, new vec3(0, 2 * duckOffset, 0));
 
 
 						if (cast1.fract == 1) {
@@ -371,7 +367,7 @@ export class PlayerUtil {
 	}
 
 	static debugMove(player: LocalPlayer, cmd: UserCmd, delta: number): void {
-		const cast = castAABB(hullSize, player.position, player.position.add(cmd.wishDir.mult(delta * 10)));
+		const cast = castAABB(hullSize, player.position, cmd.wishDir.mult(delta * 10));
 		player.position = player.position.add(cast.dir.mult(cast.dist));
 		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
 	}

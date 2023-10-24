@@ -18,6 +18,8 @@ export class LocalPlayer {
 	isDucked: boolean;
 	duckProg: number;
 
+	canFire: boolean;
+
 	constructor(pos: vec3, pitch: number, yaw: number) {
 		this.position = pos;
 		this.pitch = pitch;
@@ -34,6 +36,8 @@ export class LocalPlayer {
 		this.isDucked = false;
 		this.wishDuck = false;
 		this.duckProg = 0;
+
+		this.canFire = true;
 	}
 
 	move(cmd: UserCmd): void {
