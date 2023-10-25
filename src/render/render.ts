@@ -50,7 +50,51 @@ export function drawFrame(): void {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	drawLevel();
+	drawDebug();
+
 	drawUi();
+}
+
+function drawDebug() {
+	// draw lines
+	gl.useProgram(solidShader.program);
+
+	let mat = mat4.identity();
+	mat.rotate(player.camRotation);
+	mat.translate(camPos.inverse());
+
+	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+
+	gl.disable(gl.DEPTH_TEST);
+
+	for (let i = 0; i < lines.length; ++i) {
+		const line = lines[i];
+
+		gl.uniform4fv(solidShader.colorUnif, line.color);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
+		gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
+			line.start.x, line.start.y, line.start.z, line.end.x, line.end.y, line.end.z]));
+
+		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+		gl.enableVertexAttribArray(0);
+
+		gl.drawArrays(gl.LINES, 0, 2);
+
+		line.time -= Time.deltaTime;
+
+		if (line.time < 0) {
+			lines.splice(i, 1);
+			--i;
+		}
+	}
+
+	gl.enable(gl.DEPTH_TEST);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, null)
+
+	gl.useProgram(null);
 }
 
 function drawLevel() {
@@ -79,29 +123,15 @@ function drawMesh(mesh: Mesh, position: vec3, rotation: quaternion, scale: vec3,
 	}
 }
 
-export function drawLine(start: vec3, end: vec3, color: number[]) {
-	gl.useProgram(solidShader.program);
-
-	let mat = mat4.identity();
-	mat.rotate(player.camRotation);
-	mat.translate(camPos.inverse());
-
-	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-	gl.uniform4fv(solidShader.colorUnif, color);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
-	gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
-		start.x, start.y, start.z, end.x, end.y, end.z]));
-
-	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-
-	gl.enableVertexAttribArray(0);
-
-	gl.drawArrays(gl.LINES, 0, 2);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, null)
-
-	gl.useProgram(null);
+interface Line {
+	start: vec3,
+	end: vec3,
+	color: number[],
+	time: number
+}
+let lines: Line[] = [];
+export function drawLine(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
+	lines.push({ start: start, end: end, color: color, time: time });
 }
 
 function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3, mat: mat4) {

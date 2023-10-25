@@ -3,7 +3,7 @@ import { player } from "./localplayer.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { castRay } from "./physics.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
-import { toggleDraw } from "./render/render.js";
+import { drawLine, toggleDraw } from "./render/render.js";
 import { advanceGame, pauseGame } from "./time.js";
 
 export let moveVector = vec3.origin();
@@ -69,8 +69,9 @@ export function updateInput() {
 	if (buttons[Buttons.fire1]) {
 		if (player.canFire) {
 			// fire tracer from player face
-			console.log("fire1");
-			const result = castRay(player.camPosition, new vec3(0, 0, 1).rotatePitch(player.pitch).rotateYaw(player.yaw).mult(1000));
+			const start = player.camPosition;
+			const result = castRay(start, new vec3(0, 0, -1).rotatePitch(player.pitch).rotateYaw(player.yaw).mult(1000));
+			drawLine(start, start.add(result.dir.mult(result.dist)), [0, 0, 1, 1], 8);
 			
 			player.canFire = false;
 		}

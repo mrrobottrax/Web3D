@@ -306,9 +306,11 @@ export function castRay(start: vec3, move: vec3): CastResult {
 	// todo: aabb tree
 	const level = currentLevel.collision;
 	let tris: Face[] = [];
+
 	for (let i = 0; i < level.faces.length; ++i) {
-		// ignore faces we are moving behind
-		if (vec3.dot(level.faces[i].normal, move) < 0) {
+		// ignore backfaces
+		// ignore stuff behind start
+		if (vec3.dot(level.faces[i].normal, dir) < 0) {
 			tris.push(level.faces[i]);
 		}
 	}
@@ -324,43 +326,50 @@ export function castRay(start: vec3, move: vec3): CastResult {
 		if (Math.abs(denom) == 0)
 			continue;
 
-		const t = (vec3.dot(tri.normal, start) - tri.distance) / denom;
-
-		const point = start.add(dir.mult(t));
+		const t = (-vec3.dot(tri.normal, start) + tri.distance) / denom;
+		if (t < 0)
+			continue;
 
 		let triEdges: Array<HalfEdge> = new Array(3);
-		let triVerts: Array<Vertex> = new Array(3);
+		let triVerts: Array<vec3> = new Array(3);
 		triEdges[0] = (level.halfEdges[tri.halfEdge]);
 		triEdges[1] = (level.halfEdges[level.halfEdges[tri.halfEdge].next]);
 		triEdges[2] = (level.halfEdges[level.halfEdges[tri.halfEdge].prev]);
-		triVerts[0] = level.vertices[triEdges[0].vert];
-		triVerts[1] = level.vertices[triEdges[1].vert];
-		triVerts[2] = level.vertices[triEdges[2].vert];
+		triVerts[0] = vec3.copy(level.vertices[triEdges[0].vert].position);
+		triVerts[1] = vec3.copy(level.vertices[triEdges[1].vert].position);
+		triVerts[2] = vec3.copy(level.vertices[triEdges[2].vert].position);
 
-		const x = vec3.copy(triVerts[0].position).sub(triVerts[1].position).normalised();
-		const y = vec3.cross(x, tri.normal);
+		const x = triVerts[1].sub(triVerts[0]).normalised();
+		const y = vec3.cross(tri.normal, x).normalised();
 
-		let test = true;
+		const point = start.add(dir.mult(t));
+		const pointTrans = new vec3(vec3.dot(x, point), vec3.dot(y, point), 0);
+
+		let insideTri = true;
 
 		// for each edge
 		for (let i = 0; i < 3; ++i) {
-			// check if point is on right side
-			const nextPoint = vec3.copy(triVerts[(i + 1) % 3].position);
-			const edgeDir = nextPoint.sub(triVerts[i].position);
-			const edgeDirTrans = new vec3(vec3.dot(edgeDir, x), vec3.dot(edgeDir, y), 0);
-			const edgeRight = new vec3(edgeDirTrans.x, -edgeDirTrans.y, 0);
+			// check if point is inside
+			const nextPoint = triVerts[(i + 1) % 3];
+			const edgeDir = nextPoint.sub(triVerts[i]);
 
-			test &&= vec3.dot(edgeRight, point) >= vec3.dot(edgeRight, triVerts[i].position);
+			const vertTrans = new vec3(vec3.dot(x, triVerts[i]), vec3.dot(y, triVerts[i]), 0);
+			const edgeDirTrans = new vec3(vec3.dot(edgeDir, x), vec3.dot(edgeDir, y), 0);
+
+			const edgeLeftTrans = new vec3(-edgeDirTrans.y, edgeDirTrans.x, 0);
+
+			const isInside = vec3.dot(edgeLeftTrans, pointTrans) >= vec3.dot(edgeLeftTrans, vertTrans);
+			if (!isInside) {
+				insideTri = false;
+				break;
+			}
 		}
 
-		if (test && t < dist)
-		{
+		if (insideTri && t < dist) {
 			dist = t;
 			normal = normal;
 		}
 	}
-
-	console.log(start.add(dir.mult(dist)));
 
 	return { dist: dist, normal: normal, fract: dist / maxDist, dir: dir };
 }

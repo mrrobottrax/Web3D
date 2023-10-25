@@ -63,7 +63,7 @@ export class vec3 {
 	rotatePitch(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 
-		const s = Math.sin(angle);
+		const s = Math.sin(-angle);
 		const c = Math.cos(angle);
 
 		v.y = this.z * s + this.y * c;
