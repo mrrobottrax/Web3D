@@ -1,3 +1,4 @@
+import { initClient } from "./client.js";
 import { initInput, updateInput } from "./input.js";
 import { setLevel } from "./level.js";
 import { player } from "./localplayer.js";
@@ -24,6 +25,7 @@ async function main(): Promise<void> {
 }
 
 async function init(): Promise<void> {
+	initClient();
 	await initGl();
 	initInput();
 	initUi();
