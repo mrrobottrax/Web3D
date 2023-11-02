@@ -1,3 +1,6 @@
+import { PacketType } from "./network/netenums.js";
+import { Packet } from "./network/packet.js";
+
 export function initClient() {
 	(window as any).connect = connect;
 }
@@ -8,6 +11,14 @@ function connect(url: string) {
 
 	ws = new WebSocket(url);
 	ws.onopen = ev => {
-		ws.send("TESTPACKET");
+		const reqPacket: Packet = {
+			type: PacketType.requestJoin
+		}
+
+		ws.send(JSON.stringify(reqPacket));
+	}
+	ws.onmessage = ev => {
+		console.log("RECEIVED: ");
+		console.log(ev.data);
 	}
 }
