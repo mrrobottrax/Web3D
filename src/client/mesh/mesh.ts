@@ -1,4 +1,4 @@
-import { gl, loadTexture, solidTex, SharedAttribs } from "../../render/gl.js";
+import { gl, loadTexture, solidTex, SharedAttribs } from "../render/gl.js";
 import { Primitive, PrimitiveData } from "./primitive.js";
 import { textures } from "./textures.js";
 

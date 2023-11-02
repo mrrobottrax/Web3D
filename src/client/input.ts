@@ -1,11 +1,11 @@
-import { config } from "./client/config.js";
-import { player } from "./localplayer.js";
-import { quaternion, vec3 } from "./math/vector.js";
-import { castRay } from "./physics.js";
-import { lockCursor, unlockCursor } from "./client/pointerlock.js"
+import { config } from "./config.js";
+import { player } from "../localplayer.js";
+import { quaternion, vec3 } from "../math/vector.js";
+import { castRay } from "../physics.js";
+import { lockCursor, unlockCursor } from "./pointerlock.js"
 import { drawLine, toggleDraw } from "./render/render.js";
-import { advanceGame, pauseGame } from "./time.js";
-import { Buttons } from "./buttons.js";
+import { advanceGame, pauseGame } from "../time.js";
+import { Buttons } from "../buttons.js";
 
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;

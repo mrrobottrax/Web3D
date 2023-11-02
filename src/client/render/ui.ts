@@ -1,5 +1,5 @@
-import { mat4 } from "../math/matrix.js";
-import { vec3 } from "../math/vector.js";
+import { mat4 } from "../../math/matrix.js";
+import { vec3 } from "../../math/vector.js";
 import { SharedAttribs, gl, glProperties, loadTexture, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";

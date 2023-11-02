@@ -1,7 +1,7 @@
-import { player } from "../localplayer.js";
-import { mat4 } from "../math/matrix.js";
-import { vec3 } from "../math/vector.js";
-import { Time } from "../time.js";
+import { player } from "../../localplayer.js";
+import { mat4 } from "../../math/matrix.js";
+import { vec3 } from "../../math/vector.js";
+import { Time } from "../../time.js";
 import { gl, loadTexture, uiShader } from "./gl.js";
 
 let viewModelLocation = new vec3(0.8, -0.65, 0);

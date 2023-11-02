@@ -1,13 +1,13 @@
 import { defaultShader, fallbackShader, gl, glProperties, lineBuffer, solidShader } from "./gl.js";
-import gMath from "../math/gmath.js";
-import { quaternion, vec3 } from "../math/vector.js";
-import { Mesh } from "../client/mesh/mesh.js";
-import { Model } from "../client/mesh/model.js";
-import { mat4 } from "../math/matrix.js";
-import { Primitive } from "../client/mesh/primitive.js";
-import { player } from "../localplayer.js";
-import { currentLevel } from "../level.js";
-import { Time } from "../time.js";
+import gMath from "../../math/gmath.js";
+import { quaternion, vec3 } from "../../math/vector.js";
+import { Mesh } from "../mesh/mesh.js";
+import { Model } from "../mesh/model.js";
+import { mat4 } from "../../math/matrix.js";
+import { Primitive } from "../mesh/primitive.js";
+import { player } from "../../localplayer.js";
+import { currentLevel } from "../../level.js";
+import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
 
 const nearClip = 0.015;
