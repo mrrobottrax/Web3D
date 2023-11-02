@@ -1,6 +1,6 @@
-import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
+import { loadGlTFFromWeb } from "./client/mesh/gltfloader.js";
 import { HalfEdgeMesh } from "./mesh/halfedge.js";
-import { Model } from "./mesh/model.js";
+import { Model } from "./client/mesh/model.js";
 
 export interface LevelFile {
 	collision: HalfEdgeMesh;

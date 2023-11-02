@@ -1,4 +1,4 @@
-import { canvas } from "./render/gl.js";
+import { canvas } from "../render/gl.js";
 
 export function lockCursor() {
 	canvas.requestPointerLock({

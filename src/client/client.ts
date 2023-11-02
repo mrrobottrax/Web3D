@@ -1,5 +1,5 @@
-import { PacketType } from "./network/netenums.js";
-import { Packet } from "./network/packet.js";
+import { PacketType } from "../network/netenums.js";
+import { Packet } from "../network/packet.js";
 
 export function initClient() {
 	(window as any).connect = connect;

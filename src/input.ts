@@ -1,27 +1,14 @@
-import { config } from "./config.js";
+import { config } from "./client/config.js";
 import { player } from "./localplayer.js";
 import { quaternion, vec3 } from "./math/vector.js";
 import { castRay } from "./physics.js";
-import { lockCursor, unlockCursor } from "./pointerlock.js"
+import { lockCursor, unlockCursor } from "./client/pointerlock.js"
 import { drawLine, toggleDraw } from "./render/render.js";
 import { advanceGame, pauseGame } from "./time.js";
+import { Buttons } from "./buttons.js";
 
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;
-
-export enum Buttons {
-	forward,
-	backward,
-	moveleft,
-	moveright,
-	moveup,
-	movedown,
-	jump,
-	duck,
-	fire1,
-
-	MAX_BUTTONS
-}
 
 let buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 

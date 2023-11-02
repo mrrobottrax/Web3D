@@ -1,5 +1,5 @@
 import { UserCmd } from "./usercmd.js";
-import { Buttons } from "./input.js";
+import { Buttons } from "./buttons.js";
 import { LocalPlayer, player } from "./localplayer.js";
 import gMath from "./math/gmath.js";
 import { vec3 } from "./math/vector.js";

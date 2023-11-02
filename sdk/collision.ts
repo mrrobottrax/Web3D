@@ -1,5 +1,5 @@
 import { LevelFile } from "../src/level.js";
-import { getGltfMeshData } from "../src/mesh/gltfloader.js";
+import { getGltfMeshData } from "../src/client/mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../src/mesh/halfedge.js";
 import { drawLine } from "../src/render/render.js";
 
