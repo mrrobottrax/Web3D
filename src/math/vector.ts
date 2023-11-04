@@ -1,44 +1,44 @@
 import gMath from "./gmath.js";
 import { mat4 } from "./matrix.js";
 
-export class vec3 {
+export  class vec3 {
 	x: number;
 	y: number;
 	z: number;
 
-	constructor(x: number, y: number, z: number) {
+	public constructor(x: number, y: number, z: number) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 	}
 
-	inverse(): vec3 {
+	public inverse(): vec3 {
 		return new vec3(-this.x, -this.y, -this.z);
 	}
 
-	equals(v: vec3): boolean {
+	public equals(v: vec3): boolean {
 		return this.x == v.x && this.y == v.y && this.z == v.z;
 	}
 
-	add(vec: vec3): vec3 {
+	public add(vec: vec3): vec3 {
 		return new vec3(this.x + vec.x, this.y + vec.y, this.z + vec.z);
 	}
 
-	sub(vec: vec3): vec3 {
+	public sub(vec: vec3): vec3 {
 		return new vec3(this.x - vec.x, this.y - vec.y, this.z - vec.z);
 	}
 
-	mult(s: number): vec3 {
+	public mult(s: number): vec3 {
 		return new vec3(this.x * s, this.y * s, this.z * s);
 	}
 
-	copy(v: vec3): void {
+	public copy(v: vec3): void {
 		this.x = v.x;
 		this.y = v.y;
 		this.z = v.z;
 	}
 
-	static copy(v: vec3): vec3 {
+	public static copy(v: vec3): vec3 {
 		let vec = new vec3(0, 0, 0);
 
 		vec.x = v.x;
@@ -48,7 +48,7 @@ export class vec3 {
 		return vec;
 	}
 
-	rotateYaw(angle: number): vec3 {
+	public rotateYaw(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 
 		const s = Math.sin(angle);
@@ -60,7 +60,7 @@ export class vec3 {
 		return v;
 	}
 
-	rotatePitch(angle: number): vec3 {
+	public rotatePitch(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 
 		const s = Math.sin(-angle);
@@ -72,15 +72,15 @@ export class vec3 {
 		return v;
 	}
 
-	sqrMagnitude(): number {
+	public sqrMagnitude(): number {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
 
-	magnitide(): number {
+	public magnitide(): number {
 		return Math.sqrt(this.sqrMagnitude());
 	}
 
-	normalise() {
+	public normalise() {
 		const m = this.magnitide();
 		if (m == 0)
 			return;
@@ -90,7 +90,7 @@ export class vec3 {
 		this.z /= m;
 	}
 
-	normalised(): vec3 {
+	public normalised(): vec3 {
 		const m = this.magnitide();
 		if (m == 0)
 			return this;
@@ -98,7 +98,7 @@ export class vec3 {
 		return this.mult(1 / m);
 	}
 
-	multMat4(mat: mat4): vec3 {
+	public multMat4(mat: mat4): vec3 {
 		let result = vec3.origin();
 
 		result.x = (
@@ -123,23 +123,23 @@ export class vec3 {
 		return result;
 	}
 
-	sqrDist(v: vec3): number {
+	public sqrDist(v: vec3): number {
 		return this.sub(v).sqrMagnitude();
 	}
 
-	dist(v: vec3): number {
+	public dist(v: vec3): number {
 		return this.sub(v).magnitide();
 	}
 
-	static dot(a: vec3, b: vec3): number {
+	public static dot(a: vec3, b: vec3): number {
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}
 
-	static origin(): vec3 {
+	public static origin(): vec3 {
 		return new vec3(0, 0, 0);
 	}
 
-	static cross(a: vec3, b: vec3): vec3 {
+	public static cross(a: vec3, b: vec3): vec3 {
 		return new vec3(
 			a.y * b.z - a.z * b.y,
 			a.z * b.x - a.x * b.z,
@@ -147,7 +147,7 @@ export class vec3 {
 		);
 	}
 
-	static min(a: vec3, b: vec3): vec3 {
+	public static min(a: vec3, b: vec3): vec3 {
 		return new vec3(
 			Math.min(a.x, b.x),
 			Math.min(a.y, b.y),
@@ -155,7 +155,7 @@ export class vec3 {
 		);
 	}
 
-	static max(a: vec3, b: vec3): vec3 {
+	public static max(a: vec3, b: vec3): vec3 {
 		return new vec3(
 			Math.max(a.x, b.x),
 			Math.max(a.y, b.y),
@@ -163,7 +163,7 @@ export class vec3 {
 		);
 	}
 
-	static lerp(a: vec3, b: vec3, t: number): vec3 {
+	public static lerp(a: vec3, b: vec3, t: number): vec3 {
 		return new vec3(
 			a.x + (b.x - a.x) * t,
 			a.y + (b.y - a.y) * t,
@@ -189,7 +189,7 @@ export class quaternion {
 		this.z = z;
 	}
 
-	static euler(x: number, y: number, z: number): quaternion {
+	public static euler(x: number, y: number, z: number): quaternion {
 		const _x = gMath.deg2Rad(x);
 		const _y = gMath.deg2Rad(y);
 		const _z = gMath.deg2Rad(z);
@@ -197,7 +197,7 @@ export class quaternion {
 		return this.eulerRad(_x, _y, _z);
 	}
 
-	static eulerRad(x: number, y: number, z: number): quaternion {
+	public static eulerRad(x: number, y: number, z: number): quaternion {
 		const cx = Math.cos(x * 0.5);
 		const sx = Math.sin(x * 0.5);
 		const cy = Math.cos(y * 0.5);
@@ -214,13 +214,13 @@ export class quaternion {
 		return q;
 	}
 
-	inverse(): quaternion {
+	public inverse(): quaternion {
 		let q = new quaternion(this.w, -this.x, -this.y, -this.z);
 		// q.normalise();
 		return q;
 	}
 
-	normalise(): void {
+	public normalise(): void {
 		const squared_norm = this.w * this.w + this.x * this.x + this.y * this.y + this.z * this.z;
 		this.w /= squared_norm;
 		this.x /= squared_norm;
@@ -228,7 +228,7 @@ export class quaternion {
 		this.z /= squared_norm;
 	}
 
-	toMatrix(): mat4 {
+	public toMatrix(): mat4 {
 		let m: mat4 = mat4.identity();
 
 		const qxx = this.x * this.x;

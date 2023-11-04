@@ -3,7 +3,8 @@ import { LevelFile } from "../levelfile.js";
 import { ServerPlayer } from "./serverplayer.js";
 import { vec3 } from "../math/vector.js";
 import { PacketType } from "../network/netenums.js";
-import { JoinResponsePacket } from "../network/packet.js";
+import { JoinResponsePacket, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
+import { setLevelServer } from "./level.js";
 
 export class Server {
 	wss!: WebSocketServer;
@@ -25,11 +26,16 @@ export class Server {
 					case PacketType.joinReq:
 						this.handleJoin(ws);
 						break;
+					case PacketType.userCmd:
+						this.handleCmd(packet, ws);
+						break;
 					default:
 						break;
 				}
 			});
 		});
+
+		setLevelServer("./data/levels/_testlvl");
 
 		console.log("SERVER OPENED");
 	}
@@ -69,5 +75,24 @@ export class Server {
 
 		ws.send(JSON.stringify(resPacket));
 		console.log("Added player");
+	}
+
+	handleCmd(packet: UserCmdPacket, ws: WebSocket) {
+		const cmd = packet.cmd;
+		const player = this.players.get(ws);
+
+		if (!player)
+		{
+			console.log("ERROR: UserCMD from nonexistant player");
+			return;
+		}
+
+		player.processCmd(cmd);
+
+		const res: SnapshotPacket = {
+			type: PacketType.snapshot,
+			pos: player.position,
+		}
+		ws.send(JSON.stringify(res));
 	}
 }

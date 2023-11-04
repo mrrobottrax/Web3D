@@ -36,7 +36,9 @@ export class SharedPlayer {
 		this.duckProg = 0;
 	}
 
-	move(cmd: UserCmd): void {
+	processCmd(cmd: UserCmd): void {
+		this.pitch = cmd.pitch;
+		this.yaw = cmd.yaw;
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 	}
 }

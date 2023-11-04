@@ -1,6 +1,10 @@
-import { currentLevel } from "./client/level.js";
 import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
+
+export let levelCollision: HalfEdgeMesh;
+export function setLevelCollision(collision: HalfEdgeMesh) {
+	levelCollision = collision;
+}
 
 export interface CastResult {
 	dist: number;
@@ -30,7 +34,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	// find all tris in totalMin/totalMax
 	// temp: get all tris everywhere
 	// todo: aabb tree
-	const level = currentLevel.collision;
+	const level = levelCollision;
 	let tris: Face[] = [];
 	for (let i = 0; i < level.faces.length; ++i) {
 		// ignore faces we are moving behind
@@ -304,7 +308,7 @@ export function castRay(start: vec3, move: vec3): CastResult {
 	// find all tris with aabb that intersects ray
 	// temp: get all tris everywhere
 	// todo: aabb tree
-	const level = currentLevel.collision;
+	const level = levelCollision;
 	let tris: Face[] = [];
 
 	for (let i = 0; i < level.faces.length; ++i) {

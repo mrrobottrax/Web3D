@@ -1,6 +1,7 @@
 import { vec3 } from "../math/vector.js";
 import { PacketType } from "../network/netenums.js";
-import { Packet } from "../network/packet.js";
+import { Packet, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
+import { PlayerUtil } from "../playerutil.js";
 import { SharedPlayer } from "../sharedplayer.js";
 import { createUserCMD, initInput } from "./input.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
@@ -54,6 +55,9 @@ export class Client {
 					this.localPlayer = new SharedPlayer(vec3.origin(), 0, 0);
 					initInput(this.localPlayer);
 					break;
+				case PacketType.snapshot:
+					this.handleSnapshot(data);
+					break;
 				default:
 					break;
 			}
@@ -61,23 +65,33 @@ export class Client {
 	}
 
 	public tick(): void {
-		if (this.localPlayer == null)
+		if (!this.isConnected)
 			return;
 
 		lastCamPos.copy(this.localPlayer.camPosition);
 
 		const cmd = createUserCMD(this.localPlayer);
-		this.localPlayer.move(cmd);
-		
+		const cmdPacket: UserCmdPacket = {
+			type: PacketType.userCmd,
+			cmd: cmd
+		}
+		this.ws?.send(JSON.stringify(cmdPacket));
+		// this.localPlayer.move(cmd);
+
 		tickViewmodel(this.localPlayer);
 	}
 
 	public frame(): void {
-		if (this.localPlayer == null)
+		if (!this.isConnected)
 			return;
 
 		updateInterp(this.localPlayer);
 		resizeCanvas();
 		drawFrame(this.localPlayer);
+	}
+
+	handleSnapshot(snapshot: SnapshotPacket) {
+		this.localPlayer.position = vec3.copy(snapshot.pos);
+		this.localPlayer.camPosition = PlayerUtil.getCameraPosition(this.localPlayer);
 	}
 }

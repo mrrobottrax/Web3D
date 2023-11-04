@@ -1,6 +1,6 @@
 import { Client } from "./client/client.js";
 import { initInput } from "./client/input.js";
-import { setLevel } from "./client/level.js";
+import { setLevelClient } from "./client/level.js";
 import { initGl } from "./client/render/gl.js";
 import { initUi } from "./client/render/ui.js";
 import { Time, startTicking, updateTime } from "./time.js";
@@ -13,7 +13,7 @@ main();
 async function main(): Promise<void> {
 	await init();
 
-	await setLevel("./data/levels/_testlvl");
+	await setLevelClient("./data/levels/_testlvl");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
 }

@@ -2,6 +2,7 @@ import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
 import { Model } from "./mesh/model.js";
 import { LevelFile } from "../levelfile.js";
+import { setLevelCollision } from "../physics.js";
 
 export class Level {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
@@ -10,7 +11,7 @@ export class Level {
 
 export let currentLevel: Level;
 
-export async function setLevel(url: string): Promise<void> {
+export async function setLevelClient(url: string): Promise<void> {
 	const req = new XMLHttpRequest();
 	const promise = new Promise<XMLHttpRequest>((resolve) => {
 		req.addEventListener("load", function () { resolve(this); });
@@ -36,5 +37,6 @@ export async function setLevel(url: string): Promise<void> {
 
 	currentLevel = new Level();
 	currentLevel.collision = file.collision;
+	setLevelCollision(currentLevel.collision);
 	currentLevel.models = await models;
 }

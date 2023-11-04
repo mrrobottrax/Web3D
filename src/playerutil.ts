@@ -177,7 +177,7 @@ export class PlayerUtil {
 			accelSpeed = addSpeed;
 		}
 
-		return curVel.add(wishDir.mult(accelSpeed));
+		return curVel.add(vec3.copy(wishDir).mult(accelSpeed));
 	}
 
 	static catagorizePosition(player: SharedPlayer): PositionData {
@@ -363,7 +363,11 @@ export class PlayerUtil {
 
 		player.positionData = this.catagorizePosition(player);
 
-		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
+		player.camPosition = this.getCameraPosition(player);
+	}
+
+	static getCameraPosition(player: SharedPlayer): vec3 {
+		return player.position.add(new vec3(0, this.getViewOffset(player), 0));
 	}
 
 	static debugMove(player: SharedPlayer, cmd: UserCmd, delta: number): void {
