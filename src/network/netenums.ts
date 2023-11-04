@@ -1,4 +1,5 @@
 export enum PacketType
 {
-	requestJoin
+	joinReq,
+	joinRes
 }

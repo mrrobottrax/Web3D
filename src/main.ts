@@ -1,4 +1,4 @@
-import { initClient } from "./client/client.js";
+import { Client } from "./client/client.js";
 import { initInput, updateInput } from "./client/input.js";
 import { setLevel } from "./client/level.js";
 import { player } from "./sharedplayer.js";
@@ -9,6 +9,7 @@ import { tickViewmodel } from "./client/render/viewmodel.js";
 import { Time, startTicking, updateTime } from "./time.js";
 
 let running: boolean = false;
+let client: Client;
 
 main();
 
@@ -25,7 +26,7 @@ async function main(): Promise<void> {
 }
 
 async function init(): Promise<void> {
-	initClient();
+	client = new Client();
 	await initGl();
 	initInput();
 	initUi();
