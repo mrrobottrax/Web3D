@@ -1,4 +1,4 @@
-import { currentLevel } from "./level.js";
+import { currentLevel } from "./client/level.js";
 import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
 

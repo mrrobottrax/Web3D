@@ -1,7 +1,7 @@
 import { initClient } from "./client/client.js";
 import { initInput, updateInput } from "./client/input.js";
-import { setLevel } from "./level.js";
-import { player } from "./localplayer.js";
+import { setLevel } from "./client/level.js";
+import { player } from "./sharedplayer.js";
 import { initGl, resizeCanvas } from "./client/render/gl.js";
 import { drawFrame, lastCamPos, updateInterp } from "./client/render/render.js";
 import { initUi } from "./client/render/ui.js";

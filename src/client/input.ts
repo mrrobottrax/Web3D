@@ -1,5 +1,5 @@
 import { config } from "./config.js";
-import { player } from "../localplayer.js";
+import { player } from "../sharedplayer.js";
 import { quaternion, vec3 } from "../math/vector.js";
 import { castRay } from "../physics.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"

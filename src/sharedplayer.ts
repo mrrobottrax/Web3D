@@ -3,7 +3,7 @@ import { quaternion, vec3 } from "./math/vector.js";
 import { PlayerUtil, PositionData } from "./playerutil.js";
 import { Time } from "./time.js";
 
-export class LocalPlayer {
+export class SharedPlayer {
 	camPosition: vec3;
 	camRotation: quaternion;
 	pitch: number;
@@ -45,4 +45,4 @@ export class LocalPlayer {
 	}
 }
 
-export let player = new LocalPlayer(new vec3(0, 1, 0), 0, 0);
+export let player = new SharedPlayer(new vec3(0, 1, 0), 0, 0);

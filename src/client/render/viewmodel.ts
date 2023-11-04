@@ -1,4 +1,4 @@
-import { player } from "../../localplayer.js";
+import { player } from "../../sharedplayer.js";
 import { mat4 } from "../../math/matrix.js";
 import { vec3 } from "../../math/vector.js";
 import { Time } from "../../time.js";
