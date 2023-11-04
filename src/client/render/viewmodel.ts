@@ -1,6 +1,6 @@
-import { player } from "../../sharedplayer.js";
 import { mat4 } from "../../math/matrix.js";
 import { vec3 } from "../../math/vector.js";
+import { SharedPlayer } from "../../sharedplayer.js";
 import { Time } from "../../time.js";
 import { gl, loadTexture, uiShader } from "./gl.js";
 
@@ -38,7 +38,7 @@ export function initViewmodel() {
 	);
 }
 
-export function tickViewmodel() {
+export function tickViewmodel(player: SharedPlayer) {
 	lastBobOffset.copy(nextBobOffset);
 
 	let playerSpeed = player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z;

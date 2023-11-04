@@ -1,21 +1,14 @@
 import { Client } from "./client/client.js";
-import { initInput, updateInput } from "./client/input.js";
+import { initInput } from "./client/input.js";
 import { setLevel } from "./client/level.js";
-import { player } from "./sharedplayer.js";
-import { initGl, resizeCanvas } from "./client/render/gl.js";
-import { drawFrame, lastCamPos, updateInterp } from "./client/render/render.js";
+import { initGl } from "./client/render/gl.js";
 import { initUi } from "./client/render/ui.js";
-import { tickViewmodel } from "./client/render/viewmodel.js";
 import { Time, startTicking, updateTime } from "./time.js";
 
 let running: boolean = false;
 let client: Client;
 
 main();
-
-function exit(): void {
-	running = false;
-}
 
 async function main(): Promise<void> {
 	await init();
@@ -27,9 +20,7 @@ async function main(): Promise<void> {
 
 async function init(): Promise<void> {
 	client = new Client();
-	await initGl();
-	initInput();
-	initUi();
+	client.init();
 
 	startTicking();
 }
@@ -42,16 +33,8 @@ function gameLoop(): void {
 	updateTime();
 	
 	if (Time.canTick) {
-		lastCamPos.copy(player.camPosition);
-		tick();
+		client.tick();
 	}
-	updateInterp();
 	
-	resizeCanvas();
-	drawFrame();
-}
-
-function tick(): void {
-	updateInput();
-	tickViewmodel();
+	client.frame();
 }

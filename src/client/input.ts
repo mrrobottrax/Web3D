@@ -1,18 +1,18 @@
 import { config } from "./config.js";
-import { player } from "../sharedplayer.js";
 import { quaternion, vec3 } from "../math/vector.js";
 import { castRay } from "../physics.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
 import { drawLine, toggleDraw } from "./render/render.js";
 import { advanceGame, pauseGame } from "../time.js";
 import { Buttons } from "../buttons.js";
+import { SharedPlayer } from "../sharedplayer.js";
 
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;
 
 let buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 
-export function initInput() {
+export function initInput(player: SharedPlayer) {
 	document.addEventListener('keydown', event => {
 		key(event.code, true);
 	});
@@ -30,7 +30,7 @@ export function initInput() {
 	});
 
 	document.addEventListener("mousemove", event => {
-		mouseLook(event.movementX, event.movementY)
+		mouseLook(event.movementX, event.movementY, player)
 	});
 
 	document.onpointerlockchange = event => {
@@ -43,7 +43,7 @@ export function initInput() {
 	}
 }
 
-export function updateInput() {
+export function updateInput(player: SharedPlayer) {
 	moveVector = vec3.origin();
 
 	moveVector.z -= buttons[Buttons.forward] ? 1 : 0;
@@ -88,7 +88,7 @@ function mouse(button: number, down: boolean) {
 }
 
 const quakeSens = (1 / 16385) * 2 * Math.PI;
-function mouseLook(x: number, y: number) {
+function mouseLook(x: number, y: number, player: SharedPlayer) {
 	if (!pointerLocked)
 		return;
 

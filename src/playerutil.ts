@@ -1,6 +1,6 @@
 import { UserCmd } from "./usercmd.js";
 import { Buttons } from "./buttons.js";
-import { SharedPlayer, player } from "./sharedplayer.js";
+import { SharedPlayer } from "./sharedplayer.js";
 import gMath from "./math/gmath.js";
 import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
@@ -51,7 +51,7 @@ export class PlayerUtil {
 		}
 	}
 
-	static flyMove(start: vec3, velocity: vec3, delta: number): {
+	static flyMove(start: vec3, velocity: vec3, delta: number, player: SharedPlayer): {
 		endPos: vec3,
 		blocked: number,
 		endVel: vec3
@@ -213,12 +213,12 @@ export class PlayerUtil {
 		player.velocity.y = 0;
 
 		// try regular move
-		const move = this.flyMove(player.position, player.velocity, delta);
+		const move = this.flyMove(player.position, player.velocity, delta, player);
 
 		// try higher move
 		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, maxStepHeight, 0));
 		// player.velocity.y -= 0.1; // this fixes movement bugs?
-		const stepMove = this.flyMove(player.position.add(new vec3(0, castUp.dist, 0)), player.velocity, delta);
+		const stepMove = this.flyMove(player.position.add(new vec3(0, castUp.dist, 0)), player.velocity, delta, player);
 		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 3, 0));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
@@ -247,7 +247,7 @@ export class PlayerUtil {
 
 		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, airSpeed, airAccel, delta));
 
-		const move = this.flyMove(player.position, player.velocity, delta);
+		const move = this.flyMove(player.position, player.velocity, delta, player);
 		player.position.copy(move.endPos);
 		player.velocity.copy(move.endVel);
 

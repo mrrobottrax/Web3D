@@ -5,10 +5,10 @@ import { Mesh } from "../mesh/mesh.js";
 import { Model } from "../mesh/model.js";
 import { mat4 } from "../../math/matrix.js";
 import { Primitive } from "../mesh/primitive.js";
-import { player } from "../../sharedplayer.js";
 import { currentLevel } from "../level.js";
 import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
+import { SharedPlayer } from "../../sharedplayer.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -34,7 +34,7 @@ export function initProjection() {
 
 export let lastCamPos: vec3 = vec3.origin();
 export let camPos: vec3;
-export function updateInterp() {
+export function updateInterp(player: SharedPlayer) {
 	camPos = vec3.lerp(lastCamPos, player.camPosition, Time.fract);
 }
 
@@ -43,19 +43,19 @@ export function toggleDraw() {
 	shouldDrawLevel = !shouldDrawLevel;
 }
 
-export function drawFrame(): void {
+export function drawFrame(player: SharedPlayer): void {
 	if (!shouldDrawLevel)
 		return;
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	drawLevel();
-	drawDebug();
+	drawLevel(player);
+	drawDebug(player);
 
 	drawUi();
 }
 
-function drawDebug() {
+function drawDebug(player: SharedPlayer) {
 	// draw lines
 	gl.useProgram(solidShader.program);
 
@@ -97,7 +97,7 @@ function drawDebug() {
 	gl.useProgram(null);
 }
 
-function drawLevel() {
+function drawLevel(player: SharedPlayer) {
 	gl.useProgram(defaultShader.program);
 
 	let mat = mat4.identity();

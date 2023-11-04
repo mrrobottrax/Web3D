@@ -44,5 +44,3 @@ export class SharedPlayer {
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 	}
 }
-
-export let player = new SharedPlayer(new vec3(0, 1, 0), 0, 0);
