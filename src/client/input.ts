@@ -6,10 +6,12 @@ import { drawLine, toggleDraw } from "./render/render.js";
 import { advanceGame, pauseGame } from "../time.js";
 import { Buttons } from "../buttons.js";
 import { SharedPlayer } from "../sharedplayer.js";
+import { UserCmd } from "../usercmd.js";
 
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;
 
+let lastButtons = new Array<boolean>(Buttons.MAX_BUTTONS);
 let buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 
 export function initInput(player: SharedPlayer) {
@@ -43,7 +45,7 @@ export function initInput(player: SharedPlayer) {
 	}
 }
 
-export function updateInput(player: SharedPlayer) {
+export function createUserCMD(player: SharedPlayer): UserCmd {
 	moveVector = vec3.origin();
 
 	moveVector.z -= buttons[Buttons.forward] ? 1 : 0;
@@ -54,23 +56,27 @@ export function updateInput(player: SharedPlayer) {
 	moveVector.y -= buttons[Buttons.movedown] ? 1 : 0;
 
 	if (buttons[Buttons.fire1]) {
-		if (player.canFire) {
+		if (!lastButtons[Buttons.fire1]) {
 			// fire tracer from player face
 			const start = player.camPosition;
 			const result = castRay(start, new vec3(0, 0, -1).rotatePitch(player.pitch).rotateYaw(player.yaw).mult(1000));
 			drawLine(start, start.add(result.dir.mult(result.dist)), [0, 0, 1, 1], 8);
-			
-			player.canFire = false;
 		}
 	}
-	else {
-		player.canFire = true;
-	}
-	
-	player.move({
+
+	const cmd: UserCmd = {
 		wishDir: moveVector.rotateYaw(player.yaw).normalised(),
 		buttons: buttons
-	});
+	}
+	tickButtons();
+
+	return cmd;
+}
+
+function tickButtons() {
+	for (let i = 0; i < buttons.length; ++i) {
+		lastButtons[i] = buttons[i];
+	}
 }
 
 function clearButtons() {

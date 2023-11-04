@@ -18,8 +18,6 @@ export class SharedPlayer {
 	isDucked: boolean;
 	duckProg: number;
 
-	canFire: boolean;
-
 	constructor(pos: vec3, pitch: number, yaw: number) {
 		this.position = pos;
 		this.pitch = pitch;
@@ -36,8 +34,6 @@ export class SharedPlayer {
 		this.isDucked = false;
 		this.wishDuck = false;
 		this.duckProg = 0;
-
-		this.canFire = true;
 	}
 
 	move(cmd: UserCmd): void {

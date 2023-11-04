@@ -2,7 +2,7 @@ import { vec3 } from "../math/vector.js";
 import { PacketType } from "../network/netenums.js";
 import { Packet } from "../network/packet.js";
 import { SharedPlayer } from "../sharedplayer.js";
-import { initInput, updateInput } from "./input.js";
+import { createUserCMD, initInput } from "./input.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
 import { drawFrame, lastCamPos, updateInterp } from "./render/render.js";
 import { initUi } from "./render/ui.js";
@@ -66,7 +66,9 @@ export class Client {
 
 		lastCamPos.copy(this.localPlayer.camPosition);
 
-		updateInput(this.localPlayer);
+		const cmd = createUserCMD(this.localPlayer);
+		this.localPlayer.move(cmd);
+		
 		tickViewmodel(this.localPlayer);
 	}
 
