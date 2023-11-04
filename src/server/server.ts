@@ -20,7 +20,9 @@ export class Server {
 		this.wss.on('connection', ws => {
 			ws.on('error', console.error);
 
-			ws.on('message', (data) => {
+			ws.on('message', async data => {
+				await new Promise(resolve => setTimeout(resolve, 100));
+
 				const packet = JSON.parse(data.toString());
 				switch (packet.type) {
 					case PacketType.joinReq:
