@@ -128,7 +128,7 @@ export class Client {
 		const offset = this.cmdNumber - snapshot.lastCmd;
 		const playerData = this.cmdBuffer.rewind(offset);
 
-		if (playerData.cmdNumber != snapshot.lastCmd) {
+		if (!playerData || playerData.cmdNumber != snapshot.lastCmd) {
 			console.error("Record does not exist!");
 			return;
 		}

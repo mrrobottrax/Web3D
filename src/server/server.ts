@@ -5,6 +5,7 @@ import { vec3 } from "../common/math/vector.js";
 import { PacketType } from "../network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
 import { setLevelServer } from "./level.js";
+import { Time } from "../time.js";
 
 export class Server {
 	wss!: WebSocketServer;
@@ -39,9 +40,23 @@ export class Server {
 			});
 		});
 
+		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
 		setLevelServer("./data/levels/_testlvl");
 
 		console.log("SERVER OPENED");
+	}
+
+	tick() {
+		this.generateSnapshot();
+
+		for (let player of this.players.values()) {
+			const res: SnapshotPacket = {
+				type: PacketType.snapshot,
+				lastCmd: player.lastCmd,
+				snapshot: this.snapshot
+			}
+			player.ws.send(JSON.stringify(res));
+		}
 	}
 
 	canPlayerJoin(): boolean {
@@ -94,8 +109,7 @@ export class Server {
 		const cmd = packet.cmd;
 		const player = this.players.get(packet.id);
 
-		if (!player)
-		{
+		if (!player) {
 			console.log("ERROR: UserCMD from nonexistant player");
 			return;
 		}
@@ -106,15 +120,6 @@ export class Server {
 
 		player.processCmd(cmd);
 		player.lastCmd = packet.number;
-
-		this.generateSnapshot();
-
-		const res: SnapshotPacket = {
-			type: PacketType.snapshot,
-			lastCmd: player.lastCmd,
-			snapshot: this.snapshot
-		}
-		ws.send(JSON.stringify(res));
 	}
 
 	generateSnapshot() {
