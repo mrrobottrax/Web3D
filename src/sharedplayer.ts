@@ -18,7 +18,9 @@ export class SharedPlayer {
 	isDucked: boolean;
 	duckProg: number;
 
-	constructor(pos: vec3, pitch: number, yaw: number) {
+	id: number;
+
+	constructor(pos: vec3, pitch: number, yaw: number, id: number) {
 		this.position = pos;
 		this.pitch = pitch;
 		this.yaw = yaw;
@@ -34,6 +36,8 @@ export class SharedPlayer {
 		this.isDucked = false;
 		this.wishDuck = false;
 		this.duckProg = 0;
+
+		this.id = id;
 	}
 
 	processCmd(cmd: UserCmd, positionOnly: boolean = false): void {

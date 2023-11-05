@@ -3,17 +3,19 @@ import { LevelFile } from "../levelfile.js";
 import { ServerPlayer } from "./serverplayer.js";
 import { vec3 } from "../common/math/vector.js";
 import { PacketType } from "../network/netenums.js";
-import { JoinResponsePacket, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
+import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
 import { setLevelServer } from "./level.js";
 
 export class Server {
 	wss!: WebSocketServer;
 
 	public currentMap: LevelFile | null = null;
-	public players: Map<WebSocket, ServerPlayer> = new Map();
+	public players: Map<number, ServerPlayer> = new Map();
 
 	playerCount: number = 0;
 	maxPlayerCount: number = 32;
+
+	snapshot!: Snapshot;
 
 	public init() {
 		this.wss = new WebSocketServer({ port: 80 })
@@ -46,19 +48,27 @@ export class Server {
 		return this.playerCount < this.maxPlayerCount;
 	}
 
-	playerConnect(ws: WebSocket): boolean {
+	// returns player id or null when they cannot connect
+	playerConnect(ws: WebSocket): number | null {
 		if (!this.canPlayerJoin)
-			return false;
+			return null;
 
-		this.players.set(ws, new ServerPlayer(vec3.origin(), 0, 0));
+		const id = this.generatePlayerId();
+		this.players.set(id, new ServerPlayer(vec3.origin(), 0, 0, id, ws));
 
-		return true;
+		return id;
+	}
+
+	nextPlayerId = 0;
+	generatePlayerId(): number {
+		return ++this.nextPlayerId;
 	}
 
 	handleJoin(ws: WebSocket) {
 		console.log("Player requesting join.");
 
-		if (!this.playerConnect(ws)) {
+		const id = this.playerConnect(ws);
+		if (id == null) {
 			const resPacket: JoinResponsePacket = {
 				type: PacketType.joinRes,
 				success: false
@@ -72,6 +82,7 @@ export class Server {
 		const resPacket: JoinResponsePacket = {
 			type: PacketType.joinRes,
 			success: true,
+			playerId: id,
 			mapname: ""
 		}
 
@@ -81,7 +92,7 @@ export class Server {
 
 	handleCmd(packet: UserCmdPacket, ws: WebSocket) {
 		const cmd = packet.cmd;
-		const player = this.players.get(ws);
+		const player = this.players.get(packet.id);
 
 		if (!player)
 		{
@@ -89,14 +100,39 @@ export class Server {
 			return;
 		}
 
+		if (player.ws != ws) {
+			console.log("Identity fraud!");
+		}
+
 		player.processCmd(cmd);
 		player.lastCmd = packet.number;
+
+		this.generateSnapshot();
 
 		const res: SnapshotPacket = {
 			type: PacketType.snapshot,
 			lastCmd: player.lastCmd,
-			pos: player.position,
+			snapshot: this.snapshot
 		}
 		ws.send(JSON.stringify(res));
+	}
+
+	generateSnapshot() {
+		let players: PlayerSnapshot[] = [];
+		players.length = this.players.size;
+
+		let i = 0;
+		for (let player of this.players.values()) {
+			players[i] = {
+				id: player.id,
+				position: player.position
+			}
+
+			++i;
+		}
+
+		this.snapshot = {
+			players: players
+		}
 	}
 }

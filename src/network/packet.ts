@@ -12,15 +12,26 @@ export interface JoinRequestPacket extends Packet {
 
 export interface JoinResponsePacket extends Packet {
 	success: boolean,
+	playerId?: number,
 	mapname?: string,
 }
 
 export interface UserCmdPacket extends Packet {
 	number: number,
-	cmd: UserCmd
+	id: number
+	cmd: UserCmd,
+}
+
+export interface Snapshot {
+	players: PlayerSnapshot[]
+}
+
+export interface PlayerSnapshot {
+	id: number,
+	position: vec3
 }
 
 export interface SnapshotPacket extends Packet {
 	lastCmd: number,
-	pos: vec3
+	snapshot: Snapshot
 }

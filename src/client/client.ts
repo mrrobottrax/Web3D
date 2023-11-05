@@ -1,7 +1,7 @@
 import { CircularBuffer } from "../common/circularbuffer.js";
 import { vec3 } from "../common/math/vector.js";
 import { PacketType } from "../network/netenums.js";
-import { Packet, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
+import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
 import { PlayerUtil } from "../playerutil.js";
 import { SharedPlayer } from "../sharedplayer.js";
 import { Time } from "../time.js";
@@ -24,23 +24,21 @@ export class Client {
 	localPlayer!: SharedPlayer;
 	cmdNumber: number = 0;
 
-	positionBuffer: CircularBuffer<PlayerData>;
+	cmdBuffer: CircularBuffer<PlayerData>;
 
 	public constructor() {
 		this.ws = null;
 		(window as any).connect = (url: string) => this.connect(url);
-		this.positionBuffer = new CircularBuffer(1 / Time.fixedDeltaTime);
+		this.cmdBuffer = new CircularBuffer(1 / Time.fixedDeltaTime);
 	}
 
 	public async init() {
-		this.setup();
-
 		await initGl();
 		initUi();
 	}
 
-	setup() {
-		this.localPlayer = new SharedPlayer(vec3.origin(), 0, 0);
+	setup(playerId: number) {
+		this.localPlayer = new SharedPlayer(vec3.origin(), 0, 0, playerId);
 		this.cmdNumber = 0;
 		initInput(this.localPlayer);
 	}
@@ -67,8 +65,8 @@ export class Client {
 			switch (data.type) {
 				case PacketType.joinRes:
 					console.log("Successfully joined server");
+					this.setup(data.playerId);
 					this.isConnected = true;
-					this.setup();
 					break;
 				case PacketType.snapshot:
 					this.handleSnapshot(data);
@@ -89,18 +87,19 @@ export class Client {
 		const cmdPacket: UserCmdPacket = {
 			number: this.cmdNumber,
 			type: PacketType.userCmd,
-			cmd: cmd
+			cmd: cmd,
+			id: this.localPlayer.id
 		}
 		this.ws?.send(JSON.stringify(cmdPacket));
-		
+
 		// predict player
 		this.localPlayer.processCmd(cmd);
-		this.positionBuffer.push({
+		this.cmdBuffer.push({
 			position: vec3.copy(this.localPlayer.position),
 			cmd: cmd,
 			cmdNumber: this.cmdNumber
 		});
-		
+
 		tickViewmodel(this.localPlayer);
 		++this.cmdNumber;
 	}
@@ -114,27 +113,38 @@ export class Client {
 		drawFrame(this.localPlayer);
 	}
 
-	handleSnapshot(snapshot: SnapshotPacket) {
+	handleSnapshot(packet: SnapshotPacket) {
+		// udpate players
+		for (let i = 0; i < packet.snapshot.players.length; ++i) {
+			const playerSnapshot = packet.snapshot.players[i];
+
+			if (playerSnapshot.id == this.localPlayer.id) {
+				this.updateLocalPlayer(playerSnapshot, packet);
+			}
+		}
+	}
+
+	updateLocalPlayer(playerSnapshot: PlayerSnapshot, snapshot: SnapshotPacket) {
 		const offset = this.cmdNumber - snapshot.lastCmd;
-		const playerData = this.positionBuffer.rewind(offset);
-		
+		const playerData = this.cmdBuffer.rewind(offset);
+
 		if (playerData.cmdNumber != snapshot.lastCmd) {
 			console.error("Record does not exist!");
 			return;
 		}
 
-		if (!playerData.position.equals(snapshot.pos)) {
-			drawLine(snapshot.pos, snapshot.pos.add(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
+		if (!playerData.position.equals(playerSnapshot.position)) {
+			drawLine(playerSnapshot.position, vec3.copy(playerSnapshot.position).add(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
 			drawLine(playerData.position, playerData.position.add(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
 
-			console.error("Prediction Error! " + vec3.dist(snapshot.pos, playerData.position));
+			console.error("Prediction Error! " + playerData.position.dist(playerData.position));
 
 			// snap to position and resim all userCmds
-			this.localPlayer.position = vec3.copy(snapshot.pos);
+			this.localPlayer.position = vec3.copy(playerSnapshot.position);
 
 			for (let i = offset; i <= 0; --i) {
-				this.localPlayer.processCmd(this.positionBuffer.rewind(offset).cmd, true);
-				this.positionBuffer.rewind(offset).position = this.localPlayer.position;
+				this.localPlayer.processCmd(this.cmdBuffer.rewind(offset).cmd, true);
+				this.cmdBuffer.rewind(offset).position = this.localPlayer.position;
 			}
 		}
 	}
