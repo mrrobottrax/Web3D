@@ -6,8 +6,8 @@ export class ServerPlayer extends SharedPlayer {
 	lastCmd: number = -1;
 	ws: WebSocket
 
-	constructor(pos: vec3, pitch: number, yaw: number, id: number, ws: WebSocket) {
-		super(pos, pitch, yaw, id);
+	constructor(id: number, ws: WebSocket) {
+		super(id);
 
 		this.ws = ws;
 	}

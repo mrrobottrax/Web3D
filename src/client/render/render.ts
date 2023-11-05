@@ -9,6 +9,7 @@ import { currentLevel } from "../level.js";
 import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
 import { SharedPlayer } from "../../sharedplayer.js";
+import { Client } from "../client.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -34,8 +35,8 @@ export function initProjection() {
 
 export let lastCamPos: vec3 = vec3.origin();
 export let camPos: vec3;
-export function updateInterp(player: SharedPlayer) {
-	camPos = vec3.lerp(lastCamPos, player.camPosition, Time.fract);
+export function updateInterp(client: Client) {
+	camPos = vec3.lerp(lastCamPos, client.localPlayer.camPosition, Time.fract);
 }
 
 let shouldDrawLevel = true;
@@ -43,14 +44,15 @@ export function toggleDraw() {
 	shouldDrawLevel = !shouldDrawLevel;
 }
 
-export function drawFrame(player: SharedPlayer): void {
+export function drawFrame(client: Client): void {
 	if (!shouldDrawLevel)
 		return;
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	drawLevel(player);
-	drawDebug(player);
+	drawLevel(client.localPlayer);
+	drawPlayers(client.localPlayer, client.otherPlayers.values());
+	drawDebug(client.localPlayer);
 
 	drawUi();
 }
@@ -97,6 +99,12 @@ function drawDebug(player: SharedPlayer) {
 	gl.useProgram(null);
 }
 
+function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<SharedPlayer>) {
+	for (let player of otherPlayers) {
+		drawLine(player.position, player.position.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
+	}
+}
+
 function drawLevel(player: SharedPlayer) {
 	gl.useProgram(defaultShader.program);
 
@@ -131,7 +139,7 @@ interface Line {
 }
 let lines: Line[] = [];
 export function drawLine(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
-	lines.push({ start: start, end: end, color: color, time: time });
+	lines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
 function drawPrimitive(primitive: Primitive, position: vec3, rotation: quaternion, scale: vec3, mat: mat4) {

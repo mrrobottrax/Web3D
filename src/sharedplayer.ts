@@ -20,12 +20,12 @@ export class SharedPlayer {
 
 	id: number;
 
-	constructor(pos: vec3, pitch: number, yaw: number, id: number) {
-		this.position = pos;
-		this.pitch = pitch;
-		this.yaw = yaw;
+	constructor(id: number) {
+		this.position = vec3.origin();
+		this.pitch = 0;
+		this.yaw = 0;
 
-		this.camRotation = quaternion.eulerRad(pitch, yaw, 0);
+		this.camRotation = quaternion.identity();
 		this.velocity = vec3.origin();
 
 		this.positionData = {

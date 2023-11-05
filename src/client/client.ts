@@ -26,6 +26,8 @@ export class Client {
 
 	cmdBuffer: CircularBuffer<PlayerData>;
 
+	otherPlayers!: Map<number, SharedPlayer>;
+
 	public constructor() {
 		this.ws = null;
 		(window as any).connect = (url: string) => this.connect(url);
@@ -38,7 +40,8 @@ export class Client {
 	}
 
 	setup(playerId: number) {
-		this.localPlayer = new SharedPlayer(vec3.origin(), 0, 0, playerId);
+		this.localPlayer = new SharedPlayer(playerId);
+		this.otherPlayers = new Map();
 		this.cmdNumber = 0;
 		initInput(this.localPlayer);
 	}
@@ -108,9 +111,9 @@ export class Client {
 		if (!this.isConnected)
 			return;
 
-		updateInterp(this.localPlayer);
+		updateInterp(this);
 		resizeCanvas();
-		drawFrame(this.localPlayer);
+		drawFrame(this);
 	}
 
 	handleSnapshot(packet: SnapshotPacket) {
@@ -120,6 +123,15 @@ export class Client {
 
 			if (playerSnapshot.id == this.localPlayer.id) {
 				this.updateLocalPlayer(playerSnapshot, packet);
+			} else {
+				let player = this.otherPlayers.get(playerSnapshot.id);
+
+				if (!player) {
+					player = new SharedPlayer(playerSnapshot.id);
+					this.otherPlayers.set(playerSnapshot.id, player);	
+				}
+
+				player.position.copy(playerSnapshot.position);
 			}
 		}
 	}

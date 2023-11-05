@@ -69,7 +69,7 @@ export class Server {
 			return null;
 
 		const id = this.generatePlayerId();
-		this.players.set(id, new ServerPlayer(vec3.origin(), 0, 0, id, ws));
+		this.players.set(id, new ServerPlayer(id, ws));
 
 		return id;
 	}
