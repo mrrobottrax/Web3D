@@ -1,5 +1,5 @@
-import { mat4 } from "../../math/matrix.js";
-import { vec3 } from "../../math/vector.js";
+import { mat4 } from "../../common/math/matrix.js";
+import { vec3 } from "../../common/math/vector.js";
 import { SharedPlayer } from "../../sharedplayer.js";
 import { Time } from "../../time.js";
 import { gl, loadTexture, uiShader } from "./gl.js";

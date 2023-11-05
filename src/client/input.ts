@@ -1,5 +1,5 @@
 import { config } from "./config.js";
-import { quaternion, vec3 } from "../math/vector.js";
+import { quaternion, vec3 } from "../common/math/vector.js";
 import { castRay } from "../physics.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
 import { drawLine, toggleDraw } from "./render/render.js";

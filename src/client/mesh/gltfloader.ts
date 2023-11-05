@@ -1,4 +1,4 @@
-import { quaternion, vec3 } from "../../math/vector.js";
+import { quaternion, vec3 } from "../../common/math/vector.js";
 import { Mesh } from "./mesh.js";
 import { Model } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";

@@ -1,9 +1,9 @@
 import { defaultShader, fallbackShader, gl, glProperties, lineBuffer, solidShader } from "./gl.js";
-import gMath from "../../math/gmath.js";
-import { quaternion, vec3 } from "../../math/vector.js";
+import gMath from "../../common/math/gmath.js";
+import { quaternion, vec3 } from "../../common/math/vector.js";
 import { Mesh } from "../mesh/mesh.js";
 import { Model } from "../mesh/model.js";
-import { mat4 } from "../../math/matrix.js";
+import { mat4 } from "../../common/math/matrix.js";
 import { Primitive } from "../mesh/primitive.js";
 import { currentLevel } from "../level.js";
 import { Time } from "../../time.js";

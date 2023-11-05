@@ -19,4 +19,8 @@ export default class gMath {
 			return 0.5 * f * f * f + 1;
 		}
 	}
+
+	static modulo(a: number, b: number) {
+		return ((a % b) + b) % b;
+	}
 }

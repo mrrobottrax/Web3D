@@ -1,5 +1,5 @@
 import { UserCmd } from "./usercmd.js";
-import { quaternion, vec3 } from "./math/vector.js";
+import { quaternion, vec3 } from "./common/math/vector.js";
 import { PlayerUtil, PositionData } from "./playerutil.js";
 import { Time } from "./time.js";
 
@@ -36,9 +36,14 @@ export class SharedPlayer {
 		this.duckProg = 0;
 	}
 
-	processCmd(cmd: UserCmd): void {
-		this.pitch = cmd.pitch;
-		this.yaw = cmd.yaw;
+	processCmd(cmd: UserCmd, positionOnly: boolean = false): void {
+		if (!positionOnly) {
+			this.pitch = cmd.pitch;
+			this.yaw = cmd.yaw;
+		}
+
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
+
+		// todo: firing
 	}
 }

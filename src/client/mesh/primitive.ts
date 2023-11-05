@@ -1,4 +1,4 @@
-import { quaternion, vec3 } from "../../math/vector.js";
+import { quaternion, vec3 } from "../../common/math/vector.js";
 
 export interface MeshData {
 	translation: vec3;

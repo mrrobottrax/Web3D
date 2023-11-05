@@ -1,7 +1,7 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { LevelFile } from "../levelfile.js";
 import { ServerPlayer } from "./serverplayer.js";
-import { vec3 } from "../math/vector.js";
+import { vec3 } from "../common/math/vector.js";
 import { PacketType } from "../network/netenums.js";
 import { JoinResponsePacket, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
 import { setLevelServer } from "./level.js";
@@ -90,9 +90,11 @@ export class Server {
 		}
 
 		player.processCmd(cmd);
+		player.lastCmd = packet.number;
 
 		const res: SnapshotPacket = {
 			type: PacketType.snapshot,
+			lastCmd: player.lastCmd,
 			pos: player.position,
 		}
 		ws.send(JSON.stringify(res));

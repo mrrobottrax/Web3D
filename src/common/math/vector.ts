@@ -48,6 +48,10 @@ export  class vec3 {
 		return vec;
 	}
 
+	public static dist(a: vec3, b: vec3): number {
+		return a.dist(b);
+	}
+
 	public rotateYaw(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 

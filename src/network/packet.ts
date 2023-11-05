@@ -1,4 +1,4 @@
-import { vec3 } from "../math/vector.js";
+import { vec3 } from "../common/math/vector.js";
 import { UserCmd } from "../usercmd.js";
 import { PacketType } from "./netenums.js";
 
@@ -16,9 +16,11 @@ export interface JoinResponsePacket extends Packet {
 }
 
 export interface UserCmdPacket extends Packet {
+	number: number,
 	cmd: UserCmd
 }
 
 export interface SnapshotPacket extends Packet {
+	lastCmd: number,
 	pos: vec3
 }
