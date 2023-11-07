@@ -155,13 +155,23 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model[] 
 	let models: Model[] = [];
 
 	for (let i = 0; i < meshes.length; ++i) {
-		let m = new Model();
-		m.mesh.genBuffers(meshes[i].primitives);
-		m.position = meshes[i].translation;
-		m.rotation = meshes[i].rotation;
-		m.scale = meshes[i].scale;
+		const createModelRecursive = (meshData: MeshData, parent: Model | null = null): Model => {
+			let m = new Model();
+			m.mesh.genBuffers(meshData.primitives);
+			m.position = meshData.translation;
+			m.rotation = meshData.rotation;
+			m.scale = meshData.scale;
+			m.parent = parent;
+			
+			m.children.length = meshData.children.length;
+			for (let j = 0; j < meshData.children.length; ++j) {
+				m.children[j] = createModelRecursive(meshData.children[j], m);
+			}
 
-		models.push(m);
+			return m;
+		}
+
+		models.push(createModelRecursive(meshes[i]));
 	}
 
 	return models;
@@ -172,52 +182,79 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 
 	// load nodes
 	for (let j = 0; j < json.scenes[0].nodes.length; ++j) {
-		let primitives: PrimitiveData[] = [];
-		const index = json.scenes[0].nodes[j];
-		const node = json.nodes[index];
-		const meshIndex = node.mesh;
-		
-		for (let i = 0; i < json.meshes[meshIndex].primitives.length; ++i) {
-			const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix);
-			if (!p) {
-				// todo: return error model
-				return [];
+		const getChildrenRecursive = (nodeIndex: number): MeshData => {
+			const node = json.nodes[nodeIndex];
+
+			let children: MeshData[] = [];
+			if (node.children) {
+				for (let i = 0; i < node.children.length; ++i) {
+					children.push(getChildrenRecursive(node.children[i]));
+				}
 			}
-			primitives.push(p);
+
+			let primitives: PrimitiveData[] = [];
+			if (node.mesh != null) {
+				const meshIndex = node.mesh;
+				for (let i = 0; i < json.meshes[meshIndex].primitives.length; ++i) {
+					const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix);
+					if (!p) {
+						// todo: return error model
+						return {
+							primitives: primitives,
+							translation: vec3.origin(),
+							rotation: quaternion.identity(),
+							scale: new vec3(1, 1, 1),
+							parent: null,
+							children: []
+						};
+					}
+					primitives.push(p);
+				}
+			}
+
+			let translation = vec3.origin();
+			let rotation = quaternion.identity();
+			let scale = new vec3(1, 1, 1);
+
+			const t = node.translation;
+			if (t) {
+				translation.x = t[0];
+				translation.y = t[1];
+				translation.z = t[2];
+			}
+
+			const r = node.rotation;
+			if (r) {
+				rotation.x = r[0];
+				rotation.y = r[1];
+				rotation.z = r[2];
+				rotation.w = r[3];
+			}
+
+			const s = node.scale;
+			if (s) {
+				scale.x = s[0];
+				scale.y = s[1];
+				scale.z = s[2];
+			}
+
+			const meshData: MeshData = {
+				primitives: primitives,
+				translation: translation,
+				rotation: rotation,
+				scale: scale,
+				parent: null,
+				children: children
+			};
+
+			for (let i = 0; i < meshData.children.length; ++i) {
+				meshData.children[i].parent = meshData;
+			}
+
+			return meshData;
 		}
 
-		let translation = vec3.origin();
-		let rotation = quaternion.identity();
-		let scale = new vec3(1, 1, 1);
-
-		const t = node.translation;
-		if (t) {
-			translation.x = t[0];
-			translation.y = t[1];
-			translation.z = t[2];
-		}
-
-		const r = node.rotation;
-		if (r) {
-			rotation.x = r[0];
-			rotation.y = r[1];
-			rotation.z = r[2];
-			rotation.w = r[3];
-		}
-
-		const s = node.scale;
-		if (s) {
-			scale.x = s[0];
-			scale.y = s[1];
-			scale.z = s[2];
-		}
-
-		meshes.push({
-			primitives: primitives,
-			translation: translation,
-			rotation: rotation,
-			scale: scale
-		})
+		meshes.push(getChildrenRecursive(json.scenes[0].nodes[j]));
 	}
 
 	return meshes;

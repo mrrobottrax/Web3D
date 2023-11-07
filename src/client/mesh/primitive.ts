@@ -5,6 +5,9 @@ export interface MeshData {
 	rotation: quaternion;
 	scale: vec3;
 
+	parent: MeshData | null;
+	children: MeshData[];
+
 	primitives: PrimitiveData[];
 }
 

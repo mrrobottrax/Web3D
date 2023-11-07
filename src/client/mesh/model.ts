@@ -7,4 +7,7 @@ export class Model {
 	rotation: quaternion = new quaternion(1, 0, 0, 0);
 
 	mesh: Mesh = new Mesh();
+
+	children: Model[] = [];
+	parent: Model | null = null;
 }
