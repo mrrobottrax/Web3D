@@ -21,7 +21,7 @@ export let uiMatrix: mat4;
 let debugModel: Model;
 export async function initRender() {
 	debugModel = (await loadGlTFFromWeb("./data/models/skintest"))[0];
-	console.log(debugModel);
+	debugModel.position = new vec3(0, 3, 0);
 }
 
 export function initProjection() {
