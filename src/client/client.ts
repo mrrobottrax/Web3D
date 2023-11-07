@@ -8,7 +8,7 @@ import { Time } from "../time.js";
 import { UserCmd } from "../usercmd.js";
 import { createUserCMD, initInput } from "./input.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
-import { drawFrame, drawLine, lastCamPos, updateInterp } from "./render/render.js";
+import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "./render/render.js";
 import { initUi } from "./render/ui.js";
 import { tickViewmodel } from "./render/viewmodel.js";
 
@@ -37,6 +37,7 @@ export class Client {
 	public async init() {
 		await initGl();
 		initUi();
+		initRender();
 	}
 
 	setup(playerId: number) {

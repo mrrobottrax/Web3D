@@ -171,10 +171,12 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 	let meshes: MeshData[] = [];
 
 	// load nodes
-	for (let j = 0; j < json.nodes.length; ++j) {
+	for (let j = 0; j < json.scenes[0].nodes.length; ++j) {
 		let primitives: PrimitiveData[] = [];
-		const node = json.nodes[j];
+		const index = json.scenes[0].nodes[j];
+		const node = json.nodes[index];
 		const meshIndex = node.mesh;
+		
 		for (let i = 0; i < json.meshes[meshIndex].primitives.length; ++i) {
 			const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix);
 			if (!p) {
