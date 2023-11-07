@@ -99,6 +99,31 @@ function drawDebug(player: SharedPlayer) {
 		}
 	}
 
+	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat4.identity().getData());
+
+	for (let i = 0; i < screenLines.length; ++i) {
+		const line = screenLines[i];
+
+		gl.uniform4fv(solidShader.colorUnif, line.color);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
+		gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
+			line.start.x, line.start.y, line.start.z, line.end.x, line.end.y, line.end.z]));
+
+		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+		gl.enableVertexAttribArray(0);
+
+		gl.drawArrays(gl.LINES, 0, 2);
+
+		line.time -= Time.deltaTime;
+
+		if (line.time < 0) {
+			screenLines.splice(i, 1);
+			--i;
+		}
+	}
+
 	gl.enable(gl.DEPTH_TEST);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, null)
@@ -125,14 +150,16 @@ function drawLevel(player: SharedPlayer) {
 		}
 
 		// debug model!
+		console.log("Start");
 		if (debugModel)
-			drawModel(debugModel, mat);
+			drawModel(debugModel, mat, true);
 	}
 
 	gl.useProgram(null);
 }
 
-function drawModel(model: Model, mat: mat4) {
+function drawModel(model: Model, mat: mat4, debug: boolean = false) {
+	console.log(model);
 	let _mat = mat.copy();
 	_mat.translate(model.position);
 	_mat.rotate(model.rotation);
@@ -141,11 +168,19 @@ function drawModel(model: Model, mat: mat4) {
 	drawMesh(model.mesh, _mat);
 
 	for (let i = 0; i < model.children.length; ++i) {
-		drawModel(model.children[i], _mat);
+		drawModel(model.children[i], _mat, debug);
 	}
 }
 
 function drawMesh(mesh: Mesh, mat: mat4) {
+	// bone
+	if (mesh.primitives.length == 0) {
+		const start = new vec3(0, 0, 0).multMat4(mat);
+		const end = new vec3(0, 0.5, 0).multMat4(mat);
+		drawLineScreen(start, end, [0, 1, 1, 1], 0);
+		return;
+	}
+
 	for (let i = 0; i < mesh.primitives.length; ++i) {
 		drawPrimitive(mesh.primitives[i], mat);
 	}
@@ -160,6 +195,11 @@ interface Line {
 let lines: Line[] = [];
 export function drawLine(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
 	lines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
+}
+
+let screenLines: Line[] = [];
+export function drawLineScreen(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
+	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
 function drawPrimitive(primitive: Primitive, mat: mat4) {
