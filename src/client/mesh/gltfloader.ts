@@ -3,7 +3,7 @@ import { Mesh } from "./mesh.js";
 import { Model } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
 
-export async function loadGlTFFromWeb(url: string): Promise<Model[]> {
+export async function loadGltfFromWeb(url: string): Promise<Model[]> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();

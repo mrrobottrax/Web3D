@@ -1,4 +1,4 @@
-import { loadGlTFFromWeb } from "./mesh/gltfloader.js";
+import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
 import { Model } from "./mesh/model.js";
 import { LevelFile } from "../levelfile.js";
@@ -28,7 +28,7 @@ export async function setLevelClient(url: string): Promise<void> {
 	}
 
 	const file: LevelFile = JSON.parse(res.response);
-	const models = loadGlTFFromWeb(url);
+	const models = loadGltfFromWeb(url);
 
 	if (!models) {
 		console.error("Failed to load level model");

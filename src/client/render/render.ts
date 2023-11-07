@@ -10,7 +10,7 @@ import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
 import { SharedPlayer } from "../../sharedplayer.js";
 import { Client } from "../client.js";
-import { loadGlTFFromWeb } from "../mesh/gltfloader.js";
+import { loadGltfFromWeb } from "../mesh/gltfloader.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -20,7 +20,7 @@ export let uiMatrix: mat4;
 
 let debugModel: Model;
 export async function initRender() {
-	debugModel = (await loadGlTFFromWeb("./data/models/skintest"))[0];
+	debugModel = (await loadGltfFromWeb("./data/models/skintest"))[0];
 	debugModel.position = new vec3(0, 3, 0);
 }
 
