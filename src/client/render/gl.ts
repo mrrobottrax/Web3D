@@ -8,7 +8,9 @@ export let gl: WebGL2RenderingContext;
 
 export enum SharedAttribs {
 	positionAttrib,
-	texCoordAttrib
+	texCoordAttrib,
+	boneIdsAttrib,
+	boneWeightsAttrib
 }
 
 // ~~~~~~~~~~~~~ shaders ~~~~~~~~~~~~~~
@@ -28,8 +30,8 @@ interface UninstancedShaderBase extends ShaderBase {
 interface InstancedShaderBase extends ShaderBase {
 	program: WebGLProgram | null;
 	modelViewMatrixAttrib: number | null;
-	samplerAttrib: number | null;
 	projectionMatrixUnif: WebGLUniformLocation | null;
+	samplerAttrib: number | null;
 }
 
 export let solidShader: UninstancedShaderBase = {
@@ -51,6 +53,16 @@ export let fallbackShader: UninstancedShaderBase = {
 interface DefaultShader extends UninstancedShaderBase {
 }
 export let defaultShader: DefaultShader = {
+	program: null,
+	modelViewMatrixUnif: null,
+	samplerUnif: null,
+	projectionMatrixUnif: null,
+	colorUnif: null
+};
+
+interface SkinnedShaderBase extends UninstancedShaderBase {
+}
+export let skinnedShader: SkinnedShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	samplerUnif: null,
@@ -165,6 +177,7 @@ export async function initGl(): Promise<void> {
 
 	defaultShader.program = fallbackShader.program;
 	uiShader.program = fallbackShader.program;
+	skinnedShader.program = fallbackShader.program;
 
 	// create default solid texture
 	createSolidTexture();
@@ -173,9 +186,11 @@ export async function initGl(): Promise<void> {
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
+		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
 	]).then((results) => {
-		defaultShader.program = results[0];
-		uiShader.program = results[1];
+		defaultShader.program 	= results[0];
+		uiShader.program 		= results[1];
+		skinnedShader.program 	= results[2];
 	});
 
 	// get shader locations
@@ -195,6 +210,11 @@ export async function initGl(): Promise<void> {
 	uiShader.projectionMatrixUnif = gl.getUniformLocation(uiShader.program, "uProjectionMatrix");
 	uiShader.samplerUnif = gl.getUniformLocation(uiShader.program, "uSampler");
 	uiShader.colorUnif = gl.getUniformLocation(uiShader.program, "uColor");
+
+	skinnedShader.modelViewMatrixUnif = gl.getUniformLocation(skinnedShader.program, "uModelViewMatrix");
+	skinnedShader.projectionMatrixUnif = gl.getUniformLocation(skinnedShader.program, "uProjectionMatrix");
+	skinnedShader.samplerUnif = gl.getUniformLocation(skinnedShader.program, "uSampler");
+	skinnedShader.colorUnif = gl.getUniformLocation(skinnedShader.program, "uColor");
 
 	lineBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);

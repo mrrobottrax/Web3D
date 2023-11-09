@@ -1,4 +1,4 @@
-import { defaultShader, fallbackShader, gl, glProperties, lineBuffer, solidShader } from "./gl.js";
+import { defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Mesh } from "../mesh/mesh.js";
@@ -21,7 +21,7 @@ export let uiMatrix: mat4;
 let debugModel: Model;
 export async function initRender() {
 	debugModel = (await loadGltfFromWeb("./data/models/skintest"))[0];
-	debugModel.position = new vec3(0, 3, 0);
+	debugModel.position = new vec3(0, 0, 0);
 }
 
 export function initProjection() {
@@ -33,6 +33,9 @@ export function initProjection() {
 
 	gl.useProgram(defaultShader.program);
 	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+
+	gl.useProgram(skinnedShader.program);
+	gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 
 	gl.useProgram(solidShader.program);
 	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
@@ -135,6 +138,17 @@ function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<S
 	for (let player of otherPlayers) {
 		drawLine(player.position, player.position.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
 	}
+
+	gl.useProgram(skinnedShader.program);
+
+	// debug model!
+	let mat = mat4.identity();
+	mat.rotate(localPlayer.camRotation);
+	mat.translate(camPos.inverse());
+	if (debugModel)
+		drawModel(debugModel, mat, skinnedShader.colorUnif, skinnedShader.modelViewMatrixUnif, skinnedShader.samplerUnif, true);
+
+	gl.useProgram(null);
 }
 
 function drawLevel(player: SharedPlayer) {
@@ -146,33 +160,29 @@ function drawLevel(player: SharedPlayer) {
 
 	if (currentLevel != undefined) {
 		for (let i = 0; i < currentLevel.models.length; ++i) {
-			drawModel(currentLevel.models[i], mat);
+			drawModel(currentLevel.models[i], mat, defaultShader.colorUnif, defaultShader.modelViewMatrixUnif, defaultShader.samplerUnif);
 		}
-
-		// debug model!
-		console.log("Start");
-		if (debugModel)
-			drawModel(debugModel, mat, true);
 	}
 
 	gl.useProgram(null);
 }
 
-function drawModel(model: Model, mat: mat4, debug: boolean = false) {
-	console.log(model);
+function drawModel(model: Model, mat: mat4,
+	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null, debug: boolean = false) {
 	let _mat = mat.copy();
 	_mat.translate(model.position);
 	_mat.rotate(model.rotation);
 	_mat.scale(model.scale);
 
-	drawMesh(model.mesh, _mat);
+	drawMesh(model.mesh, _mat, colorUnif, modelViewMatrixUnif, samplerUnif);
 
 	for (let i = 0; i < model.children.length; ++i) {
-		drawModel(model.children[i], _mat, debug);
+		drawModel(model.children[i], _mat, colorUnif, modelViewMatrixUnif, samplerUnif, debug);
 	}
 }
 
-function drawMesh(mesh: Mesh, mat: mat4) {
+function drawMesh(mesh: Mesh, mat: mat4,
+	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null) {
 	// bone
 	if (mesh.primitives.length == 0) {
 		const start = new vec3(0, 0, 0).multMat4(mat);
@@ -182,7 +192,7 @@ function drawMesh(mesh: Mesh, mat: mat4) {
 	}
 
 	for (let i = 0; i < mesh.primitives.length; ++i) {
-		drawPrimitive(mesh.primitives[i], mat);
+		drawPrimitive(mesh.primitives[i], mat, colorUnif, modelViewMatrixUnif, samplerUnif);
 	}
 }
 
@@ -202,15 +212,16 @@ export function drawLineScreen(start: vec3, end: vec3, color: number[], time: nu
 	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
-function drawPrimitive(primitive: Primitive, mat: mat4) {
+function drawPrimitive(primitive: Primitive, mat: mat4,
+	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null) {
 	gl.bindVertexArray(primitive.vao);
 
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, primitive.textures[0]);
 
-	gl.uniform4fv(defaultShader.colorUnif, primitive.color);
-	gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, mat.getData());
-	gl.uniform1i(defaultShader.samplerUnif, 0);
+	gl.uniform4fv(colorUnif, primitive.color);
+	gl.uniformMatrix4fv(modelViewMatrixUnif, false, mat.getData());
+	gl.uniform1i(samplerUnif, 0);
 
 	gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
 
