@@ -16,8 +16,8 @@ export interface MeshData {
 }
 
 export interface PrimitiveData {
-	positions: Float32Array;
-	texCoords: Float32Array;
+	positions: Uint8Array;
+	texCoords: Uint8Array;
 	elements: Uint16Array;
 	weights: Float32Array;
 	boneIds: Uint8Array;

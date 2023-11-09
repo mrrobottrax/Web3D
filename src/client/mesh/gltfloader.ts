@@ -466,8 +466,8 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 	}
 
 	let p: PrimitiveData = {
-		positions: new Float32Array(vertices),
-		texCoords: new Float32Array(texCoords),
+		positions: new Uint8Array(new Float32Array(vertices).buffer),
+		texCoords: new Uint8Array(new Float32Array(texCoords).buffer),
 		elements: new Uint16Array(indices),
 		color: color,
 		boneIds: new Uint8Array(boneIds),

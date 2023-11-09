@@ -64,26 +64,45 @@ export class Mesh {
 				this.primitives[i].textures = [solidTex];
 			}
 
-			let length = data[i].positions.length + data[i].texCoords.length;
+			let length = data[i].positions.length * 4 + data[i].texCoords.length * 4;
 
 			if (data[i].skinned) {
 				// length += data[i].boneIds.length + data[i].weights.length;
 			}
 
-			let vertData = new Float32Array(length);
+			let vertData = new Uint8Array(length);
 
 			// merge into one array
 			const vertCount = data[i].positions.length / 3;
 			for (let j = 0; j < vertCount; ++j) {
-				const index = j * 5;
-				const posIndex = j * 3;
-				const texIndex = j * 2;
+				const index = j * 20;
+				const posIndex = j * 12;
+				const texIndex = j * 8;
 
 				vertData[index] = data[i].positions[posIndex];
 				vertData[index + 1] = data[i].positions[posIndex + 1];
 				vertData[index + 2] = data[i].positions[posIndex + 2];
-				vertData[index + 3] = data[i].texCoords[texIndex];
-				vertData[index + 4] = data[i].texCoords[texIndex + 1];
+				vertData[index + 3] = data[i].positions[posIndex + 3];
+
+				vertData[index + 4] = data[i].positions[posIndex + 4];
+				vertData[index + 5] = data[i].positions[posIndex + 5];
+				vertData[index + 6] = data[i].positions[posIndex + 6];
+				vertData[index + 7] = data[i].positions[posIndex + 7];
+
+				vertData[index + 8] = data[i].positions[posIndex + 8];
+				vertData[index + 9] = data[i].positions[posIndex + 9];
+				vertData[index + 10] = data[i].positions[posIndex + 10];
+				vertData[index + 11] = data[i].positions[posIndex + 11];
+
+				vertData[index + 12] = data[i].texCoords[texIndex];
+				vertData[index + 13] = data[i].texCoords[texIndex + 1];
+				vertData[index + 14] = data[i].texCoords[texIndex + 2];
+				vertData[index + 15] = data[i].texCoords[texIndex + 3];
+
+				vertData[index + 16] = data[i].texCoords[texIndex + 4];
+				vertData[index + 17] = data[i].texCoords[texIndex + 5];
+				vertData[index + 18] = data[i].texCoords[texIndex + 6];
+				vertData[index + 19] = data[i].texCoords[texIndex + 7];
 			}
 
 			gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
