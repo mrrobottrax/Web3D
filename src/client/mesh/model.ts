@@ -10,4 +10,7 @@ export class Model {
 
 	children: Model[] = [];
 	parent: Model | null = null;
+
+	skinned: boolean = false;
+	joints: Model[] = [];
 }

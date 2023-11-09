@@ -5,8 +5,10 @@ export interface MeshData {
 	rotation: quaternion;
 	scale: vec3;
 
-	parent: MeshData | null;
-	children: MeshData[];
+	children: number[];
+
+	skinned: boolean;
+	joints: number[];
 
 	primitives: PrimitiveData[];
 }
