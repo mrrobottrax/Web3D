@@ -1,8 +1,8 @@
-import { defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Mesh } from "../mesh/mesh.js";
-import { Model } from "../mesh/model.js";
+import { Model, SkinnedModel } from "../mesh/model.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { Primitive } from "../mesh/primitive.js";
 import { currentLevel } from "../level.js";
@@ -18,10 +18,11 @@ const farClip = 1000;
 let perspectiveMatrix: mat4;
 export let uiMatrix: mat4;
 
-let debugModel: Model;
+let debugModel: Model | SkinnedModel;
 export async function initRender() {
 	debugModel = (await loadGltfFromWeb("./data/models/skintest"))[0];
-	debugModel.position = new vec3(0, 0, 0);
+	console.log(debugModel);
+	debugModel.transform.position = new vec3(0, 0, 0);
 }
 
 export function initProjection() {
@@ -68,13 +69,13 @@ export function drawFrame(client: Client): void {
 }
 
 function updateWorldMatrix(model: Model, baseMat: mat4 = mat4.identity()) {
-	model.worldMatrix.set(baseMat);
-	model.worldMatrix.translate(model.position);
-	model.worldMatrix.rotate(model.rotation);
-	model.worldMatrix.scale(model.scale);
+	model.transform.worldMatrix.set(baseMat);
+	model.transform.worldMatrix.translate(model.transform.position);
+	model.transform.worldMatrix.rotate(model.transform.rotation);
+	model.transform.worldMatrix.scale(model.transform.scale);
 
 	for (let i = 0; i < model.children.length; ++i) {
-		updateWorldMatrix(model.children[i], model.worldMatrix);
+		updateWorldMatrix(model.children[i], model.transform.worldMatrix);
 	}
 }
 
@@ -158,7 +159,7 @@ function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<S
 	mat.translate(camPos.inverse());
 	if (debugModel) {
 		updateWorldMatrix(debugModel);
-		drawModel(debugModel, mat, skinnedShader.colorUnif, skinnedShader.modelViewMatrixUnif, skinnedShader.samplerUnif, true);
+		drawModel(debugModel, mat, skinnedShader, true);
 	}
 
 	gl.useProgram(null);
@@ -180,27 +181,25 @@ function drawLevel(player: SharedPlayer) {
 
 	if (currentLevel != undefined) {
 		for (let i = 0; i < currentLevel.models.length; ++i) {
-			drawModel(currentLevel.models[i], mat, defaultShader.colorUnif, defaultShader.modelViewMatrixUnif, defaultShader.samplerUnif);
+			drawModel(currentLevel.models[i], mat, defaultShader);
 		}
 	}
 
 	gl.useProgram(null);
 }
 
-function drawModel(model: Model, mat: mat4,
-	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null, debug: boolean = false) {
+function drawModel(model: Model, mat: mat4, shader: UninstancedShaderBase, debug: boolean = false) {
 
 	let _mat = mat.copy();
-	_mat = _mat.multiply(model.worldMatrix);
-	drawMesh(model.mesh, _mat, colorUnif, modelViewMatrixUnif, samplerUnif);
+	_mat = _mat.multiply(model.transform.worldMatrix);
+	drawMesh(model.mesh, _mat, shader);
 
 	for (let i = 0; i < model.children.length; ++i) {
-		drawModel(model.children[i], mat, colorUnif, modelViewMatrixUnif, samplerUnif, debug);
+		drawModel(model.children[i], mat, shader);
 	}
 }
 
-function drawMesh(mesh: Mesh, mat: mat4,
-	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null) {
+function drawMesh(mesh: Mesh, mat: mat4, shader: UninstancedShaderBase) {
 	// bone
 	if (mesh.primitives.length == 0) {
 		const start = new vec3(0, 0, 0).multMat4(mat);
@@ -210,7 +209,7 @@ function drawMesh(mesh: Mesh, mat: mat4,
 	}
 
 	for (let i = 0; i < mesh.primitives.length; ++i) {
-		drawPrimitive(mesh.primitives[i], mat, colorUnif, modelViewMatrixUnif, samplerUnif);
+		drawPrimitive(mesh.primitives[i], mat, shader);
 	}
 }
 
@@ -230,16 +229,15 @@ export function drawLineScreen(start: vec3, end: vec3, color: number[], time: nu
 	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
-function drawPrimitive(primitive: Primitive, mat: mat4,
-	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null) {
+function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase) {
 	gl.bindVertexArray(primitive.vao);
 
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, primitive.textures[0]);
 
-	gl.uniform4fv(colorUnif, primitive.color);
-	gl.uniformMatrix4fv(modelViewMatrixUnif, false, mat.getData());
-	gl.uniform1i(samplerUnif, 0);
+	gl.uniform4fv(shader.colorUnif, primitive.color);
+	gl.uniformMatrix4fv(shader.modelViewMatrixUnif, false, mat.getData());
+	gl.uniform1i(shader.samplerUnif, 0);
 
 	gl.drawElements(gl.TRIANGLES, primitive.elementCount, gl.UNSIGNED_SHORT, 0);
 

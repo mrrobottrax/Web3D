@@ -1,9 +1,10 @@
+import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
 import { Mesh } from "./mesh.js";
-import { Model } from "./model.js";
+import { Model, SkinnedModel } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
 
-export async function loadGltfFromWeb(url: string): Promise<Model[]> {
+export async function loadGltfFromWeb(url: string): Promise<(Model | SkinnedModel)[]> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();
@@ -21,7 +22,7 @@ export async function loadGltfFromWeb(url: string): Promise<Model[]> {
 	req2.open("GET", url + ".bin");
 	req2.send();
 
-	let models: Model[] = [];
+	let models: (Model | SkinnedModel)[] = [];
 
 	// get model from requests
 	await Promise.all([promise1, promise2]).then((results) => {
@@ -150,22 +151,30 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model[] {
+function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (Model | SkinnedModel)[] {
 	let meshes: MeshData[] = getGltfMeshData(json, buffers, texPrefix);
-	let rootModels: Model[] = [];
-	let nodeToModel: Model[] = [];
+	let rootModels: (Model | SkinnedModel)[] = [];
+	let nodeToModel: (Model)[] = [];
 	nodeToModel.length = meshes.length;
 
 	// set up children
 	const nodes = json.scenes[0].nodes;
 	for (let i = 0; i < nodes.length; ++i) {
 		const createModelRecursive = (index: number, parent: Model | null = null): Model => {
-			let m = new Model();
+			let m;
 			const meshData = meshes[index];
+
+			if (meshData.skinned) {
+				m = new SkinnedModel();
+				m.inverseBindMatrices = meshData.inverseBindMatrices;
+			} else {
+				m = new Model();
+			}
+
 			m.mesh.genBuffers(meshData.primitives);
-			m.position = meshData.translation;
-			m.rotation = meshData.rotation;
-			m.scale = meshData.scale;
+			m.transform.position = meshData.translation;
+			m.transform.rotation = meshData.rotation;
+			m.transform.scale = meshData.scale;
 			m.parent = parent;
 			m.skinned = meshData.skinned;
 
@@ -190,11 +199,25 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model[] 
 			for (let j = 0; j < meshes[i].joints.length; ++j) {
 				joints[j] = nodeToModel[meshes[i].joints[j]];
 			}
-			nodeToModel[i].joints = joints;
+			(nodeToModel[i] as SkinnedModel).joints = joints;
 		}
 	}
 
 	return rootModels;
+}
+
+function getErrorData(): MeshData[] {
+	// todo: return error model
+	return [{
+		primitives: [],
+		translation: vec3.origin(),
+		rotation: quaternion.identity(),
+		scale: new vec3(1, 1, 1),
+		children: [],
+		joints: [],
+		skinned: false,
+		inverseBindMatrices: []
+	}];
 }
 
 export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: string): MeshData[] {
@@ -206,6 +229,7 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 
 		let skinned = false;
 		let joints: number[] = [];
+		let inverseBindMatrices: mat4[] = [];
 
 		let primitives: PrimitiveData[] = [];
 		if (node.mesh != null) {
@@ -214,15 +238,7 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 				const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix);
 				if (!p) {
 					// todo: return error model
-					return [{
-						primitives: primitives,
-						translation: vec3.origin(),
-						rotation: quaternion.identity(),
-						scale: new vec3(1, 1, 1),
-						children: [],
-						joints: [],
-						skinned: false
-					}];
+					return getErrorData();
 				}
 				primitives.push(p);
 			}
@@ -230,6 +246,26 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 			if (node.skin != null) {
 				skinned = true;
 				joints = json.skins[node.skin].joints;
+
+				// load inverse bind matrices
+				const inverseBindMatricesAccessor = json.accessors[json.skins[node.skin].inverseBindMatrices];
+				if (!assertAccessor(inverseBindMatricesAccessor, componentTypes.FLOAT, accessorTypes.MAT4))
+					return getErrorData();
+
+				const inverseBindMatricesBufferView = json.bufferViews[inverseBindMatricesAccessor.bufferView];
+				const buffer = new DataView(buffers[inverseBindMatricesBufferView.buffer].buffer,
+					buffers[inverseBindMatricesBufferView.buffer].byteOffset + inverseBindMatricesBufferView.byteOffset);
+
+				inverseBindMatrices.length = inverseBindMatricesAccessor.count;
+				for (let i = 0; i < inverseBindMatricesAccessor.count; ++i) {
+					inverseBindMatrices[i] = new mat4(0);
+					for (let row = 0; row < 4; ++row) {
+						for (let column = 0; column < 4; ++column) {
+							const float = buffer.getFloat32((i * 16 + row + column * 4) * 4, true);
+							inverseBindMatrices[i].setValue(column, row, float);
+						}
+					}
+				}
 			}
 		}
 
@@ -270,13 +306,27 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 			scale: scale,
 			children: children,
 			skinned: skinned,
-			joints: joints
+			joints: joints,
+			inverseBindMatrices: inverseBindMatrices
 		};
 
 		meshes.push(meshData);
 	}
 
 	return meshes;
+}
+
+function assertAccessor(accessor: any, componentType: number, accessorType: string): boolean {
+	if (accessor.componentType != componentType) {
+		console.error("glTF: type error");
+		return false;
+	}
+	if (accessor.type != accessorType) {
+		console.error("glTF: type error");
+		return false;
+	}
+
+	return true;
 }
 
 function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPrefix: string): PrimitiveData | null {
@@ -292,33 +342,15 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 	const indicesAccessor = json.accessors[indicesIndex];
 
 	// asserts
-	if (positionAccessor.componentType != componentTypes.FLOAT) {
-		console.error("glTF: type error");
+	if (!assertAccessor(positionAccessor, componentTypes.FLOAT, accessorTypes.VEC3)) {
 		return null;
 	}
 
-	if (positionAccessor.type != accessorTypes.VEC3) {
-		console.error("glTF: type error");
+	if (!assertAccessor(texCoordAccessor, componentTypes.FLOAT, accessorTypes.VEC2)) {
 		return null;
 	}
 
-	if (texCoordAccessor.componentType != componentTypes.FLOAT) {
-		console.error("glTF: type error");
-		return null;
-	}
-
-	if (texCoordAccessor.type != accessorTypes.VEC2) {
-		console.error("glTF: type error");
-		return null;
-	}
-
-	if (indicesAccessor.componentType != componentTypes.UNSIGNED_SHORT) {
-		console.error("glTF: type error");
-		return null;
-	}
-
-	if (indicesAccessor.type != accessorTypes.SCALAR) {
-		console.error("glTF: type error");
+	if (!assertAccessor(indicesAccessor, componentTypes.UNSIGNED_SHORT, accessorTypes.SCALAR)) {
 		return null;
 	}
 
@@ -332,11 +364,6 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 		buffers[texCoordBufferView.buffer].byteOffset + texCoordBufferView.byteOffset);
 	const indicesBuffer = new DataView(buffers[indicesBufferView.buffer].buffer,
 		buffers[indicesBufferView.buffer].byteOffset + indicesBufferView.byteOffset);
-
-	let data = '';
-	for (let i = 0; i < positionBuffer.byteLength; ++i) {
-		data += positionBuffer.getUint8(i).toString(16) + " ";
-	}
 
 	// positions
 	let vertices: number[] = [];

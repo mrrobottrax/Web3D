@@ -19,7 +19,7 @@ interface ShaderBase {
 	program: WebGLProgram | null;
 }
 
-interface UninstancedShaderBase extends ShaderBase {
+export interface UninstancedShaderBase extends ShaderBase {
 	program: WebGLProgram | null;
 	modelViewMatrixUnif: WebGLUniformLocation | null;
 	projectionMatrixUnif: WebGLUniformLocation | null;

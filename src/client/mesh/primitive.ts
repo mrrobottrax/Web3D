@@ -1,3 +1,4 @@
+import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
 
 export interface MeshData {
@@ -9,6 +10,7 @@ export interface MeshData {
 
 	skinned: boolean;
 	joints: number[];
+	inverseBindMatrices: mat4[];
 
 	primitives: PrimitiveData[];
 }
