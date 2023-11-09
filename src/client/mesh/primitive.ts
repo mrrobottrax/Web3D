@@ -22,6 +22,7 @@ export interface PrimitiveData {
 	weights: Float32Array;
 	boneIds: Uint8Array;
 	color: number[];
+	skinned: boolean;
 
 	textureUris: string[];
 }

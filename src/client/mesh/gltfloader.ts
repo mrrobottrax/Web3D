@@ -472,6 +472,7 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 		color: color,
 		boneIds: new Uint8Array(boneIds),
 		weights: new Float32Array(weights),
+		skinned: skinned,
 
 		textureUris: uris
 	};
