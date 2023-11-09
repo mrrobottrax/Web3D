@@ -9,18 +9,21 @@ export class Transform {
 	worldMatrix: mat4 = mat4.identity();
 }
 
-export class Model {
+export class ModelBase {
 	transform: Transform = new Transform();
 
 	mesh: Mesh = new Mesh();
 
-	children: Model[] = [];
-	parent: Model | null = null;
+	children: ModelBase[] = [];
+	parent: ModelBase | null = null;
 
 	skinned: boolean = false;
 }
 
-export class SkinnedModel extends Model {
-	joints: Model[] = [];
+export class StaticModel extends ModelBase {
+}
+
+export class SkinnedModel extends ModelBase {
+	joints: ModelBase[] = [];
 	inverseBindMatrices: mat4[] = [];
 }

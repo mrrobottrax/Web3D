@@ -1,10 +1,10 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
 import { Mesh } from "./mesh.js";
-import { Model, SkinnedModel } from "./model.js";
+import { StaticModel, SkinnedModel, ModelBase } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
 
-export async function loadGltfFromWeb(url: string): Promise<(Model | SkinnedModel)[]> {
+export async function loadGltfFromWeb(url: string): Promise<(StaticModel | SkinnedModel)[]> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();
@@ -22,7 +22,7 @@ export async function loadGltfFromWeb(url: string): Promise<(Model | SkinnedMode
 	req2.open("GET", url + ".bin");
 	req2.send();
 
-	let models: (Model | SkinnedModel)[] = [];
+	let models: (StaticModel | SkinnedModel)[] = [];
 
 	// get model from requests
 	await Promise.all([promise1, promise2]).then((results) => {
@@ -151,27 +151,28 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (Model | SkinnedModel)[] {
+function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticModel | SkinnedModel)[] {
 	let meshes: MeshData[] = getGltfMeshData(json, buffers, texPrefix);
-	let rootModels: (Model | SkinnedModel)[] = [];
-	let nodeToModel: (Model)[] = [];
+	let rootModels: (StaticModel | SkinnedModel)[] = [];
+	let nodeToModel: (StaticModel | SkinnedModel)[] = [];
 	nodeToModel.length = meshes.length;
 
 	// set up children
 	const nodes = json.scenes[0].nodes;
 	for (let i = 0; i < nodes.length; ++i) {
-		const createModelRecursive = (index: number, parent: Model | null = null): Model => {
+		const createModelRecursive = (index: number, parent: ModelBase | null = null): StaticModel | SkinnedModel => {
 			let m;
 			const meshData = meshes[index];
 
 			if (meshData.skinned) {
 				m = new SkinnedModel();
 				m.inverseBindMatrices = meshData.inverseBindMatrices;
+				m.mesh.genBuffers(meshData.primitives);
 			} else {
-				m = new Model();
+				m = new StaticModel();
+				m.mesh.genBuffers(meshData.primitives);
 			}
 
-			m.mesh.genBuffers(meshData.primitives);
 			m.transform.position = meshData.translation;
 			m.transform.rotation = meshData.rotation;
 			m.transform.scale = meshData.scale;
@@ -194,7 +195,7 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (Model |
 	// set up joints
 	for (let i = 0; i < nodeToModel.length; ++i) {
 		if (nodeToModel[i].skinned) {
-			let joints: Model[] = [];
+			let joints: ModelBase[] = [];
 			joints.length = meshes[i].joints.length;
 			for (let j = 0; j < meshes[i].joints.length; ++j) {
 				joints[j] = nodeToModel[meshes[i].joints[j]];
@@ -231,11 +232,15 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 		let joints: number[] = [];
 		let inverseBindMatrices: mat4[] = [];
 
+		if (node.skin != null)
+			skinned = true;
+
 		let primitives: PrimitiveData[] = [];
 		if (node.mesh != null) {
+
 			const meshIndex = node.mesh;
 			for (let i = 0; i < json.meshes[meshIndex].primitives.length; ++i) {
-				const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix);
+				const p = loadPrimitive(json.meshes[meshIndex].primitives[i], json, buffers, texPrefix, skinned);
 				if (!p) {
 					// todo: return error model
 					return getErrorData();
@@ -243,8 +248,7 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 				primitives.push(p);
 			}
 
-			if (node.skin != null) {
-				skinned = true;
+			if (skinned) {
 				joints = json.skins[node.skin].joints;
 
 				// load inverse bind matrices
@@ -329,7 +333,7 @@ function assertAccessor(accessor: any, componentType: number, accessorType: stri
 	return true;
 }
 
-function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPrefix: string): PrimitiveData | null {
+function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPrefix: string, skinned: boolean = false): PrimitiveData | null {
 	const attributes = primitive.attributes;
 
 	const positionIndex = attributes["POSITION"];
@@ -340,6 +344,17 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 	const positionAccessor = json.accessors[positionIndex];
 	const texCoordAccessor = json.accessors[texCoordIndex];
 	const indicesAccessor = json.accessors[indicesIndex];
+
+	let boneIdsAccessor;
+	let weightsAccessor;
+
+	if (skinned) {
+		const boneIdsIndex = attributes["JOINTS_0"];
+		boneIdsAccessor = json.accessors[boneIdsIndex];
+
+		const weightsIndex = attributes["WEIGHTS_0"];
+		weightsAccessor = json.accessors[weightsIndex];
+	}
 
 	// asserts
 	if (!assertAccessor(positionAccessor, componentTypes.FLOAT, accessorTypes.VEC3)) {
@@ -354,9 +369,27 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 		return null;
 	}
 
+	if (skinned) {
+		if (!assertAccessor(boneIdsAccessor, componentTypes.UNSIGNED_BYTE, accessorTypes.VEC4)) {
+			return null;
+		}
+
+		if (!assertAccessor(weightsAccessor, componentTypes.FLOAT, accessorTypes.VEC4)) {
+			return null;
+		}
+	}
+
 	const positionBufferView = json.bufferViews[positionAccessor.bufferView];
 	const texCoordBufferView = json.bufferViews[texCoordAccessor.bufferView];
 	const indicesBufferView = json.bufferViews[indicesAccessor.bufferView];
+
+	let boneIdsBufferView;
+	let weightsBufferView;
+
+	if (skinned) {
+		boneIdsBufferView = json.bufferViews[boneIdsAccessor.bufferView];
+		weightsBufferView = json.bufferViews[weightsAccessor.bufferView];
+	}
 
 	const positionBuffer = new DataView(buffers[positionBufferView.buffer].buffer,
 		buffers[positionBufferView.buffer].byteOffset + positionBufferView.byteOffset);
@@ -365,23 +398,46 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 	const indicesBuffer = new DataView(buffers[indicesBufferView.buffer].buffer,
 		buffers[indicesBufferView.buffer].byteOffset + indicesBufferView.byteOffset);
 
+	let boneIdsBuffer;
+	let weightsBuffer;
+
+	if (skinned) {
+		boneIdsBuffer = new DataView(buffers[boneIdsBufferView.buffer].buffer,
+			buffers[boneIdsBufferView.buffer].byteOffset + boneIdsBufferView.byteOffset);
+		weightsBuffer = new DataView(buffers[weightsBufferView.buffer].buffer,
+			buffers[weightsBufferView.buffer].byteOffset + weightsBufferView.byteOffset);
+	}
+
 	// positions
 	let vertices: number[] = [];
-
 	for (let i = 0; i < positionAccessor.count * 3; ++i) {
 		vertices[i] = positionBuffer.getFloat32(i * 4, true);
 	}
 
-	// positions
+	// tex coords
 	let texCoords: number[] = [];
-
 	for (let i = 0; i < texCoordAccessor.count * 2; ++i) {
 		texCoords[i] = texCoordBuffer.getFloat32(i * 4, true);
 	}
 
+	// bone ids
+	let boneIds: number[] = [];
+	if (skinned && boneIdsBuffer) {
+		for (let i = 0; i < boneIdsAccessor.count * 4; ++i) {
+			boneIds[i] = boneIdsBuffer.getUint8(i);
+		}
+	}
+
+	// weights
+	let weights: number[] = [];
+	if (skinned && weightsBuffer) {
+		for (let i = 0; i < weightsAccessor.count * 4; ++i) {
+			weights[i] = weightsBuffer.getFloat32(i * 4, true);
+		}
+	}
+
 	// indices
 	let indices: number[] = [];
-
 	for (let i = 0; i < indicesAccessor.count; ++i) {
 		indices[i] = indicesBuffer.getUint16(i * 2, true);
 	}
@@ -414,6 +470,8 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 		texCoords: new Float32Array(texCoords),
 		elements: new Uint16Array(indices),
 		color: color,
+		boneIds: new Uint8Array(boneIds),
+		weights: new Float32Array(weights),
 
 		textureUris: uris
 	};

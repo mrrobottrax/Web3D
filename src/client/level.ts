@@ -1,12 +1,12 @@
 import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
-import { Model } from "./mesh/model.js";
+import { SkinnedModel, StaticModel } from "./mesh/model.js";
 import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
 
 export class Level {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
-	models: Model[] = [];
+	models: (StaticModel | SkinnedModel)[] = [];
 }
 
 export let currentLevel: Level;

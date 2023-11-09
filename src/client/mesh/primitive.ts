@@ -19,6 +19,8 @@ export interface PrimitiveData {
 	positions: Float32Array;
 	texCoords: Float32Array;
 	elements: Uint16Array;
+	weights: Float32Array;
+	boneIds: Uint8Array;
 	color: number[];
 
 	textureUris: string[];
