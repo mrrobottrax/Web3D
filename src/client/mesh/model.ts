@@ -18,6 +18,8 @@ export class ModelBase {
 	parent: ModelBase | null = null;
 
 	skinned: boolean = false;
+
+	animations: Animation[] = [];
 }
 
 export class StaticModel extends ModelBase {

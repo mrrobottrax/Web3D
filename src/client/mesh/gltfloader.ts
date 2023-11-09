@@ -204,6 +204,10 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticM
 		}
 	}
 
+	if (json.animations) {
+		console.log("HAS ANIMATION!");
+	}
+
 	return rootModels;
 }
 
