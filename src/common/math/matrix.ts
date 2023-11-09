@@ -24,6 +24,21 @@ export class mat4 {
 		this.values[column * 4 + row] = value;
 	}
 
+	setIdentity() {
+		for (let row = 0; row < 4; ++row) {
+			for (let column = 0; column < 4; ++column) {
+				this.setValue(column, row, column == row ? 1 : 0);
+			}
+		}
+	}
+
+	set(mat: mat4) {
+		const matData = mat.getData();
+
+		for (let i = 0; i < this.values.length; ++i)
+			this.values[i] = matData[i];
+	}
+
 	getValue(column: number, row: number): number {
 		return this.values[column * 4 + row];
 	}

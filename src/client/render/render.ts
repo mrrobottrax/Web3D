@@ -67,6 +67,17 @@ export function drawFrame(client: Client): void {
 	drawUi();
 }
 
+function updateWorldMatrix(model: Model, baseMat: mat4 = mat4.identity()) {
+	model.worldMatrix.set(baseMat);
+	model.worldMatrix.translate(model.position);
+	model.worldMatrix.rotate(model.rotation);
+	model.worldMatrix.scale(model.scale);
+
+	for (let i = 0; i < model.children.length; ++i) {
+		updateWorldMatrix(model.children[i], model.worldMatrix);
+	}
+}
+
 function drawDebug(player: SharedPlayer) {
 	// draw lines
 	gl.useProgram(solidShader.program);
@@ -145,13 +156,22 @@ function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<S
 	let mat = mat4.identity();
 	mat.rotate(localPlayer.camRotation);
 	mat.translate(camPos.inverse());
-	if (debugModel)
+	if (debugModel) {
+		updateWorldMatrix(debugModel);
 		drawModel(debugModel, mat, skinnedShader.colorUnif, skinnedShader.modelViewMatrixUnif, skinnedShader.samplerUnif, true);
+	}
 
 	gl.useProgram(null);
 }
 
 function drawLevel(player: SharedPlayer) {
+	// update world matrices
+	if (currentLevel != undefined) {
+		for (let i = 0; i < currentLevel.models.length; ++i) {
+			updateWorldMatrix(currentLevel.models[i]);
+		}
+	}
+
 	gl.useProgram(defaultShader.program);
 
 	let mat = mat4.identity();
@@ -169,15 +189,13 @@ function drawLevel(player: SharedPlayer) {
 
 function drawModel(model: Model, mat: mat4,
 	colorUnif: WebGLUniformLocation | null, modelViewMatrixUnif: WebGLUniformLocation | null, samplerUnif: WebGLUniformLocation | null, debug: boolean = false) {
-	let _mat = mat.copy();
-	_mat.translate(model.position);
-	_mat.rotate(model.rotation);
-	_mat.scale(model.scale);
 
+	let _mat = mat.copy();
+	_mat = _mat.multiply(model.worldMatrix);
 	drawMesh(model.mesh, _mat, colorUnif, modelViewMatrixUnif, samplerUnif);
 
 	for (let i = 0; i < model.children.length; ++i) {
-		drawModel(model.children[i], _mat, colorUnif, modelViewMatrixUnif, samplerUnif, debug);
+		drawModel(model.children[i], mat, colorUnif, modelViewMatrixUnif, samplerUnif, debug);
 	}
 }
 

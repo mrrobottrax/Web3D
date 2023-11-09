@@ -143,6 +143,10 @@ export  class vec3 {
 		return new vec3(0, 0, 0);
 	}
 
+	public static one(): vec3 {
+		return new vec3(1, 1, 1);
+	}
+
 	public static cross(a: vec3, b: vec3): vec3 {
 		return new vec3(
 			a.y * b.z - a.z * b.y,
