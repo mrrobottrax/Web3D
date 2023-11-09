@@ -160,7 +160,7 @@ function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<S
 	// debug model!
 	if (debugModel) {
 		updateWorldMatrix(debugModel);
-		drawModelSkinned(debugModel, viewMatrix, skinnedShader, true);
+		drawModelSkinned(debugModel, viewMatrix, skinnedShader);
 	}
 
 	gl.useProgram(null);
@@ -185,7 +185,7 @@ function drawLevel(player: SharedPlayer) {
 	gl.useProgram(null);
 }
 
-function drawModel(model: ModelBase, mat: mat4, shader: UninstancedShaderBase, debug: boolean = false) {
+function drawModel(model: ModelBase, mat: mat4, shader: UninstancedShaderBase) {
 	let _mat = mat.multiply(model.transform.worldMatrix);
 	if (!model.skinned)
 		drawMesh((model as StaticModel).mesh, _mat, shader);
@@ -195,10 +195,26 @@ function drawModel(model: ModelBase, mat: mat4, shader: UninstancedShaderBase, d
 	}
 }
 
-function drawModelSkinned(model: ModelBase, mat: mat4, shader: UninstancedShaderBase, debug: boolean = false) {
+function drawModelSkinned(model: ModelBase, mat: mat4, shader: UninstancedShaderBase) {
 	let _mat = mat.multiply(model.transform.worldMatrix);
 	if (model.skinned) {
-		drawMeshSkinned((model as SkinnedModel).mesh, _mat, shader);
+		const skinnedModel = model as SkinnedModel;
+		
+		// create bone matrices
+		let floatArray: Float32Array = new Float32Array(skinnedModel.inverseBindMatrices.length * 16);
+		for (let i = 0; i < skinnedModel.inverseBindMatrices.length; ++i) {
+			let mat = skinnedModel.inverseBindMatrices[i];
+			const arr2 = mat.multiply(skinnedModel.joints[i].transform.worldMatrix).getData();
+			
+			for (let j = 0; j < 16; ++j) {
+				floatArray[i * 16 + j] = arr2[j];
+			}
+		}
+
+		skinnedModel.joints[2].transform.position.x += Time.deltaTime * 0.1;
+
+		gl.uniformMatrix4fv(skinnedShader.boneMatricesUnif, false, floatArray);
+		drawMeshSkinned(skinnedModel.mesh, _mat, shader);
 	}
 	else
 		drawMesh((model as StaticModel).mesh, _mat, shader); // TODO: remove later, causes shader errors

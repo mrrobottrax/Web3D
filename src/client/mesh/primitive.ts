@@ -19,7 +19,7 @@ export interface PrimitiveData {
 	positions: Uint8Array;
 	texCoords: Uint8Array;
 	elements: Uint16Array;
-	weights: Float32Array;
+	weights: Uint8Array;
 	boneIds: Uint8Array;
 	color: number[];
 	skinned: boolean;

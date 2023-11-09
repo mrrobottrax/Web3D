@@ -1,15 +1,15 @@
 import { quaternion, vec3 } from "./vector";
 
 export class mat4 {
-	private values: number[];
+	private values: Float32Array;
 
 	constructor(n: number) {
-		this.values = [
+		this.values = new Float32Array([
 			n, 0, 0, 0,
 			0, n, 0, 0,
 			0, 0, n, 0,
 			0, 0, 0, n,
-		];
+		]);
 	}
 
 	static identity() {
@@ -43,7 +43,7 @@ export class mat4 {
 		return this.values[column * 4 + row];
 	}
 
-	getData() {
+	getData(): Float32Array {
 		return this.values;
 	}
 

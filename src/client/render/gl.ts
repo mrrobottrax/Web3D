@@ -61,13 +61,15 @@ export let defaultShader: DefaultShader = {
 };
 
 interface SkinnedShaderBase extends UninstancedShaderBase {
+	boneMatricesUnif: WebGLUniformLocation | null
 }
 export let skinnedShader: SkinnedShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	samplerUnif: null,
 	projectionMatrixUnif: null,
-	colorUnif: null
+	colorUnif: null,
+	boneMatricesUnif: null
 };
 
 interface UiShader extends UninstancedShaderBase {
@@ -215,6 +217,7 @@ export async function initGl(): Promise<void> {
 	skinnedShader.projectionMatrixUnif = gl.getUniformLocation(skinnedShader.program, "uProjectionMatrix");
 	skinnedShader.samplerUnif = gl.getUniformLocation(skinnedShader.program, "uSampler");
 	skinnedShader.colorUnif = gl.getUniformLocation(skinnedShader.program, "uColor");
+	skinnedShader.boneMatricesUnif = gl.getUniformLocation(skinnedShader.program, "uBoneMatrices");
 
 	lineBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
@@ -302,6 +305,8 @@ function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | n
 
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.positionAttrib, "aVertexPosition");
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.texCoordAttrib, "aTexCoord");
+	gl.bindAttribLocation(shaderProgram, SharedAttribs.boneIdsAttrib, "aBoneIds");
+	gl.bindAttribLocation(shaderProgram, SharedAttribs.boneWeightsAttrib, "aBoneWeights");
 
 	gl.linkProgram(shaderProgram);
 

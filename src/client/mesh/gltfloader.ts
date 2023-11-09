@@ -471,7 +471,7 @@ function loadPrimitive(primitive: any, json: any, buffers: Uint8Array[], texPref
 		elements: new Uint16Array(indices),
 		color: color,
 		boneIds: new Uint8Array(boneIds),
-		weights: new Float32Array(weights),
+		weights: new Uint8Array(new Float32Array(weights).buffer),
 		skinned: skinned,
 
 		textureUris: uris
