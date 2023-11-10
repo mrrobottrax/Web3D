@@ -4,7 +4,7 @@ import { Mesh } from "./mesh.js";
 import { StaticModel, SkinnedModel, ModelBase } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
 
-export async function loadGltfFromWeb(url: string): Promise<(StaticModel | SkinnedModel)[]> {
+export async function loadGltfFromWeb(url: string): Promise<(StaticModel | SkinnedModel)> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();
@@ -22,15 +22,15 @@ export async function loadGltfFromWeb(url: string): Promise<(StaticModel | Skinn
 	req2.open("GET", url + ".bin");
 	req2.send();
 
-	let models: (StaticModel | SkinnedModel)[] = [];
+	let model: (StaticModel | SkinnedModel) = new ModelBase();
 
 	// get model from requests
 	await Promise.all([promise1, promise2]).then((results) => {
 		if (results[0].status != 200 || results[1].status != 200) {
-			return models;
+			return model;
 		}
 
-		models = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)], url.substring(0, url.lastIndexOf('/') + 1));
+		model = loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)], url.substring(0, url.lastIndexOf('/') + 1));
 	});
 
 	// fall back when request fails
@@ -40,7 +40,7 @@ export async function loadGltfFromWeb(url: string): Promise<(StaticModel | Skinn
 	//	shader = initShaderProgram(fallbackVSource, fallbackFSource);
 	//}
 
-	return models;
+	return model;
 }
 
 export async function loadGlbFromWeb(url: string): Promise<Mesh | null> {
@@ -151,7 +151,7 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticModel | SkinnedModel)[] {
+function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticModel | SkinnedModel) {
 	let meshes: MeshData[] = getGltfMeshData(json, buffers, texPrefix);
 	let rootModels: (StaticModel | SkinnedModel)[] = [];
 	let nodeToModel: (StaticModel | SkinnedModel)[] = [];
@@ -208,7 +208,13 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticM
 		console.log("HAS ANIMATION!");
 	}
 
-	return rootModels;
+	const baseModel = new StaticModel();
+	baseModel.children = rootModels;
+	for (let i = 0; i < baseModel.children.length; ++i) {
+		baseModel.children[i].parent = baseModel;
+	}
+
+	return baseModel;
 }
 
 function getErrorData(): MeshData[] {

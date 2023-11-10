@@ -21,8 +21,8 @@ export let uiMatrix: mat4;
 
 let debugModel: StaticModel | SkinnedModel;
 export async function initRender() {
-	debugModel = (await loadGltfFromWeb("./data/models/skintest"))[0];
-	debugModel.transform.position = new vec3(0, 0, 0);
+	debugModel = await loadGltfFromWeb("./data/models/skintest");
+	debugModel.transform.position = new vec3(0, 2, 0);
 }
 
 export function initProjection() {
@@ -169,17 +169,13 @@ function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<S
 function drawLevel(player: SharedPlayer) {
 	// update world matrices
 	if (currentLevel != undefined) {
-		for (let i = 0; i < currentLevel.models.length; ++i) {
-			updateWorldMatrix(currentLevel.models[i]);
-		}
+		updateWorldMatrix(currentLevel.model);
 	}
 
 	gl.useProgram(defaultShader.program);
 
 	if (currentLevel != undefined) {
-		for (let i = 0; i < currentLevel.models.length; ++i) {
-			drawModel(currentLevel.models[i], viewMatrix, defaultShader);
-		}
+		drawModel(currentLevel.model, viewMatrix, defaultShader);
 	}
 
 	gl.useProgram(null);
@@ -199,13 +195,13 @@ function drawModelSkinned(model: ModelBase, mat: mat4, shader: UninstancedShader
 	let _mat = mat.multiply(model.transform.worldMatrix);
 	if (model.skinned) {
 		const skinnedModel = model as SkinnedModel;
-		
+
 		// create bone matrices
 		let floatArray: Float32Array = new Float32Array(skinnedModel.inverseBindMatrices.length * 16);
 		for (let i = 0; i < skinnedModel.inverseBindMatrices.length; ++i) {
 			let mat = skinnedModel.inverseBindMatrices[i];
 			const arr2 = mat.multiply(skinnedModel.joints[i].transform.worldMatrix).getData();
-			
+
 			for (let j = 0; j < 16; ++j) {
 				floatArray[i * 16 + j] = arr2[j];
 			}
@@ -215,9 +211,12 @@ function drawModelSkinned(model: ModelBase, mat: mat4, shader: UninstancedShader
 
 		gl.uniformMatrix4fv(skinnedShader.boneMatricesUnif, false, floatArray);
 		drawMeshSkinned(skinnedModel.mesh, _mat, shader);
+	} else {
+		const start = vec3.origin().multMat4(_mat);
+		const end = new vec3(0, 0.5, 0).multMat4(_mat);
+		drawLineScreen(start, end, [0, 1, 1, 1], 0);
 	}
-	else
-		drawMesh((model as StaticModel).mesh, _mat, shader); // TODO: remove later, causes shader errors
+
 
 	for (let i = 0; i < model.children.length; ++i) {
 		drawModelSkinned(model.children[i], mat, shader);
@@ -225,28 +224,12 @@ function drawModelSkinned(model: ModelBase, mat: mat4, shader: UninstancedShader
 }
 
 function drawMesh(mesh: Mesh, mat: mat4, shader: UninstancedShaderBase) {
-	// bone
-	if (mesh.primitives.length == 0) {
-		const start = new vec3(0, 0, 0).multMat4(mat);
-		const end = new vec3(0, 0.5, 0).multMat4(mat);
-		drawLineScreen(start, end, [0, 1, 1, 1], 0);
-		return;
-	}
-
 	for (let i = 0; i < mesh.primitives.length; ++i) {
 		drawPrimitive(mesh.primitives[i], mat, shader);
 	}
 }
 
 function drawMeshSkinned(mesh: Mesh, mat: mat4, shader: UninstancedShaderBase) {
-	// bone
-	if (mesh.primitives.length == 0) {
-		const start = new vec3(0, 0, 0).multMat4(mat);
-		const end = new vec3(0, 0.5, 0).multMat4(mat);
-		drawLineScreen(start, end, [0, 1, 1, 1], 0);
-		return;
-	}
-
 	for (let i = 0; i < mesh.primitives.length; ++i) {
 		drawPrimitive(mesh.primitives[i], mat, shader);
 	}

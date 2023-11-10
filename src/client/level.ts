@@ -1,12 +1,12 @@
 import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
-import { SkinnedModel, StaticModel } from "./mesh/model.js";
+import { ModelBase, SkinnedModel, StaticModel } from "./mesh/model.js";
 import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
 
 export class Level {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
-	models: (StaticModel | SkinnedModel)[] = [];
+	model: (StaticModel | SkinnedModel) = new ModelBase();
 }
 
 export let currentLevel: Level;
@@ -28,9 +28,9 @@ export async function setLevelClient(url: string): Promise<void> {
 	}
 
 	const file: LevelFile = JSON.parse(res.response);
-	const models = loadGltfFromWeb(url);
+	const model = loadGltfFromWeb(url);
 
-	if (!models) {
+	if (!model) {
 		console.error("Failed to load level model");
 		return;
 	}
@@ -38,5 +38,5 @@ export async function setLevelClient(url: string): Promise<void> {
 	currentLevel = new Level();
 	currentLevel.collision = file.collision;
 	setLevelCollision(currentLevel.collision);
-	currentLevel.models = await models;
+	currentLevel.model = await model;
 }
