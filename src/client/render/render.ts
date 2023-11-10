@@ -23,9 +23,10 @@ export let uiMatrix: mat4;
 
 let debugModel: GameObject;
 export async function initRender() {
-	debugModel = await loadGltfFromWeb("./data/models/skintest");
+	debugModel = await loadGltfFromWeb("./data/models/sci_player");
 	debugModel.transform.position = new vec3(0, 2, 0);
-	(debugModel as AnimatedGameObject).controller.currentAnimation = (debugModel as AnimatedGameObject).animations[0];
+	console.log(debugModel);
+	// (debugModel as AnimatedGameObject).controller.currentAnimation = (debugModel as AnimatedGameObject).animations[0];
 }
 
 export function initProjection() {
@@ -104,9 +105,9 @@ export function drawFrame(client: Client): void {
 
 function updateWorldMatrix(transform: Transform, baseMat: mat4 = mat4.identity()) {
 	transform.worldMatrix.set(baseMat);
-	transform.worldMatrix.translate(transform.position);
-	transform.worldMatrix.rotate(transform.rotation);
 	transform.worldMatrix.scale(transform.scale);
+	transform.worldMatrix.rotate(transform.rotation);
+	transform.worldMatrix.translate(transform.position);
 
 	for (let i = 0; i < transform.children.length; ++i) {
 		updateWorldMatrix(transform.children[i], transform.worldMatrix);
