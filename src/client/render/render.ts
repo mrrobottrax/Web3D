@@ -10,8 +10,9 @@ import { drawUi } from "./ui.js";
 import { SharedPlayer } from "../../sharedplayer.js";
 import { Client } from "../client.js";
 import { loadGltfFromWeb } from "../mesh/gltfloader.js";
-import { PropBase, SkinnedProp, StaticProp } from "../mesh/prop.js";
+import { AnimatedGameObject, SkinnedProp, StaticProp } from "../mesh/prop.js";
 import { Transform } from "../../componentsystem/transform.js";
+import { GameObject } from "../../componentsystem/gameobject.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -20,10 +21,11 @@ let perspectiveMatrix: mat4;
 let viewMatrix: mat4 = mat4.identity();
 export let uiMatrix: mat4;
 
-let debugModel: SkinnedProp;
+let debugModel: GameObject;
 export async function initRender() {
-	debugModel = (await loadGltfFromWeb("./data/models/skintest")) as SkinnedProp;
+	debugModel = await loadGltfFromWeb("./data/models/skintest");
 	debugModel.transform.position = new vec3(0, 2, 0);
+	(debugModel as AnimatedGameObject).controller.currentAnimation = (debugModel as AnimatedGameObject).animations[0];
 }
 
 export function initProjection() {
@@ -68,7 +70,12 @@ export function drawFrame(client: Client): void {
 
 	if (currentLevel != undefined) {
 		for (let i = 0; i < gameobjectsList.length; ++i) {
-			// update world matrices
+			// animations
+			if (gameobjectsList[i] instanceof AnimatedGameObject) {
+				(gameobjectsList[i] as AnimatedGameObject).controller.frame();
+			}
+
+			// update positions
 			updateWorldMatrix(gameobjectsList[i].transform);
 		}
 
@@ -204,8 +211,6 @@ function drawModelSkinned(model: SkinnedProp, mat: mat4, shader: UninstancedShad
 		const end = new vec3(0, 0.5, 0).multMat4(joint.worldMatrix);
 		drawLine(start, end, [0, 1, 1, 1], 0);
 	}
-
-	skinnedModel.joints[2].position.x += Time.deltaTime * 0.1;
 
 	gl.uniformMatrix4fv(skinnedShader.boneMatricesUnif, false, floatArray);
 	drawMeshSkinned(skinnedModel.mesh, _mat, shader);

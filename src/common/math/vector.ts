@@ -205,6 +205,10 @@ export class quaternion {
 		return this.eulerRad(_x, _y, _z);
 	}
 
+	public static lerp(a: quaternion, b: quaternion, t: number): quaternion {
+		return new quaternion(gMath.lerp(a.w, b.w, t), gMath.lerp(a.x, b.x, t), gMath.lerp(a.y, b.y, t), gMath.lerp(a.z, b.z, t)).normalised();
+	}
+
 	public static eulerRad(x: number, y: number, z: number): quaternion {
 		const cx = Math.cos(x * 0.5);
 		const sx = Math.sin(x * 0.5);
@@ -234,6 +238,11 @@ export class quaternion {
 		this.x /= squared_norm;
 		this.y /= squared_norm;
 		this.z /= squared_norm;
+	}
+
+	public normalised(): quaternion {
+		this.normalise();
+		return this;
 	}
 
 	public toMatrix(): mat4 {

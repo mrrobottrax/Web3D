@@ -1,5 +1,5 @@
 import { GameObject } from "../../componentsystem/gameobject.js";
-import { Animation } from "../animation.js";
+import { Animation, AnimationController } from "../animation.js";
 import { SkinnedMeshRenderer, StaticMeshRenderer } from "./meshrenderer.js";
 
 export class PropBase extends GameObject {
@@ -14,14 +14,11 @@ export class DynamicProp extends PropBase {
 
 }
 
-class AnimatedPropBase extends DynamicProp {
+export class AnimatedGameObject extends GameObject {
 	animations: Animation[] = [];
+	controller!: AnimationController;
 }
 
-export class AnimatedProp extends AnimatedPropBase {
-	meshRenderer!: StaticMeshRenderer;
-}
-
-export class SkinnedProp extends AnimatedPropBase {
+export class SkinnedProp extends DynamicProp {
 	meshRenderer!: SkinnedMeshRenderer;
 }

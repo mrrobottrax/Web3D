@@ -2,13 +2,13 @@ import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
 import { GameObject } from "../../componentsystem/gameobject.js";
 import { Transform } from "../../componentsystem/transform.js";
-import { Animation, AnimationChannel, ChannelTarget } from "../animation.js";
+import { Animation, AnimationChannel, AnimationController, ChannelTarget } from "../animation.js";
 import { Mesh } from "./mesh.js";
 import { SkinnedMeshRenderer, StaticMeshRenderer } from "./meshrenderer.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
-import { AnimatedProp, PropBase, SkinnedProp, StaticProp } from "./prop.js";
+import { AnimatedGameObject, PropBase, SkinnedProp, StaticProp } from "./prop.js";
 
-export async function loadGltfFromWeb(url: string): Promise<PropBase> {
+export async function loadGltfFromWeb(url: string): Promise<GameObject> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();
@@ -26,7 +26,7 @@ export async function loadGltfFromWeb(url: string): Promise<PropBase> {
 	req2.open("GET", url + ".bin");
 	req2.send();
 
-	let model = new PropBase();
+	let model = new GameObject();
 
 	// get model from requests
 	await Promise.all([promise1, promise2]).then((results) => {
@@ -155,7 +155,7 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): PropBase {
+function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): GameObject {
 	let meshes: MeshData[] = getGltfMeshData(json, buffers, texPrefix);
 	let rootModels: GameObject[] = [];
 	let nodeToModel: GameObject[] = [];
@@ -164,7 +164,7 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): PropBase
 	// set up children
 	const nodes = json.scenes[0].nodes;
 	for (let i = 0; i < nodes.length; ++i) {
-		const createModelRecursive = (index: number, parent: Transform | null = null): PropBase => {
+		const createModelRecursive = (index: number, parent: Transform | null = null): GameObject => {
 			let renderer;
 			let prop;
 			const meshData = meshes[index];
@@ -216,17 +216,13 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): PropBase
 		}
 	}
 
-	const baseModel = new GameObject();
-	for (let i = 0; i < rootModels.length; ++i) {
-		baseModel.transform.children[i] = rootModels[i].transform;
-		baseModel.transform.children[i].parent = baseModel.transform;
-	}
+	let baseModel
 
 	// animations
 	if (json.animations) {
-		const animatedBaseModel = baseModel as AnimatedProp;
-		animatedBaseModel.animations = [];
-		animatedBaseModel.animations.length = json.animations.length;
+		baseModel = new AnimatedGameObject();
+		baseModel.animations = [];
+		baseModel.animations.length = json.animations.length;
 		for (let i = 0; i < json.animations.length; ++i) {
 			const anim = json.animations[i];
 			let animation = new Animation(anim.name);
@@ -300,10 +296,16 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): PropBase
 				animation.channels.push(channelObj);
 			}
 			animation.length = maxTime;
-			animatedBaseModel.animations[i] = animation;
-			console.log(animatedBaseModel);
-			return animatedBaseModel;
+			baseModel.animations[i] = animation;
+			baseModel.controller = new AnimationController();
 		}
+	} else {
+		baseModel = new GameObject();
+	}
+	
+	for (let i = 0; i < rootModels.length; ++i) {
+		baseModel.transform.children[i] = rootModels[i].transform;
+		baseModel.transform.children[i].parent = baseModel.transform;
 	}
 
 	return baseModel;
