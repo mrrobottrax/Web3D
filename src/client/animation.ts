@@ -20,15 +20,38 @@ export class AnimationChannel {
 	keyframes: Keyframe[] = [];
 	currentKeyframe: number = 0;
 
-	constructor (target: ModelBase, channel: ChannelTarget) {
-		this.targetChannel = channel;
+	constructor(target: ModelBase, path: string) {
+		switch (path) {
+			case "translation":
+				this.targetChannel = ChannelTarget.translation;
+				break;
+			case "rotation":
+				this.targetChannel = ChannelTarget.rotation;
+				break;
+			case "scale":
+				this.targetChannel = ChannelTarget.scale;
+				break;
+			case "weights":
+				this.targetChannel = ChannelTarget.weights;
+				break;
+			default:
+				console.error("Error: Unknown path!");
+				this.targetChannel = ChannelTarget.none;
+				break
+		}
+
 		this.target = target;
 	}
 }
 
 export class Animation {
+	name: string;
 	length: number = 0;
 	channels: AnimationChannel[] = [];
+
+	constructor(name: string) {
+		this.name = name;
+	}
 }
 
 export class AnimationController {

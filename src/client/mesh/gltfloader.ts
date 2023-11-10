@@ -1,5 +1,6 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
+import { Animation, AnimationChannel, ChannelTarget } from "../animation.js";
 import { Mesh } from "./mesh.js";
 import { StaticModel, SkinnedModel, ModelBase } from "./model.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
@@ -204,14 +205,90 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticM
 		}
 	}
 
-	if (json.animations) {
-		console.log("HAS ANIMATION!");
-	}
-
 	const baseModel = new StaticModel();
 	baseModel.children = rootModels;
 	for (let i = 0; i < baseModel.children.length; ++i) {
 		baseModel.children[i].parent = baseModel;
+	}
+
+	// animations
+	if (json.animations) {
+		for (let i = 0; i < json.animations.length; ++i) {
+			const anim = json.animations[i];
+			let animation = new Animation(anim.name);
+
+			let maxTime = 0;
+			for (let i = 0; i < anim.channels.length; ++i) {
+				const channel = anim.channels[i];
+				const target = channel.target;
+				const sampler = anim.samplers[channel.sampler];
+
+				const targetObject = nodeToModel[target.node];
+
+				const inAccessor = json.accessors[sampler.input];
+				const outAccessor = json.accessors[sampler.output];
+
+				const inBufferView = json.bufferViews[inAccessor.bufferView];
+				const outBufferView = json.bufferViews[outAccessor.bufferView];
+
+				let channelObj = new AnimationChannel(targetObject, target.path);
+
+				const inBuffer = new DataView(buffers[inBufferView.buffer].buffer,
+					buffers[inBufferView.buffer].byteOffset + inBufferView.byteOffset);
+				const outBuffer = new DataView(buffers[outBufferView.buffer].buffer,
+					buffers[outBufferView.buffer].byteOffset + outBufferView.byteOffset);
+
+				channelObj.keyframes.length = inAccessor.count;
+				for (let i = 0; i < inAccessor.count; ++i) {
+					const t = inBuffer.getFloat32(i * 4, true);
+
+					let value;
+
+					switch (channelObj.targetChannel) {
+						case ChannelTarget.translation:
+							value = new vec3(
+								outBuffer.getFloat32(i * 12, true),
+								outBuffer.getFloat32(i * 12 + 4, true),
+								outBuffer.getFloat32(i * 12 + 8, true)
+							);
+							break;
+						case ChannelTarget.rotation:
+							value = new quaternion(
+								outBuffer.getFloat32(i * 16 + 12, true),
+								outBuffer.getFloat32(i * 16, true),
+								outBuffer.getFloat32(i * 16 + 4, true),
+								outBuffer.getFloat32(i * 16 + 8, true)
+							);
+							break;
+						case ChannelTarget.scale:
+							value = new vec3(
+								outBuffer.getFloat32(i * 12, true),
+								outBuffer.getFloat32(i * 12 + 4, true),
+								outBuffer.getFloat32(i * 12 + 8, true)
+							);
+							break;
+						case ChannelTarget.weights:
+							console.error("Weights not implemented");
+							return baseModel;
+							break;
+
+						default:
+							console.error("Unknown target");
+							return baseModel;
+					}
+
+					maxTime = Math.max(maxTime, t);
+
+					channelObj.keyframes[i] = {
+						time: t,
+						value: value
+					}
+				}
+				animation.channels.push(channelObj);
+			}
+			animation.length = maxTime;
+			baseModel.animations.push(animation);
+		}
 	}
 
 	return baseModel;

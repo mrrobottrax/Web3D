@@ -1,5 +1,6 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
+import { Animation } from "../animation.js";
 import { Mesh } from "./mesh.js";
 
 export class Transform {
