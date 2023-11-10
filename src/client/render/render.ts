@@ -2,15 +2,16 @@ import { UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties,
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Mesh } from "../mesh/mesh.js";
-import { StaticModel, ModelBase, SkinnedModel } from "../mesh/model.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { Primitive } from "../mesh/primitive.js";
-import { currentLevel } from "../level.js";
+import { currentLevel, gameobjectsList } from "../level.js";
 import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
 import { SharedPlayer } from "../../sharedplayer.js";
 import { Client } from "../client.js";
 import { loadGltfFromWeb } from "../mesh/gltfloader.js";
+import { PropBase, SkinnedProp, StaticProp } from "../mesh/prop.js";
+import { Transform } from "../../componentsystem/transform.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -19,9 +20,9 @@ let perspectiveMatrix: mat4;
 let viewMatrix: mat4 = mat4.identity();
 export let uiMatrix: mat4;
 
-let debugModel: StaticModel | SkinnedModel;
+let debugModel: SkinnedProp;
 export async function initRender() {
-	debugModel = await loadGltfFromWeb("./data/models/skintest");
+	debugModel = (await loadGltfFromWeb("./data/models/skintest")) as SkinnedProp;
 	debugModel.transform.position = new vec3(0, 2, 0);
 }
 
@@ -65,21 +66,43 @@ export function drawFrame(client: Client): void {
 	viewMatrix.rotate(client.localPlayer.camRotation);
 	viewMatrix.translate(camPos.inverse());
 
-	drawLevel(client.localPlayer);
-	drawPlayers(client.localPlayer, client.otherPlayers.values());
+	if (currentLevel != undefined) {
+		for (let i = 0; i < gameobjectsList.length; ++i) {
+			// update world matrices
+			updateWorldMatrix(gameobjectsList[i].transform);
+		}
+
+		gl.useProgram(defaultShader.program);
+		for (let i = 0; i < gameobjectsList.length; ++i) {
+			// draw regular shaded stuff
+			if (gameobjectsList[i] instanceof StaticProp)
+				drawModelStatic(gameobjectsList[i] as StaticProp, viewMatrix, defaultShader);
+		}
+
+		gl.useProgram(skinnedShader.program);
+		for (let i = 0; i < gameobjectsList.length; ++i) {
+			// draw skinned meshes
+			if (gameobjectsList[i] instanceof SkinnedProp)
+				drawModelSkinned(gameobjectsList[i] as SkinnedProp, viewMatrix, skinnedShader);
+		}
+
+		gl.useProgram(null);
+	}
+
+	drawPlayersDebug(client.localPlayer, client.otherPlayers.values());
 	drawDebug(client.localPlayer);
 
 	drawUi();
 }
 
-function updateWorldMatrix(model: ModelBase, baseMat: mat4 = mat4.identity()) {
-	model.transform.worldMatrix.set(baseMat);
-	model.transform.worldMatrix.translate(model.transform.position);
-	model.transform.worldMatrix.rotate(model.transform.rotation);
-	model.transform.worldMatrix.scale(model.transform.scale);
+function updateWorldMatrix(transform: Transform, baseMat: mat4 = mat4.identity()) {
+	transform.worldMatrix.set(baseMat);
+	transform.worldMatrix.translate(transform.position);
+	transform.worldMatrix.rotate(transform.rotation);
+	transform.worldMatrix.scale(transform.scale);
 
-	for (let i = 0; i < model.children.length; ++i) {
-		updateWorldMatrix(model.children[i], model.transform.worldMatrix);
+	for (let i = 0; i < transform.children.length; ++i) {
+		updateWorldMatrix(transform.children[i], transform.worldMatrix);
 	}
 }
 
@@ -150,77 +173,42 @@ function drawDebug(player: SharedPlayer) {
 	gl.useProgram(null);
 }
 
-function drawPlayers(localPlayer: SharedPlayer, otherPlayers: IterableIterator<SharedPlayer>) {
+function drawPlayersDebug(localPlayer: SharedPlayer, otherPlayers: IterableIterator<SharedPlayer>) {
 	for (let player of otherPlayers) {
 		drawLine(player.position, player.position.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
 	}
-
-	gl.useProgram(skinnedShader.program);
-
-	// debug model!
-	if (debugModel) {
-		updateWorldMatrix(debugModel);
-		drawModelSkinned(debugModel, viewMatrix, skinnedShader);
-	}
-
-	gl.useProgram(null);
 }
 
-function drawLevel(player: SharedPlayer) {
-	// update world matrices
-	if (currentLevel != undefined) {
-		updateWorldMatrix(currentLevel.model);
-	}
-
-	gl.useProgram(defaultShader.program);
-
-	if (currentLevel != undefined) {
-		drawModel(currentLevel.model, viewMatrix, defaultShader);
-	}
-
-	gl.useProgram(null);
+function drawModelStatic(model: StaticProp, mat: mat4, shader: UninstancedShaderBase) {
+	drawMesh(model.meshRenderer.mesh, mat.multiply(model.transform.worldMatrix), shader);
 }
 
-function drawModel(model: ModelBase, mat: mat4, shader: UninstancedShaderBase) {
+function drawModelSkinned(model: SkinnedProp, mat: mat4, shader: UninstancedShaderBase) {
 	let _mat = mat.multiply(model.transform.worldMatrix);
-	if (!model.skinned)
-		drawMesh((model as StaticModel).mesh, _mat, shader);
+	const skinnedModel = model.meshRenderer;
 
-	for (let i = 0; i < model.children.length; ++i) {
-		drawModel(model.children[i], mat, shader);
-	}
-}
+	// create bone matrices
+	let floatArray: Float32Array = new Float32Array(skinnedModel.inverseBindMatrices.length * 16);
+	for (let i = 0; i < skinnedModel.inverseBindMatrices.length; ++i) {
+		let mat = skinnedModel.inverseBindMatrices[i];
+		const arr2 = mat.multiply(skinnedModel.joints[i].worldMatrix).getData();
 
-function drawModelSkinned(model: ModelBase, mat: mat4, shader: UninstancedShaderBase) {
-	let _mat = mat.multiply(model.transform.worldMatrix);
-	if (model.skinned) {
-		const skinnedModel = model as SkinnedModel;
-
-		// create bone matrices
-		let floatArray: Float32Array = new Float32Array(skinnedModel.inverseBindMatrices.length * 16);
-		for (let i = 0; i < skinnedModel.inverseBindMatrices.length; ++i) {
-			let mat = skinnedModel.inverseBindMatrices[i];
-			const arr2 = mat.multiply(skinnedModel.joints[i].transform.worldMatrix).getData();
-
-			for (let j = 0; j < 16; ++j) {
-				floatArray[i * 16 + j] = arr2[j];
-			}
+		for (let j = 0; j < 16; ++j) {
+			floatArray[i * 16 + j] = arr2[j];
 		}
-
-		skinnedModel.joints[2].transform.position.x += Time.deltaTime * 0.1;
-
-		gl.uniformMatrix4fv(skinnedShader.boneMatricesUnif, false, floatArray);
-		drawMeshSkinned(skinnedModel.mesh, _mat, shader);
-	} else {
-		const start = vec3.origin().multMat4(_mat);
-		const end = new vec3(0, 0.5, 0).multMat4(_mat);
-		drawLineScreen(start, end, [0, 1, 1, 1], 0);
 	}
 
-
-	for (let i = 0; i < model.children.length; ++i) {
-		drawModelSkinned(model.children[i], mat, shader);
+	for (let i = 0; i < skinnedModel.joints.length; ++i) {
+		const joint = skinnedModel.joints[i];
+		const start = vec3.origin().multMat4(joint.worldMatrix);
+		const end = new vec3(0, 0.5, 0).multMat4(joint.worldMatrix);
+		drawLine(start, end, [0, 1, 1, 1], 0);
 	}
+
+	skinnedModel.joints[2].position.x += Time.deltaTime * 0.1;
+
+	gl.uniformMatrix4fv(skinnedShader.boneMatricesUnif, false, floatArray);
+	drawMeshSkinned(skinnedModel.mesh, _mat, shader);
 }
 
 function drawMesh(mesh: Mesh, mat: mat4, shader: UninstancedShaderBase) {

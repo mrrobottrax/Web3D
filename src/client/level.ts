@@ -1,15 +1,18 @@
 import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
-import { ModelBase, SkinnedModel, StaticModel } from "./mesh/model.js";
 import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
+import { StaticMeshRenderer } from "./mesh/meshrenderer.js";
+import { GameObject } from "../componentsystem/gameobject.js";
+import { PropBase } from "./mesh/prop.js";
 
-export class Level {
+export class Level extends GameObject {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
-	model: (StaticModel | SkinnedModel) = new ModelBase();
+	model: PropBase = new PropBase();
 }
 
 export let currentLevel: Level;
+export let gameobjectsList: GameObject[] = [];
 
 export async function setLevelClient(url: string): Promise<void> {
 	const req = new XMLHttpRequest();

@@ -1,11 +1,14 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
+import { GameObject } from "../../componentsystem/gameobject.js";
+import { Transform } from "../../componentsystem/transform.js";
 import { Animation, AnimationChannel, ChannelTarget } from "../animation.js";
 import { Mesh } from "./mesh.js";
-import { StaticModel, SkinnedModel, ModelBase } from "./model.js";
+import { SkinnedMeshRenderer, StaticMeshRenderer } from "./meshrenderer.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
+import { AnimatedProp, PropBase, SkinnedProp, StaticProp } from "./prop.js";
 
-export async function loadGltfFromWeb(url: string): Promise<(StaticModel | SkinnedModel)> {
+export async function loadGltfFromWeb(url: string): Promise<PropBase> {
 	// send requests
 	const req1 = new XMLHttpRequest();
 	const req2 = new XMLHttpRequest();
@@ -23,7 +26,7 @@ export async function loadGltfFromWeb(url: string): Promise<(StaticModel | Skinn
 	req2.open("GET", url + ".bin");
 	req2.send();
 
-	let model: (StaticModel | SkinnedModel) = new ModelBase();
+	let model = new PropBase();
 
 	// get model from requests
 	await Promise.all([promise1, promise2]).then((results) => {
@@ -152,42 +155,50 @@ function loadGlb(file: Uint8Array): Mesh | null {
 	return m;
 }
 
-function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticModel | SkinnedModel) {
+function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): PropBase {
 	let meshes: MeshData[] = getGltfMeshData(json, buffers, texPrefix);
-	let rootModels: (StaticModel | SkinnedModel)[] = [];
-	let nodeToModel: (StaticModel | SkinnedModel)[] = [];
+	let rootModels: GameObject[] = [];
+	let nodeToModel: GameObject[] = [];
 	nodeToModel.length = meshes.length;
 
 	// set up children
 	const nodes = json.scenes[0].nodes;
 	for (let i = 0; i < nodes.length; ++i) {
-		const createModelRecursive = (index: number, parent: ModelBase | null = null): StaticModel | SkinnedModel => {
-			let m;
+		const createModelRecursive = (index: number, parent: Transform | null = null): PropBase => {
+			let renderer;
+			let prop;
 			const meshData = meshes[index];
 
-			if (meshData.skinned) {
-				m = new SkinnedModel();
-				m.inverseBindMatrices = meshData.inverseBindMatrices;
-				m.mesh.genBuffers(meshData.primitives);
+			if (meshData.primitives.length == 0) {
+				prop = new GameObject();
+			} else if (meshData.skinned) {
+				renderer = new SkinnedMeshRenderer();
+				renderer.inverseBindMatrices = meshData.inverseBindMatrices;
+				renderer.mesh.genBuffers(meshData.primitives);
+
+				prop = new SkinnedProp();
+				prop.meshRenderer = renderer;
 			} else {
-				m = new StaticModel();
-				m.mesh.genBuffers(meshData.primitives);
+				renderer = new StaticMeshRenderer();
+				renderer.mesh.genBuffers(meshData.primitives);
+
+				prop = new StaticProp();
+				prop.meshRenderer = renderer;
 			}
 
-			m.transform.position = meshData.translation;
-			m.transform.rotation = meshData.rotation;
-			m.transform.scale = meshData.scale;
-			m.parent = parent;
-			m.skinned = meshData.skinned;
+			prop.transform.position = meshData.translation;
+			prop.transform.rotation = meshData.rotation;
+			prop.transform.scale = meshData.scale;
+			prop.transform.parent = parent;
 
-			m.children.length = meshData.children.length;
+			prop.transform.children.length = meshData.children.length;
 			for (let j = 0; j < meshData.children.length; ++j) {
-				m.children[j] = createModelRecursive(meshData.children[j], m);
+				prop.transform.children[j] = createModelRecursive(meshData.children[j], prop.transform).transform;
 			}
 
-			nodeToModel[index] = m;
+			nodeToModel[index] = prop;
 
-			return m;
+			return prop;
 		}
 
 		rootModels.push(createModelRecursive(nodes[i]));
@@ -195,24 +206,27 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticM
 
 	// set up joints
 	for (let i = 0; i < nodeToModel.length; ++i) {
-		if (nodeToModel[i].skinned) {
-			let joints: ModelBase[] = [];
+		if (meshes[i].skinned) {
+			let joints: Transform[] = [];
 			joints.length = meshes[i].joints.length;
 			for (let j = 0; j < meshes[i].joints.length; ++j) {
-				joints[j] = nodeToModel[meshes[i].joints[j]];
+				joints[j] = nodeToModel[meshes[i].joints[j]].transform;
 			}
-			(nodeToModel[i] as SkinnedModel).joints = joints;
+			(nodeToModel[i] as SkinnedProp).meshRenderer.joints = joints;
 		}
 	}
 
-	const baseModel = new StaticModel();
-	baseModel.children = rootModels;
-	for (let i = 0; i < baseModel.children.length; ++i) {
-		baseModel.children[i].parent = baseModel;
+	const baseModel = new GameObject();
+	for (let i = 0; i < rootModels.length; ++i) {
+		baseModel.transform.children[i] = rootModels[i].transform;
+		baseModel.transform.children[i].parent = baseModel.transform;
 	}
 
 	// animations
 	if (json.animations) {
+		const animatedBaseModel = baseModel as AnimatedProp;
+		animatedBaseModel.animations = [];
+		animatedBaseModel.animations.length = json.animations.length;
 		for (let i = 0; i < json.animations.length; ++i) {
 			const anim = json.animations[i];
 			let animation = new Animation(anim.name);
@@ -270,7 +284,6 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticM
 						case ChannelTarget.weights:
 							console.error("Weights not implemented");
 							return baseModel;
-							break;
 
 						default:
 							console.error("Unknown target");
@@ -287,7 +300,8 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): (StaticM
 				animation.channels.push(channelObj);
 			}
 			animation.length = maxTime;
-			baseModel.animations.push(animation);
+			animatedBaseModel.animations.push(animation);
+			return animatedBaseModel;
 		}
 	}
 

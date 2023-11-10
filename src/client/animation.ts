@@ -1,5 +1,5 @@
 import { quaternion, vec3 } from "../common/math/vector";
-import { ModelBase } from "./mesh/model";
+import { GameObject } from "../componentsystem/gameobject";
 
 export enum ChannelTarget {
 	none,
@@ -16,11 +16,11 @@ export interface Keyframe {
 
 export class AnimationChannel {
 	targetChannel: ChannelTarget;
-	target: ModelBase;
+	target: GameObject;
 	keyframes: Keyframe[] = [];
 	currentKeyframe: number = 0;
 
-	constructor(target: ModelBase, path: string) {
+	constructor(target: GameObject, path: string) {
 		switch (path) {
 			case "translation":
 				this.targetChannel = ChannelTarget.translation;
