@@ -300,7 +300,8 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): PropBase
 				animation.channels.push(channelObj);
 			}
 			animation.length = maxTime;
-			animatedBaseModel.animations.push(animation);
+			animatedBaseModel.animations[i] = animation;
+			console.log(animatedBaseModel);
 			return animatedBaseModel;
 		}
 	}
