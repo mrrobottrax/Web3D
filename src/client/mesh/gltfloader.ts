@@ -6,7 +6,7 @@ import { Animation, AnimationChannel, AnimationController, ChannelTarget } from 
 import { Mesh } from "./mesh.js";
 import { SkinnedMeshRenderer, StaticMeshRenderer } from "./meshrenderer.js";
 import { MeshData, PrimitiveData } from "./primitive.js";
-import { AnimatedGameObject, PropBase, SkinnedProp, StaticProp } from "./prop.js";
+import { AnimatedGameObject, SkinnedProp, StaticProp } from "./prop.js";
 
 export async function loadGltfFromWeb(url: string): Promise<GameObject> {
 	// send requests
@@ -212,7 +212,8 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): GameObje
 			if (parent) {
 				const childIndex = parent.children.indexOf(nodeToModel[i].transform);
 				parent.children.splice(childIndex, 1);
-				nodeToModel[i].transform.parent = null;
+				parent.parent?.children.push(nodeToModel[i].transform);
+				nodeToModel[i].transform.parent = parent.parent;
 			}
 
 			let joints: Transform[] = [];

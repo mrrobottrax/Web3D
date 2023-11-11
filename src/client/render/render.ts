@@ -65,7 +65,7 @@ export function drawFrame(client: Client): void {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	viewMatrix.setIdentity();
-	viewMatrix.rotate(client.localPlayer.camRotation);
+	viewMatrix.rotate(client.localPlayer.camRotation.inverse());
 	viewMatrix.translate(camPos.inverse());
 
 	if (currentLevel != undefined) {
@@ -104,9 +104,9 @@ export function drawFrame(client: Client): void {
 
 function updateWorldMatrix(transform: Transform, baseMat: mat4 = mat4.identity()) {
 	transform.worldMatrix.set(baseMat);
-	transform.worldMatrix.scale(transform.scale);
-	transform.worldMatrix.rotate(transform.rotation);
 	transform.worldMatrix.translate(transform.position);
+	transform.worldMatrix.rotate(transform.rotation);
+	transform.worldMatrix.scale(transform.scale);
 
 	for (let i = 0; i < transform.children.length; ++i) {
 		updateWorldMatrix(transform.children[i], transform.worldMatrix);
@@ -118,7 +118,7 @@ function drawDebug(player: SharedPlayer) {
 	gl.useProgram(solidShader.program);
 
 	let mat = mat4.identity();
-	mat.rotate(player.camRotation);
+	mat.rotate(player.camRotation.inverse());
 	mat.translate(camPos.inverse());
 
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());

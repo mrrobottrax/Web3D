@@ -1,7 +1,7 @@
 import gMath from "./gmath.js";
 import { mat4 } from "./matrix.js";
 
-export  class vec3 {
+export class vec3 {
 	x: number;
 	y: number;
 	z: number;
@@ -206,7 +206,56 @@ export class quaternion {
 	}
 
 	public static lerp(a: quaternion, b: quaternion, t: number): quaternion {
-		return new quaternion(gMath.lerp(a.w, b.w, t), gMath.lerp(a.x, b.x, t), gMath.lerp(a.y, b.y, t), gMath.lerp(a.z, b.z, t)).normalised();
+		let result = quaternion.identity();
+
+		result.x = gMath.lerp(a.x, b.x, t);
+		result.y = gMath.lerp(a.y, b.y, t);
+		result.z = gMath.lerp(a.z, b.z, t);
+		result.w = gMath.lerp(a.w, b.w, t);
+
+		result.normalise();
+
+		return result;
+	}
+
+	public static dot(a: quaternion, b: quaternion): number {
+		return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+	}
+
+	public static slerp(a: quaternion, b: quaternion, t: number): quaternion {
+		let _b = quaternion.copy(b);
+
+		// lerp when close
+		let dot = quaternion.dot(a, _b);
+		if (dot > 0.9995) {
+			return quaternion.lerp(a, _b, t);
+		}
+
+		if (dot < 0) {
+			_b = _b.inverse();
+			dot = -dot;
+		}
+
+		if (dot > 1) dot = 1;
+
+		// angle between input quaternions
+		const theta0 = Math.acos(dot);
+
+		// angle between output quaternion and a
+		const theta = theta0 * t;
+
+		const b2 = _b.add(a.mult(-dot));
+		b2.normalise();
+
+		return a.mult(Math.cos(theta)).add(b2.mult(Math.sin(theta)));
+	}
+
+	public add(q: quaternion): quaternion {
+		return new quaternion(this.w + q.w, this.x + q.x, this.y + q.y, this.z + q.z);
+	}
+
+	public mult(s: number): quaternion {
+		return new quaternion(this.w * s, this.x * s, this.y * s, this.z * s);
 	}
 
 	public static eulerRad(x: number, y: number, z: number): quaternion {
@@ -228,47 +277,53 @@ export class quaternion {
 
 	public inverse(): quaternion {
 		let q = new quaternion(this.w, -this.x, -this.y, -this.z);
-		// q.normalise();
 		return q;
 	}
 
 	public normalise(): void {
 		const squared_norm = this.w * this.w + this.x * this.x + this.y * this.y + this.z * this.z;
-		this.w /= squared_norm;
-		this.x /= squared_norm;
-		this.y /= squared_norm;
-		this.z /= squared_norm;
+		const length = Math.sqrt(squared_norm);
+		this.w /= length;
+		this.x /= length;
+		this.y /= length;
+		this.z /= length;
+	}
+
+	public static copy(q: quaternion): quaternion {
+		return new quaternion(q.w, q.x, q.y, q.z);
 	}
 
 	public normalised(): quaternion {
-		this.normalise();
-		return this;
+		let result = quaternion.copy(this);
+		result.normalise();
+		return result;
 	}
 
 	public toMatrix(): mat4 {
 		let m: mat4 = mat4.identity();
 
-		const qxx = this.x * this.x;
-		const qyy = this.y * this.y;
-		const qzz = this.z * this.z;
-		const qxz = this.x * this.z;
-		const qxy = this.x * this.y;
-		const qyz = this.y * this.z;
-		const qwx = this.w * this.x;
-		const qwy = this.w * this.y;
-		const qwz = this.w * this.z;
+		const q00 = this.w * this.w;
+		const q01 = this.w * this.x;
+		const q02 = this.w * this.y;
+		const q03 = this.w * this.z;
+		const q11 = this.x * this.x;
+		const q12 = this.x * this.y;
+		const q13 = this.x * this.z;
+		const q22 = this.y * this.y;
+		const q33 = this.z * this.z;
+		const q23 = this.y * this.z;
 
-		m.setValue(0, 0, 1 - 2 * (qyy + qzz));
-		m.setValue(1, 0, 2 * (qxy + qwz));
-		m.setValue(2, 0, 2 * (qxz - qwy));
+		m.setValue(0, 0, 2 * (q00 + q11) - 1);
+		m.setValue(1, 0, 2 * (q12 - q03));
+		m.setValue(2, 0, 2 * (q13 + q02));
 
-		m.setValue(0, 1, 2 * (qxy - qwz));
-		m.setValue(1, 1, 1 - 2 * (qxx + qzz));
-		m.setValue(2, 1, 2 * (qyz + qwx));
+		m.setValue(0, 1, 2 * (q12 + q03));
+		m.setValue(1, 1, 2 * (q00 + q22) - 1);
+		m.setValue(2, 1, 2 * (q23 - q01));
 
-		m.setValue(0, 2, 2 * (qxz + qwy));
-		m.setValue(1, 2, 2 * (qyz - qwx));
-		m.setValue(2, 2, 1 - 2 * (qxx + qyy));
+		m.setValue(0, 2, 2 * (q13 - q02));
+		m.setValue(1, 2, 2 * (q23 + q01));
+		m.setValue(2, 2, 2 * (q00 + q33) - 1);
 
 		return m;
 	}

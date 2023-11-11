@@ -78,7 +78,10 @@ export class AnimationController {
 				nextKeyframe = keyframes[nextKeyframeIndex];
 			}
 
-			const fract = Math.max((this.time - currentKeyframe.time) / (nextKeyframe.time - currentKeyframe.time), 0);
+			const fract = (this.time - currentKeyframe.time) / (nextKeyframe.time - currentKeyframe.time);
+			if (fract >= 1 || fract <= 0) {
+				console.log(fract);
+			}
 
 			switch (channel.targetChannel) {
 				case ChannelTarget.translation:
@@ -86,7 +89,7 @@ export class AnimationController {
 					break;
 				case ChannelTarget.rotation:
 					// todo: faster, but should learn slerp anyways
-					channel.target.transform.rotation = quaternion.lerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
+					channel.target.transform.rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
 					break;
 				case ChannelTarget.scale:
 					channel.target.transform.scale = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
