@@ -25,8 +25,7 @@ let debugModel: GameObject;
 export async function initRender() {
 	debugModel = await loadGltfFromWeb("./data/models/sci_player");
 	debugModel.transform.position = new vec3(0, 2, 0);
-	console.log(debugModel);
-	// (debugModel as AnimatedGameObject).controller.currentAnimation = (debugModel as AnimatedGameObject).animations[0];
+	(debugModel as AnimatedGameObject).controller.currentAnimation = (debugModel as AnimatedGameObject).animations[0];
 }
 
 export function initProjection() {
@@ -199,13 +198,14 @@ function drawModelSkinned(model: SkinnedProp, mat: mat4, shader: UninstancedShad
 	let floatArray: Float32Array = new Float32Array(skinnedModel.inverseBindMatrices.length * 16);
 	for (let i = 0; i < skinnedModel.inverseBindMatrices.length; ++i) {
 		let mat = skinnedModel.inverseBindMatrices[i];
-		const arr2 = mat.multiply(skinnedModel.joints[i].worldMatrix).getData();
+		const arr2 = skinnedModel.joints[i].worldMatrix.multiply(mat).getData();
 
 		for (let j = 0; j < 16; ++j) {
 			floatArray[i * 16 + j] = arr2[j];
 		}
 	}
 
+	// draw lines
 	for (let i = 0; i < skinnedModel.joints.length; ++i) {
 		const joint = skinnedModel.joints[i];
 		const start = vec3.origin().multMat4(joint.worldMatrix);

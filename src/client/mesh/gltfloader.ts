@@ -186,10 +186,10 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): GameObje
 				prop.meshRenderer = renderer;
 			}
 
+			prop.transform.parent = parent;
 			prop.transform.position = meshData.translation;
 			prop.transform.rotation = meshData.rotation;
 			prop.transform.scale = meshData.scale;
-			prop.transform.parent = parent;
 
 			prop.transform.children.length = meshData.children.length;
 			for (let j = 0; j < meshData.children.length; ++j) {
@@ -207,6 +207,14 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): GameObje
 	// set up joints
 	for (let i = 0; i < nodeToModel.length; ++i) {
 		if (meshes[i].skinned) {
+			// remove skinned mesh parent
+			const parent = nodeToModel[i].transform.parent;
+			if (parent) {
+				const childIndex = parent.children.indexOf(nodeToModel[i].transform);
+				parent.children.splice(childIndex, 1);
+				nodeToModel[i].transform.parent = null;
+			}
+
 			let joints: Transform[] = [];
 			joints.length = meshes[i].joints.length;
 			for (let j = 0; j < meshes[i].joints.length; ++j) {
@@ -302,12 +310,13 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): GameObje
 	} else {
 		baseModel = new GameObject();
 	}
-	
+
 	for (let i = 0; i < rootModels.length; ++i) {
 		baseModel.transform.children[i] = rootModels[i].transform;
 		baseModel.transform.children[i].parent = baseModel.transform;
 	}
 
+	console.log(baseModel);
 	return baseModel;
 }
 
@@ -321,12 +330,13 @@ function getErrorData(): MeshData[] {
 		children: [],
 		joints: [],
 		skinned: false,
-		inverseBindMatrices: []
+		inverseBindMatrices: [],
 	}];
 }
 
 export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: string): MeshData[] {
 	let meshes: MeshData[] = [];
+	meshes.length = json.nodes.length;
 
 	// load nodes
 	for (let j = 0; j < json.nodes.length; ++j) {
@@ -415,10 +425,10 @@ export function getGltfMeshData(json: any, buffers: Uint8Array[], texPrefix: str
 			children: children,
 			skinned: skinned,
 			joints: joints,
-			inverseBindMatrices: inverseBindMatrices
+			inverseBindMatrices: inverseBindMatrices,
 		};
 
-		meshes.push(meshData);
+		meshes[j] = meshData;
 	}
 
 	return meshes;

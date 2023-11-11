@@ -14,9 +14,12 @@ varying vec2 vTexCoord;
 void main() {
 	vTexCoord = aTexCoord;
 
-	gl_Position = uProjectionMatrix * uModelViewMatrix * 
-		(uBoneMatrices[int(aBoneIds[0])] * aVertexPosition * aBoneWeights[0]
-		+ uBoneMatrices[int(aBoneIds[1])] * aVertexPosition * aBoneWeights[1]
-		+ uBoneMatrices[int(aBoneIds[2])] * aVertexPosition * aBoneWeights[2]
-		+ uBoneMatrices[int(aBoneIds[3])] * aVertexPosition * aBoneWeights[3]);
+	mat4 skinMat =
+        aBoneWeights.x * uBoneMatrices[int(aBoneIds.x)] +
+        aBoneWeights.y * uBoneMatrices[int(aBoneIds.y)] +
+        aBoneWeights.z * uBoneMatrices[int(aBoneIds.z)] +
+        aBoneWeights.w * uBoneMatrices[int(aBoneIds.w)];
+    vec4 worldPosition = skinMat * aVertexPosition;
+    vec4 cameraPosition = uModelViewMatrix * worldPosition;
+    gl_Position = uProjectionMatrix * cameraPosition;
 }
