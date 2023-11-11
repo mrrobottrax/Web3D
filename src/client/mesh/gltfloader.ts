@@ -317,7 +317,6 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): GameObje
 		baseModel.transform.children[i].parent = baseModel.transform;
 	}
 
-	console.log(baseModel);
 	return baseModel;
 }
 

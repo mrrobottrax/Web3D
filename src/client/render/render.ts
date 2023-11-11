@@ -24,8 +24,8 @@ export let uiMatrix: mat4;
 let debugModel: GameObject;
 export async function initRender() {
 	debugModel = await loadGltfFromWeb("./data/models/sci_player");
-	debugModel.transform.position = new vec3(0, 2, 0);
-	(debugModel as AnimatedGameObject).controller.currentAnimation = (debugModel as AnimatedGameObject).animations[0];
+	debugModel.transform.position = new vec3(0, 0, -2);
+	(debugModel as AnimatedGameObject).controller.setAnimation((debugModel as AnimatedGameObject).animations[0]);
 }
 
 export function initProjection() {

@@ -19,7 +19,6 @@ export class AnimationChannel {
 	targetChannel: ChannelTarget;
 	target: GameObject;
 	keyframes: Keyframe[] = [];
-	currentKeyframe: number = 0;
 
 	constructor(target: GameObject, path: string) {
 		switch (path) {
@@ -56,39 +55,54 @@ export class Animation {
 }
 
 export class AnimationController {
-	currentAnimation: Animation | null = null;
-	time: number = 0;
+	private currentAnimation: Animation | null = null;
+	private time: number = 0;
+	private keyframeIndices: number[] = [];
 
-	frame() {
+	public setAnimation(anim: Animation) {
+		this.keyframeIndices = [];
+		this.currentAnimation = anim;
+
+		this.keyframeIndices.length = this.currentAnimation.channels.length;
+		for (let i = 0; i < this.keyframeIndices.length; ++i) {
+			this.keyframeIndices[i] = 0;
+		}
+	}
+
+	public frame() {
 		if (!this.currentAnimation)
 			return;
 
 		for (let i = 0; i < this.currentAnimation.channels.length; ++i) {
 			const channel = this.currentAnimation.channels[i];
 			const keyframes = channel.keyframes;
-			let currentKeyframe = keyframes[channel.currentKeyframe];
-			let nextKeyframeIndex = (channel.currentKeyframe + 1) % keyframes.length;
-			let nextKeyframe = keyframes[nextKeyframeIndex];
 
-			if (this.time >= nextKeyframe.time) {
-				channel.currentKeyframe = nextKeyframeIndex;
-
-				nextKeyframeIndex = (channel.currentKeyframe + 1) % keyframes.length;
-				currentKeyframe = keyframes[channel.currentKeyframe];
-				nextKeyframe = keyframes[nextKeyframeIndex];
+			const next = (i: number) => {
+				return (i + 1) % keyframes.length;
 			}
+			
+			let nextKeyframeIndex = next(this.keyframeIndices[i]);
+			let loops = 0;
+			while (keyframes[this.keyframeIndices[i]].time > this.time || keyframes[nextKeyframeIndex].time < this.time) {
+				this.keyframeIndices[i] = nextKeyframeIndex;
+				nextKeyframeIndex = next(nextKeyframeIndex);
 
+				if (loops++ > keyframes.length) {
+					console.error("MAX LOOPS EXCEEDED!");
+					break;
+				}
+			}
+			
+			const currentKeyframe = keyframes[this.keyframeIndices[i]];
+			const nextKeyframe = keyframes[nextKeyframeIndex];
+			
 			const fract = (this.time - currentKeyframe.time) / (nextKeyframe.time - currentKeyframe.time);
-			if (fract >= 1 || fract <= 0) {
-				console.log(fract);
-			}
 
 			switch (channel.targetChannel) {
 				case ChannelTarget.translation:
 					channel.target.transform.position = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
 					break;
 				case ChannelTarget.rotation:
-					// todo: faster, but should learn slerp anyways
 					channel.target.transform.rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
 					break;
 				case ChannelTarget.scale:
@@ -104,11 +118,6 @@ export class AnimationController {
 		this.time += Time.deltaTime;
 		if (this.time > this.currentAnimation.length) {
 			this.time -= this.currentAnimation.length;
-
-			for (let i = 0; i < this.currentAnimation.channels.length; ++i) {
-				const channel = this.currentAnimation.channels[i];
-				channel.currentKeyframe = 0;
-			}
 		}
 	}
 }

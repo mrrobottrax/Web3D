@@ -6,8 +6,8 @@ import { vec3 } from "./common/math/vector.js";
 import { castAABB } from "./physics.js";
 
 const minWalkableY = 0.7;
-const hullSize = new vec3(1, 1.8, 1);
-const hullDuckSize = new vec3(1, 1, 1);
+const hullSize = new vec3(1, 2, 1);
+const hullDuckSize = new vec3(1, 1.5, 1);
 const stopSpeed = 0.01;
 const stopEpsilon = 0.001;
 const maxBumps = 4;
