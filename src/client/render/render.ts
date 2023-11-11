@@ -13,6 +13,7 @@ import { loadGltfFromWeb } from "../mesh/gltfloader.js";
 import { AnimatedGameObject, SkinnedProp, StaticProp } from "../mesh/prop.js";
 import { Transform } from "../../componentsystem/transform.js";
 import { GameObject } from "../../componentsystem/gameobject.js";
+import { PlayerUtil } from "../../playerutil.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -25,7 +26,10 @@ let debugModel: GameObject;
 export async function initRender() {
 	debugModel = await loadGltfFromWeb("./data/models/sci_player");
 	debugModel.transform.position = new vec3(0, 0, -2);
-	(debugModel as AnimatedGameObject).controller.setAnimation((debugModel as AnimatedGameObject).animations[0]);
+	const length = (debugModel as AnimatedGameObject).animations.length;
+	const index = Math.floor(Math.random() * length);
+	console.log(index);
+	(debugModel as AnimatedGameObject).controller.setAnimation((debugModel as AnimatedGameObject).animations[index]);
 }
 
 export function initProjection() {
@@ -182,7 +186,8 @@ function drawDebug(player: SharedPlayer) {
 
 function drawPlayersDebug(localPlayer: SharedPlayer, otherPlayers: IterableIterator<SharedPlayer>) {
 	for (let player of otherPlayers) {
-		drawLine(player.position, player.position.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
+		const pos = PlayerUtil.getFeet(player);
+		drawLine(pos, pos.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
 	}
 }
 

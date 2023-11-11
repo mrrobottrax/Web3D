@@ -51,6 +51,14 @@ export class PlayerUtil {
 		}
 	}
 
+	static getFeet(player: SharedPlayer): vec3 {
+		if (player.isDucked) {
+			return player.position.sub(new vec3(0, hullDuckSize.y / 2, 0));
+		} else {
+			return player.position.sub(new vec3(0, hullSize.y / 2, 0));
+		}
+	}
+
 	static flyMove(start: vec3, velocity: vec3, delta: number, player: SharedPlayer): {
 		endPos: vec3,
 		blocked: number,

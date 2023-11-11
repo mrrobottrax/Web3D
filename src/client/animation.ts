@@ -89,6 +89,8 @@ export class AnimationController {
 
 				if (loops++ > keyframes.length) {
 					console.error("MAX LOOPS EXCEEDED!");
+					console.log(this.time);
+					console.log(this.currentAnimation.length);
 					break;
 				}
 			}
@@ -116,7 +118,7 @@ export class AnimationController {
 		}
 
 		this.time += Time.deltaTime;
-		if (this.time > this.currentAnimation.length) {
+		while (this.time > this.currentAnimation.length) {
 			this.time -= this.currentAnimation.length;
 		}
 	}
