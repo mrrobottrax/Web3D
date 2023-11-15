@@ -7,7 +7,7 @@ import { Transform } from "./entitysystem/transform.js";
 import { AnimationController } from "./client/animation.js";
 import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "./client/mesh/model.js";
 
-let playerModel: Model;
+export let playerModel: Model;
 export function setPlayerModel(model: Model) {
 	playerModel = model;
 }

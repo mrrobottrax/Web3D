@@ -29,6 +29,8 @@ export interface Snapshot {
 export interface PlayerSnapshot {
 	id: number,
 	position: vec3
+	pitch: number,
+	yaw: number
 }
 
 export interface SnapshotPacket extends Packet {

@@ -6,6 +6,7 @@ import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../networ
 import { SharedPlayer } from "../sharedplayer.js";
 import { Time } from "../time.js";
 import { UserCmd } from "../usercmd.js";
+import { ClientPlayer } from "./clientplayer.js";
 import { createUserCMD, initInput } from "./input.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
 import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "./render/render.js";
@@ -26,7 +27,7 @@ export class Client {
 
 	cmdBuffer: CircularBuffer<PlayerData>;
 
-	otherPlayers!: Map<number, SharedPlayer>;
+	otherPlayers!: Map<number, ClientPlayer>;
 
 	public constructor() {
 		setContext(Context.client);
@@ -129,11 +130,13 @@ export class Client {
 				let player = this.otherPlayers.get(playerSnapshot.id);
 
 				if (!player) {
-					player = new SharedPlayer(playerSnapshot.id);
+					player = new ClientPlayer(playerSnapshot.id);
 					this.otherPlayers.set(playerSnapshot.id, player);	
 				}
 
 				player.position.copy(playerSnapshot.position);
+				player.yaw = playerSnapshot.yaw;
+				player.pitch = playerSnapshot.pitch;
 			}
 		}
 	}

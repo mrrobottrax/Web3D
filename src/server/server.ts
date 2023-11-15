@@ -144,7 +144,9 @@ export class Server {
 		for (let player of this.players.values()) {
 			players[i] = {
 				id: player.id,
-				position: player.position
+				position: player.position,
+				pitch: player.pitch,
+				yaw: player.yaw,
 			}
 
 			++i;

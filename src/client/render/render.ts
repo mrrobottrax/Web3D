@@ -2,7 +2,7 @@ import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
-import { HierarchyNode, Primitive } from "../mesh/model.js";
+import { HierarchyNode, Model, Primitive } from "../mesh/model.js";
 import { currentLevel } from "../level.js";
 import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
@@ -12,6 +12,8 @@ import { PlayerUtil } from "../../playerutil.js";
 import { DynamicProp, PropBase } from "../mesh/prop.js";
 import { loadGltfFromWeb } from "../mesh/gltfloader.js";
 import { entityList } from "../../entitysystem/entity.js";
+import { Transform } from "../../entitysystem/transform.js";
+import { ClientPlayer } from "../clientplayer.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -88,12 +90,12 @@ export function drawFrame(client: Client): void {
 		drawProp(currentLevel.prop, defaultShader);
 
 		gl.useProgram(skinnedShader.program);
-		drawPropSkinned(debugModel, skinnedShader);
+		drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader);
+		drawPlayersDebug(client.otherPlayers.values());
 
 		gl.useProgram(null);
 	}
 
-	drawPlayersDebug(client.localPlayer, client.otherPlayers.values());
 	drawDebug(client.localPlayer);
 
 	drawUi();
@@ -166,10 +168,12 @@ function drawDebug(player: SharedPlayer) {
 	gl.useProgram(null);
 }
 
-function drawPlayersDebug(localPlayer: SharedPlayer, otherPlayers: IterableIterator<SharedPlayer>) {
+function drawPlayersDebug(otherPlayers: IterableIterator<ClientPlayer>) {
 	for (let player of otherPlayers) {
 		const pos = PlayerUtil.getFeet(player);
 		drawLine(pos, pos.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
+
+		drawPropSkinned(player.nodeTransforms, player.model, player.transform.worldMatrix, skinnedShader);
 	}
 }
 
@@ -208,10 +212,10 @@ function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
 	}
 }
 
-function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
+function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix: mat4, shader: UninstancedShaderBase) {
 	// apply hierarchy
 	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
-		const transform = prop.nodeTransforms[node.index];
+		const transform = nodeTransforms[node.index];
 		const worldMat = transform.worldMatrix;
 		worldMat.set(parentMat);
 		worldMat.translate(transform.translation);
@@ -223,16 +227,16 @@ function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
 		}
 	}
 
-	for (let i = 0; i < prop.model.hierarchy.length; ++i) {
-		hierarchyRecursive(prop.model.hierarchy[i], prop.transform.worldMatrix);
+	for (let i = 0; i < model.hierarchy.length; ++i) {
+		hierarchyRecursive(model.hierarchy[i], worldMatrix);
 	}
 
-	for (let i = 0; i < prop.model.nodes.length; ++i) {
-		const node = prop.model.nodes[i];
+	for (let i = 0; i < model.nodes.length; ++i) {
+		const node = model.nodes[i];
 		
 		// bone
 		if (node.primitives.length == 0) {
-			const mat = prop.nodeTransforms[i].worldMatrix;
+			const mat = nodeTransforms[i].worldMatrix;
 			drawLine(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [0, 1, 0, 1], 0);
 			continue;
 		}
@@ -245,7 +249,7 @@ function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
 		// create bone matrices
 		let floatArray: Float32Array = new Float32Array(node.inverseBindMatrices.length * 16);
 		for (let i = 0; i < node.inverseBindMatrices.length; ++i) {
-			const arr2 = prop.nodeTransforms[node.joints[i]].worldMatrix.multiply(node.inverseBindMatrices[i]).getData();
+			const arr2 = nodeTransforms[node.joints[i]].worldMatrix.multiply(node.inverseBindMatrices[i]).getData();
 
 			for (let j = 0; j < 16; ++j) {
 				floatArray[i * 16 + j] = arr2[j];
