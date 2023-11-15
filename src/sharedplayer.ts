@@ -2,8 +2,17 @@ import { UserCmd } from "./usercmd.js";
 import { quaternion, vec3 } from "./common/math/vector.js";
 import { PlayerUtil, PositionData } from "./playerutil.js";
 import { Time } from "./time.js";
+import { Entity } from "./entitysystem/entity.js";
+import { Transform } from "./entitysystem/transform.js";
+import { AnimationController } from "./client/animation.js";
+import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "./client/mesh/model.js";
 
-export class SharedPlayer {
+let playerModel: Model;
+export function setPlayerModel(model: Model) {
+	playerModel = model;
+}
+
+export class SharedPlayer extends Entity {
 	camPosition: vec3;
 	camRotation: quaternion;
 	pitch: number;
@@ -20,7 +29,12 @@ export class SharedPlayer {
 
 	id: number;
 
+	controller: AnimationController;
+	nodeTransforms: Transform[];
+
 	constructor(id: number) {
+		super();
+
 		this.position = vec3.origin();
 		this.pitch = 0;
 		this.yaw = 0;
@@ -38,6 +52,10 @@ export class SharedPlayer {
 		this.duckProg = 0;
 
 		this.id = id;
+
+		this.nodeTransforms = [];
+		SetupNodeTransforms(this.nodeTransforms, playerModel);
+		this.controller = new AnimationController(this.nodeTransforms);
 	}
 
 	processCmd(cmd: UserCmd, positionOnly: boolean = false): void {

@@ -4,7 +4,6 @@ import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
 import { Entity } from "../entitysystem/entity.js";
 import { StaticProp } from "./mesh/prop.js";
-import { vec3 } from "../common/math/vector.js";
 
 export class Level extends Entity {
 	collision!: HalfEdgeMesh;
@@ -12,7 +11,6 @@ export class Level extends Entity {
 }
 
 export let currentLevel: Level;
-export let entityList: Entity[] = [];
 
 export async function setLevelClient(url: string): Promise<void> {
 	const req = new XMLHttpRequest();

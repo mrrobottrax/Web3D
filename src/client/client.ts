@@ -1,8 +1,8 @@
 import { CircularBuffer } from "../common/circularbuffer.js";
 import { vec3 } from "../common/math/vector.js";
+import { Context, setContext } from "../context.js";
 import { PacketType } from "../network/netenums.js";
 import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
-import { PlayerUtil } from "../playerutil.js";
 import { SharedPlayer } from "../sharedplayer.js";
 import { Time } from "../time.js";
 import { UserCmd } from "../usercmd.js";
@@ -29,6 +29,7 @@ export class Client {
 	otherPlayers!: Map<number, SharedPlayer>;
 
 	public constructor() {
+		setContext(Context.client);
 		this.ws = null;
 		(window as any).connect = (url: string) => this.connect(url);
 		this.cmdBuffer = new CircularBuffer(1 / Time.fixedDeltaTime);

@@ -1,5 +1,6 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
+import { Transform } from "../../entitysystem/transform.js";
 import { Animation } from "../animation.js";
 
 export interface HierarchyNode {
@@ -62,5 +63,18 @@ export class Primitive {
 		this.textures = textures;
 		this.elementCount = elementCount;
 		this.color = color;
+	}
+}
+
+export function SetUpNodeTransforms(nodeTransforms: Transform[], model: Model) {
+	nodeTransforms.length = model.nodes.length;
+	for (let i = 0; i < model.nodes.length; ++i) {
+		const modelNode = model.nodes[i];
+		nodeTransforms[i] = new Transform();
+		const node = nodeTransforms[i];
+
+		node.translation = vec3.copy(modelNode.translation);
+		node.rotation = quaternion.copy(modelNode.rotation);
+		node.scale = vec3.copy(modelNode.scale);
 	}
 }

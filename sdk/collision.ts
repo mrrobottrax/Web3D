@@ -1,7 +1,7 @@
 import { LevelFile } from "../src/levelfile.js";
-import { getGltfNodes } from "../src/client/mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../src/mesh/halfedge.js";
 import { drawLine } from "../src/client/render/render.js";
+import { getGltfNodes } from "../src/mesh/gltfloader.js";
 
 const gltfInput: HTMLInputElement | null = document.getElementById("gltf-input") as HTMLInputElement | null;
 const binInput: HTMLInputElement | null = document.getElementById("bin-input") as HTMLInputElement | null;

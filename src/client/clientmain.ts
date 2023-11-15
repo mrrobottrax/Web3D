@@ -1,9 +1,8 @@
-import { Client } from "./client/client.js";
-import { initInput } from "./client/input.js";
-import { setLevelClient } from "./client/level.js";
-import { initGl } from "./client/render/gl.js";
-import { initUi } from "./client/render/ui.js";
-import { Time, startTicking, updateTime } from "./time.js";
+import { Client } from "./client.js";
+import { setLevelClient } from "./level.js";
+import { Time, startTicking, updateTime } from "../time.js";
+import { setPlayerModel } from "../sharedplayer.js";
+import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 
 let running: boolean = false;
 let client: Client;
@@ -21,6 +20,7 @@ async function main(): Promise<void> {
 async function init(): Promise<void> {
 	client = new Client();
 	client.init();
+	setPlayerModel(await loadGltfFromWeb("./data/models/sci_player"));
 
 	startTicking();
 }

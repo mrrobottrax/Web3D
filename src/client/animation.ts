@@ -1,5 +1,5 @@
 import { quaternion, vec3 } from "../common/math/vector.js";
-import { Entity } from "../entitysystem/entity.js";
+import { Transform } from "../entitysystem/transform.js";
 import { Time } from "../time.js";
 import { PropBase } from "./mesh/prop.js";
 
@@ -56,13 +56,13 @@ export class Animation {
 }
 
 export class AnimationController {
-	private prop: PropBase;
+	private nodeTransforms: Transform[];
 	private currentAnimation: Animation | null = null;
 	private time: number = 0;
 	private keyframeIndices: number[] = [];
 
-	constructor(prop: PropBase) {
-		this.prop = prop;
+	constructor(nodeTransforms: Transform[]) {
+		this.nodeTransforms = nodeTransforms;
 	}
 
 	public setAnimation(anim: Animation) {
@@ -108,13 +108,13 @@ export class AnimationController {
 
 			switch (channel.targetChannel) {
 				case ChannelTarget.translation:
-					this.prop.nodeTransforms[channel.targetNode].translation = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
+					this.nodeTransforms[channel.targetNode].translation = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
 					break;
 				case ChannelTarget.rotation:
-					this.prop.nodeTransforms[channel.targetNode].rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
+					this.nodeTransforms[channel.targetNode].rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
 					break;
 				case ChannelTarget.scale:
-					this.prop.nodeTransforms[channel.targetNode].scale = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
+					this.nodeTransforms[channel.targetNode].scale = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
 					break;
 				case ChannelTarget.weights:
 					break;

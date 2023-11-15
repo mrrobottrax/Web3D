@@ -1,11 +1,14 @@
 import { WebSocket, WebSocketServer } from "ws";
+import { readFileSync } from "fs";
 import { LevelFile } from "../levelfile.js";
 import { ServerPlayer } from "./serverplayer.js";
-import { vec3 } from "../common/math/vector.js";
 import { PacketType } from "../network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
 import { setLevelServer } from "./level.js";
 import { Time } from "../time.js";
+import { Context, setContext } from "../context.js";
+import { setPlayerModel } from "../sharedplayer.js";
+import { loadGltfFromDisk } from "./mesh/gltfloader.js";
 
 export class Server {
 	wss!: WebSocketServer;
@@ -18,7 +21,9 @@ export class Server {
 
 	snapshot!: Snapshot;
 
-	public init() {
+	public async init() {
+		setContext(Context.server);
+
 		this.wss = new WebSocketServer({ port: 80 })
 		this.wss.on('connection', ws => {
 			ws.on('error', console.error);
@@ -42,8 +47,17 @@ export class Server {
 
 		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
 		setLevelServer("./data/levels/_testlvl");
+		setPlayerModel(await loadGltfFromDisk("./data/models/sci_player"));
 
 		console.log("SERVER OPENED");
+	}
+
+	static readFile(path: string): Buffer {
+		return readFileSync(path);
+	}
+
+	static readFileUtf8(path: string): string {
+		return readFileSync(path, 'utf8');
 	}
 
 	tick() {
