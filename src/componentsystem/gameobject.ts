@@ -1,10 +1,10 @@
-import { gameobjectsList } from "../client/level.js";
+import { entityList } from "../client/level.js";
 import { Transform } from "./transform.js";
 
-export class GameObject {
+export class Entity {
 	transform: Transform = new Transform();
 
 	constructor() {
-		gameobjectsList.push(this);
+		entityList.push(this);
 	}
 }

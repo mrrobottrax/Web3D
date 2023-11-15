@@ -1,5 +1,5 @@
 import { quaternion, vec3 } from "../common/math/vector.js";
-import { GameObject } from "../componentsystem/gameobject.js";
+import { Entity } from "../componentsystem/gameobject.js";
 import { Time } from "../time.js";
 
 export enum ChannelTarget {
@@ -17,10 +17,10 @@ export interface Keyframe {
 
 export class AnimationChannel {
 	targetChannel: ChannelTarget;
-	target: GameObject;
+	target: Entity;
 	keyframes: Keyframe[] = [];
 
-	constructor(target: GameObject, path: string) {
+	constructor(target: Entity, path: string) {
 		switch (path) {
 			case "translation":
 				this.targetChannel = ChannelTarget.translation;
@@ -102,7 +102,7 @@ export class AnimationController {
 
 			switch (channel.targetChannel) {
 				case ChannelTarget.translation:
-					channel.target.transform.position = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
+					channel.target.transform.translation = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
 					break;
 				case ChannelTarget.rotation:
 					channel.target.transform.rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);

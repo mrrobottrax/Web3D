@@ -3,7 +3,7 @@ import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../mesh/model.js";
-import { currentLevel, gameobjectsList } from "../level.js";
+import { currentLevel, entityList } from "../level.js";
 import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
 import { SharedPlayer } from "../../sharedplayer.js";
@@ -24,7 +24,7 @@ let debugModel: DynamicProp;
 export async function initRender() {
 	debugModel = new DynamicProp(await loadGltfFromWeb("./data/models/sci_player"));
 	console.log(debugModel);
-	// debugModel.transform.position = new vec3(0, 0, -2);
+	debugModel.transform.translation = new vec3(0, 0, -2);
 	// const length = (debugModel as AnimatedGameObject).animations.length;
 	// const index = Math.floor(Math.random() * length);
 	// console.log(index);
@@ -95,6 +95,21 @@ export function drawFrame(client: Client): void {
 		// 	if (gameobjectsList[i] instanceof SkinnedProp)
 		// 		drawModelSkinned(gameobjectsList[i] as SkinnedProp, viewMatrix, skinnedShader);
 		// }
+
+		for (let i = 0; i < entityList.length; ++i) {
+			// animations
+			// if (gameobjectsList[i] instanceof AnimatedGameObject) {
+			// 	(gameobjectsList[i] as AnimatedGameObject).controller.frame();
+			// }
+
+			// update positions
+			const trans = entityList[i].transform;
+			const mat = trans.worldMatrix;
+			mat.setIdentity();
+			mat.translate(trans.translation);
+			mat.rotate(trans.rotation);
+			mat.scale(trans.scale);
+		}
 
 		gl.useProgram(defaultShader.program);
 		drawProp(currentLevel.prop, defaultShader);
@@ -185,34 +200,13 @@ function drawPlayersDebug(localPlayer: SharedPlayer, otherPlayers: IterableItera
 	}
 }
 
-function drawModelStatic(model: Model, mat: mat4, shader: UninstancedShaderBase) {
-	for (let i = 0; i < model.nodes.length; ++i) {
-		const node = model.nodes[i];
-
-		let _mat = mat.copy();
-		_mat.translate(node.translation);
-		_mat.rotate(node.rotation);
-		_mat.scale(node.scale);
-
-		// bone
-		if (node.primitives.length == 0) {
-			drawLineScreen(vec3.origin().multMat4(_mat), new vec3(0, 1, 0).multMat4(_mat), [1, 1, 0, 1], 0);
-			continue;
-		}
-
-		for (let j = 0; j < node.primitives.length; ++j) {
-			drawPrimitive(node.primitives[j], _mat, shader);
-		}
-	}
-}
-
 function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
 	// apply hierarchy
 	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
 		const transform = prop.nodeTransforms[node.index];
 		const worldMat = transform.worldMatrix;
 		worldMat.set(parentMat);
-		worldMat.translate(transform.position);
+		worldMat.translate(transform.translation);
 		worldMat.rotate(transform.rotation);
 		worldMat.scale(transform.scale);
 
@@ -226,12 +220,12 @@ function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
 	}
 
 	for (let i = 0; i < prop.model.nodes.length; ++i) {
-		const mat = viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
 		const node = prop.model.nodes[i];
+		const mat = viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
 
 		// bone
 		if (node.primitives.length == 0) {
-			drawLineScreen(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [1, 1, 0, 1], 0);
+			drawLineScreen(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [1, 0, 0, 1], 0);
 			continue;
 		}
 
@@ -247,7 +241,7 @@ function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
 		const transform = prop.nodeTransforms[node.index];
 		const worldMat = transform.worldMatrix;
 		worldMat.set(parentMat);
-		worldMat.translate(transform.position);
+		worldMat.translate(transform.translation);
 		worldMat.rotate(transform.rotation);
 		worldMat.scale(transform.scale);
 
@@ -261,12 +255,12 @@ function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
 	}
 
 	for (let i = 0; i < prop.model.nodes.length; ++i) {
-		const mat = viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
 		const node = prop.model.nodes[i];
-
+		
 		// bone
 		if (node.primitives.length == 0) {
-			drawLineScreen(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [1, 1, 0, 1], 0);
+			const mat = prop.nodeTransforms[i].worldMatrix;
+			drawLine(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [0, 1, 0, 1], 0);
 			continue;
 		}
 
@@ -287,53 +281,10 @@ function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
 
 		gl.uniformMatrix4fv((shader as SkinnedShaderBase).boneMatricesUnif, false, floatArray);
 		for (let j = 0; j < node.primitives.length; ++j) {
-			drawPrimitive(node.primitives[j], mat, shader);
+			drawPrimitive(node.primitives[j], viewMatrix, shader);
 		}
 	}
 }
-
-// function drawModelStatic(model: StaticProp, mat: mat4, shader: UninstancedShaderBase) {
-// 	drawMesh(model.meshRenderer.mesh, mat.multiply(model.transform.worldMatrix), shader);
-// }
-
-// function drawModelSkinned(model: SkinnedProp, mat: mat4, shader: UninstancedShaderBase) {
-// 	let _mat = mat.multiply(model.transform.worldMatrix);
-// 	const skinnedModel = model.meshRenderer;
-
-// 	// create bone matrices
-// 	let floatArray: Float32Array = new Float32Array(skinnedModel.inverseBindMatrices.length * 16);
-// 	for (let i = 0; i < skinnedModel.inverseBindMatrices.length; ++i) {
-// 		let mat = skinnedModel.inverseBindMatrices[i];
-// 		const arr2 = skinnedModel.joints[i].worldMatrix.multiply(mat).getData();
-
-// 		for (let j = 0; j < 16; ++j) {
-// 			floatArray[i * 16 + j] = arr2[j];
-// 		}
-// 	}
-
-// 	// draw lines
-// 	for (let i = 0; i < skinnedModel.joints.length; ++i) {
-// 		const joint = skinnedModel.joints[i];
-// 		const start = vec3.origin().multMat4(joint.worldMatrix);
-// 		const end = new vec3(0, 0.5, 0).multMat4(joint.worldMatrix);
-// 		drawLine(start, end, [0, 1, 1, 1], 0);
-// 	}
-
-// 	gl.uniformMatrix4fv(skinnedShader.boneMatricesUnif, false, floatArray);
-// 	drawMeshSkinned(skinnedModel.mesh, _mat, shader);
-// }
-
-// function drawMesh(mesh: Mesh, mat: mat4, shader: UninstancedShaderBase) {
-// 	for (let i = 0; i < mesh.primitives.length; ++i) {
-// 		drawPrimitive(mesh.primitives[i], mat, shader);
-// 	}
-// }
-
-// function drawMeshSkinned(mesh: Mesh, mat: mat4, shader: UninstancedShaderBase) {
-// 	for (let i = 0; i < mesh.primitives.length; ++i) {
-// 		drawPrimitive(mesh.primitives[i], mat, shader);
-// 	}
-// }
 
 interface Line {
 	start: vec3,
