@@ -1,24 +1,23 @@
 import { GameObject } from "../../componentsystem/gameobject.js";
 import { Animation, AnimationController } from "../animation.js";
-import { SkinnedMeshRenderer, StaticMeshRenderer } from "./meshrenderer.js";
 
-export class PropBase extends GameObject {
+// export class PropBase extends GameObject {
 	
-}
+// }
 
-export class StaticProp extends PropBase {
-	meshRenderer!: StaticMeshRenderer;
-}
+// export class StaticProp extends PropBase {
+// 	meshRenderer!: StaticMeshRenderer;
+// }
 
-export class DynamicProp extends PropBase {
+// export class DynamicProp extends PropBase {
 
-}
+// }
 
-export class AnimatedGameObject extends GameObject {
-	animations: Animation[] = [];
-	controller!: AnimationController;
-}
+// export class AnimatedGameObject extends GameObject {
+// 	animations: Animation[] = [];
+// 	controller!: AnimationController;
+// }
 
-export class SkinnedProp extends DynamicProp {
-	meshRenderer!: SkinnedMeshRenderer;
-}
+// export class SkinnedProp extends DynamicProp {
+// 	meshRenderer!: SkinnedMeshRenderer;
+// }

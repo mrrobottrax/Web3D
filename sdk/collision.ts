@@ -1,5 +1,5 @@
 import { LevelFile } from "../src/levelfile.js";
-import { getGltfMeshData } from "../src/client/mesh/gltfloader.js";
+import { getGltfNodes } from "../src/client/mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../src/mesh/halfedge.js";
 import { drawLine } from "../src/client/render/render.js";
 
@@ -41,7 +41,7 @@ if (submitInput && gltfInput && binInput) {
 }
 
 function generateCollisionData(json: any, buffers: Uint8Array[]): HalfEdgeMesh {
-	const meshes = getGltfMeshData(json, buffers, "data/levels/");
+	const meshes = getGltfNodes(json, buffers, "data/levels/");
 	const halfEdgeMesh = HalfEdgeMesh.fromMeshes(meshes);
 
 	return halfEdgeMesh;

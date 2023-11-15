@@ -1,6 +1,6 @@
 import { mat4 } from "../common/math/matrix.js";
 import { vec3 } from "../common/math/vector.js";
-import { MeshData } from "../client/mesh/primitive.js";
+import { NodeData } from "../client/mesh/model.js";
 
 export interface Vertex {
 	position: vec3;
@@ -37,7 +37,7 @@ export class HalfEdgeMesh {
 		this.faces = [];
 	}
 
-	static fromMeshes(meshes: MeshData[]): HalfEdgeMesh {
+	static fromMeshes(meshes: NodeData[]): HalfEdgeMesh {
 		// vertices
 		let vertices: Vertex[] = [];
 		for (let m = 0; m < meshes.length; ++m) {

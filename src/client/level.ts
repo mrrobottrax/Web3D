@@ -2,13 +2,12 @@ import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
 import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
-import { StaticMeshRenderer } from "./mesh/meshrenderer.js";
 import { GameObject } from "../componentsystem/gameobject.js";
-import { PropBase } from "./mesh/prop.js";
+import { Model } from "./mesh/model.js";
 
 export class Level extends GameObject {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
-	model: PropBase = new PropBase();
+	model: Model = new Model();
 }
 
 export let currentLevel: Level;
