@@ -1,5 +1,6 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
+import { Animation } from "../animation.js";
 
 export interface HierarchyNode {
 	index: number;
@@ -9,6 +10,7 @@ export interface HierarchyNode {
 export class Model {
 	hierarchy: HierarchyNode[] = [];
 	nodes: Node[] = [];
+	animations: Animation[] = [];
 }
 
 export interface Node {

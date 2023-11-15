@@ -1,5 +1,6 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
+import { Animation, AnimationChannel, ChannelTarget } from "../animation.js";
 import { SharedAttribs, gl, loadTexture, solidTex } from "../render/gl.js";
 import { HierarchyNode, Model, NodeData, Primitive, PrimitiveData } from "./model.js";
 import { textures } from "./textures.js";
@@ -196,101 +197,86 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model {
 		createChildRecursive(baseNodes[i]);
 	}
 
+	// animations
+	if (json.animations) {
+		model.animations = [];
+		model.animations.length = json.animations.length;
+		for (let i = 0; i < json.animations.length; ++i) {
+			const anim = json.animations[i];
+			let animation = new Animation(anim.name);
+
+			let maxTime = 0;
+			for (let i = 0; i < anim.channels.length; ++i) {
+				const channel = anim.channels[i];
+				const target = channel.target;
+				const sampler = anim.samplers[channel.sampler];
+
+				const inAccessor = json.accessors[sampler.input];
+				const outAccessor = json.accessors[sampler.output];
+
+				const inBufferView = json.bufferViews[inAccessor.bufferView];
+				const outBufferView = json.bufferViews[outAccessor.bufferView];
+
+				let channelObj = new AnimationChannel(target.node, target.path);
+
+				const inBuffer = new DataView(buffers[inBufferView.buffer].buffer,
+					buffers[inBufferView.buffer].byteOffset + inBufferView.byteOffset);
+				const outBuffer = new DataView(buffers[outBufferView.buffer].buffer,
+					buffers[outBufferView.buffer].byteOffset + outBufferView.byteOffset);
+
+				channelObj.keyframes.length = inAccessor.count;
+				for (let i = 0; i < inAccessor.count; ++i) {
+					const t = inBuffer.getFloat32(i * 4, true);
+
+					let value;
+
+					switch (channelObj.targetChannel) {
+						case ChannelTarget.translation:
+							value = new vec3(
+								outBuffer.getFloat32(i * 12, true),
+								outBuffer.getFloat32(i * 12 + 4, true),
+								outBuffer.getFloat32(i * 12 + 8, true)
+							);
+							break;
+						case ChannelTarget.rotation:
+							value = new quaternion(
+								outBuffer.getFloat32(i * 16 + 12, true),
+								outBuffer.getFloat32(i * 16, true),
+								outBuffer.getFloat32(i * 16 + 4, true),
+								outBuffer.getFloat32(i * 16 + 8, true)
+							);
+							break;
+						case ChannelTarget.scale:
+							value = new vec3(
+								outBuffer.getFloat32(i * 12, true),
+								outBuffer.getFloat32(i * 12 + 4, true),
+								outBuffer.getFloat32(i * 12 + 8, true)
+							);
+							break;
+						case ChannelTarget.weights:
+							console.error("Weights not implemented");
+							return model;
+
+						default:
+							console.error("Unknown target");
+							return model;
+					}
+
+					maxTime = Math.max(maxTime, t);
+
+					channelObj.keyframes[i] = {
+						time: t,
+						value: value
+					}
+				}
+				animation.channels.push(channelObj);
+			}
+			animation.length = maxTime;
+			model.animations[i] = animation;
+		}
+	}
+
 	return model;
-	
-	// let baseModel
-
-	// // animations
-	// if (json.animations) {
-	// 	baseModel = new AnimatedGameObject();
-	// 	baseModel.animations = [];
-	// 	baseModel.animations.length = json.animations.length;
-	// 	for (let i = 0; i < json.animations.length; ++i) {
-	// 		const anim = json.animations[i];
-	// 		let animation = new Animation(anim.name);
-
-	// 		let maxTime = 0;
-	// 		for (let i = 0; i < anim.channels.length; ++i) {
-	// 			const channel = anim.channels[i];
-	// 			const target = channel.target;
-	// 			const sampler = anim.samplers[channel.sampler];
-
-	// 			const targetObject = nodeToModel[target.node];
-
-	// 			const inAccessor = json.accessors[sampler.input];
-	// 			const outAccessor = json.accessors[sampler.output];
-
-	// 			const inBufferView = json.bufferViews[inAccessor.bufferView];
-	// 			const outBufferView = json.bufferViews[outAccessor.bufferView];
-
-	// 			let channelObj = new AnimationChannel(targetObject, target.path);
-
-	// 			const inBuffer = new DataView(buffers[inBufferView.buffer].buffer,
-	// 				buffers[inBufferView.buffer].byteOffset + inBufferView.byteOffset);
-	// 			const outBuffer = new DataView(buffers[outBufferView.buffer].buffer,
-	// 				buffers[outBufferView.buffer].byteOffset + outBufferView.byteOffset);
-
-	// 			channelObj.keyframes.length = inAccessor.count;
-	// 			for (let i = 0; i < inAccessor.count; ++i) {
-	// 				const t = inBuffer.getFloat32(i * 4, true);
-
-	// 				let value;
-
-	// 				switch (channelObj.targetChannel) {
-	// 					case ChannelTarget.translation:
-	// 						value = new vec3(
-	// 							outBuffer.getFloat32(i * 12, true),
-	// 							outBuffer.getFloat32(i * 12 + 4, true),
-	// 							outBuffer.getFloat32(i * 12 + 8, true)
-	// 						);
-	// 						break;
-	// 					case ChannelTarget.rotation:
-	// 						value = new quaternion(
-	// 							outBuffer.getFloat32(i * 16 + 12, true),
-	// 							outBuffer.getFloat32(i * 16, true),
-	// 							outBuffer.getFloat32(i * 16 + 4, true),
-	// 							outBuffer.getFloat32(i * 16 + 8, true)
-	// 						);
-	// 						break;
-	// 					case ChannelTarget.scale:
-	// 						value = new vec3(
-	// 							outBuffer.getFloat32(i * 12, true),
-	// 							outBuffer.getFloat32(i * 12 + 4, true),
-	// 							outBuffer.getFloat32(i * 12 + 8, true)
-	// 						);
-	// 						break;
-	// 					case ChannelTarget.weights:
-	// 						console.error("Weights not implemented");
-	// 						return baseModel;
-
-	// 					default:
-	// 						console.error("Unknown target");
-	// 						return baseModel;
-	// 				}
-
-	// 				maxTime = Math.max(maxTime, t);
-
-	// 				channelObj.keyframes[i] = {
-	// 					time: t,
-	// 					value: value
-	// 				}
-	// 			}
-	// 			animation.channels.push(channelObj);
-	// 		}
-	// 		animation.length = maxTime;
-	// 		baseModel.animations[i] = animation;
-	// 		baseModel.controller = new AnimationController();
-	// 	}
-	// } else {
-	// 	baseModel = new GameObject();
-	// }
-
-	// for (let i = 0; i < rootModels.length; ++i) {
-	// 	baseModel.transform.children[i] = rootModels[i].transform;
-	// 	baseModel.transform.children[i].parent = baseModel.transform;
-	// }
-
-	// return baseModel;
 }
 
 function genBuffers(data: PrimitiveData[]): Primitive[] {

@@ -1,6 +1,7 @@
 import { quaternion, vec3 } from "../common/math/vector.js";
-import { Entity } from "../componentsystem/gameobject.js";
+import { Entity } from "../entitysystem/entity.js";
 import { Time } from "../time.js";
+import { PropBase } from "./mesh/prop.js";
 
 export enum ChannelTarget {
 	none,
@@ -17,10 +18,12 @@ export interface Keyframe {
 
 export class AnimationChannel {
 	targetChannel: ChannelTarget;
-	target: Entity;
+	targetNode: number;
 	keyframes: Keyframe[] = [];
 
-	constructor(target: Entity, path: string) {
+	constructor(targetNode: number, path: string) {
+		this.targetNode = targetNode;
+
 		switch (path) {
 			case "translation":
 				this.targetChannel = ChannelTarget.translation;
@@ -39,8 +42,6 @@ export class AnimationChannel {
 				this.targetChannel = ChannelTarget.none;
 				break
 		}
-
-		this.target = target;
 	}
 }
 
@@ -55,9 +56,14 @@ export class Animation {
 }
 
 export class AnimationController {
+	private prop: PropBase;
 	private currentAnimation: Animation | null = null;
 	private time: number = 0;
 	private keyframeIndices: number[] = [];
+
+	constructor(prop: PropBase) {
+		this.prop = prop;
+	}
 
 	public setAnimation(anim: Animation) {
 		this.keyframeIndices = [];
@@ -80,7 +86,7 @@ export class AnimationController {
 			const next = (i: number) => {
 				return (i + 1) % keyframes.length;
 			}
-			
+
 			let nextKeyframeIndex = next(this.keyframeIndices[i]);
 			let loops = 0;
 			while (keyframes[this.keyframeIndices[i]].time > this.time || keyframes[nextKeyframeIndex].time < this.time) {
@@ -94,21 +100,21 @@ export class AnimationController {
 					break;
 				}
 			}
-			
+
 			const currentKeyframe = keyframes[this.keyframeIndices[i]];
 			const nextKeyframe = keyframes[nextKeyframeIndex];
-			
+
 			const fract = (this.time - currentKeyframe.time) / (nextKeyframe.time - currentKeyframe.time);
 
 			switch (channel.targetChannel) {
 				case ChannelTarget.translation:
-					channel.target.transform.translation = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
+					this.prop.nodeTransforms[channel.targetNode].translation = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
 					break;
 				case ChannelTarget.rotation:
-					channel.target.transform.rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
+					this.prop.nodeTransforms[channel.targetNode].rotation = quaternion.slerp(currentKeyframe.value as quaternion, nextKeyframe.value as quaternion, fract);
 					break;
 				case ChannelTarget.scale:
-					channel.target.transform.scale = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
+					this.prop.nodeTransforms[channel.targetNode].scale = vec3.lerp(currentKeyframe.value as vec3, nextKeyframe.value as vec3, fract);
 					break;
 				case ChannelTarget.weights:
 					break;

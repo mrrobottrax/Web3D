@@ -1,4 +1,4 @@
-import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
@@ -8,7 +8,6 @@ import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
 import { SharedPlayer } from "../../sharedplayer.js";
 import { Client } from "../client.js";
-import { Transform } from "../../componentsystem/transform.js";
 import { PlayerUtil } from "../../playerutil.js";
 import { DynamicProp, PropBase } from "../mesh/prop.js";
 import { loadGltfFromWeb } from "../mesh/gltfloader.js";
@@ -23,12 +22,11 @@ export let uiMatrix: mat4;
 let debugModel: DynamicProp;
 export async function initRender() {
 	debugModel = new DynamicProp(await loadGltfFromWeb("./data/models/sci_player"));
-	console.log(debugModel);
 	debugModel.transform.translation = new vec3(0, 0, -2);
-	// const length = (debugModel as AnimatedGameObject).animations.length;
-	// const index = Math.floor(Math.random() * length);
-	// console.log(index);
-	// (debugModel as AnimatedGameObject).controller.setAnimation((debugModel as AnimatedGameObject).animations[index]);
+	const length = debugModel.model.animations.length;
+	const index = Math.floor(Math.random() * length);
+	console.log(index);
+	debugModel.controller.setAnimation(debugModel.model.animations[index]);
 }
 
 export function initProjection() {
@@ -72,35 +70,9 @@ export function drawFrame(client: Client): void {
 	viewMatrix.translate(camPos.inverse());
 
 	if (currentLevel != undefined) {
-		// for (let i = 0; i < gameobjectsList.length; ++i) {
-		// 	// animations
-		// 	if (gameobjectsList[i] instanceof AnimatedGameObject) {
-		// 		(gameobjectsList[i] as AnimatedGameObject).controller.frame();
-		// 	}
-
-		// 	// update positions
-		// 	updateWorldMatrix(gameobjectsList[i].transform);
-		// }
-
-		// gl.useProgram(defaultShader.program);
-		// for (let i = 0; i < gameobjectsList.length; ++i) {
-		// 	// draw regular shaded stuff
-		// 	if (gameobjectsList[i] instanceof StaticProp)
-		// 		drawModelStatic(gameobjectsList[i] as StaticProp, viewMatrix, defaultShader);
-		// }
-
-		// gl.useProgram(skinnedShader.program);
-		// for (let i = 0; i < gameobjectsList.length; ++i) {
-		// 	// draw skinned meshes
-		// 	if (gameobjectsList[i] instanceof SkinnedProp)
-		// 		drawModelSkinned(gameobjectsList[i] as SkinnedProp, viewMatrix, skinnedShader);
-		// }
-
 		for (let i = 0; i < entityList.length; ++i) {
-			// animations
-			// if (gameobjectsList[i] instanceof AnimatedGameObject) {
-			// 	(gameobjectsList[i] as AnimatedGameObject).controller.frame();
-			// }
+			// update scripts
+			entityList[i].update();
 
 			// update positions
 			const trans = entityList[i].transform;

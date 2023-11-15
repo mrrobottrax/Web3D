@@ -1,17 +1,21 @@
 import { quaternion, vec3 } from "../../common/math/vector.js";
-import { Entity } from "../../componentsystem/gameobject.js";
-import { Transform } from "../../componentsystem/transform.js";
+import { Entity } from "../../entitysystem/entity.js";
+import { Transform } from "../../entitysystem/transform.js";
+import { AnimationController } from "../animation.js";
 import { Model } from "./model.js";
 
 export class PropBase extends Entity {
 	nodeTransforms: Transform[];
 	model: Model;
+	controller: AnimationController;
 
 	constructor(model: Model) {
 		super();
 
 		this.model = model;
+		this.controller = new AnimationController(this);
 
+		// set up nodes
 		this.nodeTransforms = [];
 		this.nodeTransforms.length = model.nodes.length;
 		for (let i = 0; i < model.nodes.length; ++i) {
@@ -23,6 +27,10 @@ export class PropBase extends Entity {
 			node.rotation = quaternion.copy(modelNode.rotation);
 			node.scale = vec3.copy(modelNode.scale);
 		}
+	}
+
+	override update(): void {
+		this.controller.frame();
 	}
 }
 

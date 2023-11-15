@@ -2,7 +2,7 @@ import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../mesh/halfedge.js";
 import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
-import { Entity } from "../componentsystem/gameobject.js";
+import { Entity } from "../entitysystem/entity.js";
 import { StaticProp } from "./mesh/prop.js";
 import { vec3 } from "../common/math/vector.js";
 
