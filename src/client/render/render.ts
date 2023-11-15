@@ -1,8 +1,8 @@
-import { SharedAttribs, UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
-import { Model, Primitive } from "../mesh/model.js";
+import { HierarchyNode, Model, Primitive } from "../mesh/model.js";
 import { currentLevel, gameobjectsList } from "../level.js";
 import { Time } from "../../time.js";
 import { drawUi } from "./ui.js";
@@ -10,6 +10,8 @@ import { SharedPlayer } from "../../sharedplayer.js";
 import { Client } from "../client.js";
 import { Transform } from "../../componentsystem/transform.js";
 import { PlayerUtil } from "../../playerutil.js";
+import { DynamicProp, PropBase } from "../mesh/prop.js";
+import { loadGltfFromWeb } from "../mesh/gltfloader.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -18,9 +20,10 @@ let perspectiveMatrix: mat4;
 let viewMatrix: mat4 = mat4.identity();
 export let uiMatrix: mat4;
 
-// let debugModel: GameObject;
+let debugModel: DynamicProp;
 export async function initRender() {
-	// debugModel = await loadGltfFromWeb("./data/models/sci_player");
+	debugModel = new DynamicProp(await loadGltfFromWeb("./data/models/sci_player"));
+	console.log(debugModel);
 	// debugModel.transform.position = new vec3(0, 0, -2);
 	// const length = (debugModel as AnimatedGameObject).animations.length;
 	// const index = Math.floor(Math.random() * length);
@@ -94,8 +97,10 @@ export function drawFrame(client: Client): void {
 		// }
 
 		gl.useProgram(defaultShader.program);
+		drawProp(currentLevel.prop, defaultShader);
 
-		drawModelStatic(currentLevel.model, viewMatrix, defaultShader);
+		gl.useProgram(skinnedShader.program);
+		drawPropSkinned(debugModel, skinnedShader);
 
 		gl.useProgram(null);
 	}
@@ -104,17 +109,6 @@ export function drawFrame(client: Client): void {
 	drawDebug(client.localPlayer);
 
 	drawUi();
-}
-
-function updateWorldMatrix(transform: Transform, baseMat: mat4 = mat4.identity()) {
-	transform.worldMatrix.set(baseMat);
-	transform.worldMatrix.translate(transform.position);
-	transform.worldMatrix.rotate(transform.rotation);
-	transform.worldMatrix.scale(transform.scale);
-
-	for (let i = 0; i < transform.children.length; ++i) {
-		updateWorldMatrix(transform.children[i], transform.worldMatrix);
-	}
 }
 
 function drawDebug(player: SharedPlayer) {
@@ -194,13 +188,106 @@ function drawPlayersDebug(localPlayer: SharedPlayer, otherPlayers: IterableItera
 function drawModelStatic(model: Model, mat: mat4, shader: UninstancedShaderBase) {
 	for (let i = 0; i < model.nodes.length; ++i) {
 		const node = model.nodes[i];
+
 		let _mat = mat.copy();
 		_mat.translate(node.translation);
 		_mat.rotate(node.rotation);
 		_mat.scale(node.scale);
 
+		// bone
+		if (node.primitives.length == 0) {
+			drawLineScreen(vec3.origin().multMat4(_mat), new vec3(0, 1, 0).multMat4(_mat), [1, 1, 0, 1], 0);
+			continue;
+		}
+
 		for (let j = 0; j < node.primitives.length; ++j) {
 			drawPrimitive(node.primitives[j], _mat, shader);
+		}
+	}
+}
+
+function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
+	// apply hierarchy
+	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
+		const transform = prop.nodeTransforms[node.index];
+		const worldMat = transform.worldMatrix;
+		worldMat.set(parentMat);
+		worldMat.translate(transform.position);
+		worldMat.rotate(transform.rotation);
+		worldMat.scale(transform.scale);
+
+		for (let i = 0; i < node.children.length; ++i) {
+			hierarchyRecursive(node.children[i], worldMat);
+		}
+	}
+
+	for (let i = 0; i < prop.model.hierarchy.length; ++i) {
+		hierarchyRecursive(prop.model.hierarchy[i], prop.transform.worldMatrix);
+	}
+
+	for (let i = 0; i < prop.model.nodes.length; ++i) {
+		const mat = viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
+		const node = prop.model.nodes[i];
+
+		// bone
+		if (node.primitives.length == 0) {
+			drawLineScreen(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [1, 1, 0, 1], 0);
+			continue;
+		}
+
+		for (let j = 0; j < node.primitives.length; ++j) {
+			drawPrimitive(node.primitives[j], mat, shader);
+		}
+	}
+}
+
+function drawPropSkinned(prop: PropBase, shader: UninstancedShaderBase) {
+	// apply hierarchy
+	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
+		const transform = prop.nodeTransforms[node.index];
+		const worldMat = transform.worldMatrix;
+		worldMat.set(parentMat);
+		worldMat.translate(transform.position);
+		worldMat.rotate(transform.rotation);
+		worldMat.scale(transform.scale);
+
+		for (let i = 0; i < node.children.length; ++i) {
+			hierarchyRecursive(node.children[i], worldMat);
+		}
+	}
+
+	for (let i = 0; i < prop.model.hierarchy.length; ++i) {
+		hierarchyRecursive(prop.model.hierarchy[i], prop.transform.worldMatrix);
+	}
+
+	for (let i = 0; i < prop.model.nodes.length; ++i) {
+		const mat = viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
+		const node = prop.model.nodes[i];
+
+		// bone
+		if (node.primitives.length == 0) {
+			drawLineScreen(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [1, 1, 0, 1], 0);
+			continue;
+		}
+
+		if (!node.joints || !node.inverseBindMatrices) {
+			console.error("Missing properties");
+			continue;
+		}
+
+		// create bone matrices
+		let floatArray: Float32Array = new Float32Array(node.inverseBindMatrices.length * 16);
+		for (let i = 0; i < node.inverseBindMatrices.length; ++i) {
+			const arr2 = prop.nodeTransforms[node.joints[i]].worldMatrix.multiply(node.inverseBindMatrices[i]).getData();
+
+			for (let j = 0; j < 16; ++j) {
+				floatArray[i * 16 + j] = arr2[j];
+			}
+		}
+
+		gl.uniformMatrix4fv((shader as SkinnedShaderBase).boneMatricesUnif, false, floatArray);
+		for (let j = 0; j < node.primitives.length; ++j) {
+			drawPrimitive(node.primitives[j], mat, shader);
 		}
 	}
 }

@@ -60,7 +60,7 @@ export let defaultShader: DefaultShader = {
 	colorUnif: null
 };
 
-interface SkinnedShaderBase extends UninstancedShaderBase {
+export interface SkinnedShaderBase extends UninstancedShaderBase {
 	boneMatricesUnif: WebGLUniformLocation | null
 }
 export let skinnedShader: SkinnedShaderBase = {

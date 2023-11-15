@@ -3,11 +3,11 @@ import { HalfEdgeMesh } from "../mesh/halfedge.js";
 import { LevelFile } from "../levelfile.js";
 import { setLevelCollision } from "../physics.js";
 import { GameObject } from "../componentsystem/gameobject.js";
-import { Model } from "./mesh/model.js";
+import { StaticProp } from "./mesh/prop.js";
 
 export class Level extends GameObject {
-	collision: HalfEdgeMesh = new HalfEdgeMesh();
-	model: Model = new Model();
+	collision!: HalfEdgeMesh;
+	prop!: StaticProp;
 }
 
 export let currentLevel: Level;
@@ -40,5 +40,5 @@ export async function setLevelClient(url: string): Promise<void> {
 	currentLevel = new Level();
 	currentLevel.collision = file.collision;
 	setLevelCollision(currentLevel.collision);
-	currentLevel.model = await model;
+	currentLevel.prop = new StaticProp(await model);
 }

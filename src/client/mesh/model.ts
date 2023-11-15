@@ -1,9 +1,8 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
-import { gl } from "../render/gl.js";
 
 export interface HierarchyNode {
-	node: number;
+	index: number;
 	children: HierarchyNode[];
 }
 

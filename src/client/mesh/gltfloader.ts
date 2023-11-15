@@ -151,6 +151,7 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model {
 	let nodeData: NodeData[] = getGltfNodes(json, buffers, texPrefix);
 	let baseNodes: number[] = json.scenes[0].nodes;
 
+	// get vertex data
 	let model = new Model();
 	model.nodes.length = nodeData.length;
 	for (let i = 0; i < nodeData.length; ++i) {
@@ -159,13 +160,19 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model {
 			rotation: nodeData[i].rotation,
 			scale: nodeData[i].scale,
 			primitives: genBuffers(nodeData[i].primitives),
-			skinned: false
+			skinned: nodeData[i].skinned
+		}
+
+		if (nodeData[i].skinned) {
+			model.nodes[i].inverseBindMatrices = nodeData[i].inverseBindMatrices;
+			model.nodes[i].joints = nodeData[i].joints;
 		}
 	}
 
+	// hierarchy
 	const createChildRecursive = (node: number, parent: HierarchyNode | null = null) => {
 		let newNode: HierarchyNode = {
-			node: node,
+			index: node,
 			children: []
 		}
 		if (!parent) {
@@ -175,84 +182,22 @@ function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model {
 		}
 
 		for (let i = 0; i < nodeData[node].children.length; ++i) {
-			createChildRecursive(nodeData[node].children[i], newNode);
+			const next = nodeData[nodeData[node].children[i]];
+			if (next.skinned) {
+				// skip parent on skinned nodes (glTF spec for some reason)
+				createChildRecursive(nodeData[node].children[i], parent);
+			} else {
+				createChildRecursive(nodeData[node].children[i], newNode);
+			}
 		}
 	}
 
 	for (let i = 0; i < baseNodes.length; ++i) {
-		createChildRecursive(i);
+		createChildRecursive(baseNodes[i]);
 	}
 
 	return model;
-
-	// let rootModels: GameObject[] = [];
-	// let nodeToModel: GameObject[] = [];
-	// nodeToModel.length = meshes.length;
-
-	// // set up children
-	// const nodes = json.scenes[0].nodes;
-	// for (let i = 0; i < nodes.length; ++i) {
-	// 	const createModelRecursive = (index: number, parent: Transform | null = null): GameObject => {
-	// 		let renderer;
-	// 		let prop;
-	// 		const meshData = meshes[index];
-
-	// 		if (meshData.primitives.length == 0) {
-	// 			prop = new GameObject();
-	// 		} else if (meshData.skinned) {
-	// 			renderer = new SkinnedMeshRenderer();
-	// 			renderer.inverseBindMatrices = meshData.inverseBindMatrices;
-	// 			renderer.mesh.genBuffers(meshData.primitives);
-
-	// 			prop = new SkinnedProp();
-	// 			prop.meshRenderer = renderer;
-	// 		} else {
-	// 			renderer = new StaticMeshRenderer();
-	// 			renderer.mesh.genBuffers(meshData.primitives);
-
-	// 			prop = new StaticProp();
-	// 			prop.meshRenderer = renderer;
-	// 		}
-
-	// 		prop.transform.parent = parent;
-	// 		prop.transform.position = meshData.translation;
-	// 		prop.transform.rotation = meshData.rotation;
-	// 		prop.transform.scale = meshData.scale;
-
-	// 		prop.transform.children.length = meshData.children.length;
-	// 		for (let j = 0; j < meshData.children.length; ++j) {
-	// 			prop.transform.children[j] = createModelRecursive(meshData.children[j], prop.transform).transform;
-	// 		}
-
-	// 		nodeToModel[index] = prop;
-
-	// 		return prop;
-	// 	}
-
-	// 	rootModels.push(createModelRecursive(nodes[i]));
-	// }
-
-	// // set up joints
-	// for (let i = 0; i < nodeToModel.length; ++i) {
-	// 	if (meshes[i].skinned) {
-	// 		// remove skinned mesh parent
-	// 		const parent = nodeToModel[i].transform.parent;
-	// 		if (parent) {
-	// 			const childIndex = parent.children.indexOf(nodeToModel[i].transform);
-	// 			parent.children.splice(childIndex, 1);
-	// 			parent.parent?.children.push(nodeToModel[i].transform);
-	// 			nodeToModel[i].transform.parent = parent.parent;
-	// 		}
-
-	// 		let joints: Transform[] = [];
-	// 		joints.length = meshes[i].joints.length;
-	// 		for (let j = 0; j < meshes[i].joints.length; ++j) {
-	// 			joints[j] = nodeToModel[meshes[i].joints[j]].transform;
-	// 		}
-	// 		(nodeToModel[i] as SkinnedProp).meshRenderer.joints = joints;
-	// 	}
-	// }
-
+	
 	// let baseModel
 
 	// // animations
@@ -478,8 +423,8 @@ function getErrorData(): NodeData[] {
 }
 
 export function getGltfNodes(json: any, buffers: Uint8Array[], texPrefix: string): NodeData[] {
-	let meshes: NodeData[] = [];
-	meshes.length = json.nodes.length;
+	let data: NodeData[] = [];
+	data.length = json.nodes.length;
 
 	// load nodes
 	for (let j = 0; j < json.nodes.length; ++j) {
@@ -571,10 +516,10 @@ export function getGltfNodes(json: any, buffers: Uint8Array[], texPrefix: string
 			inverseBindMatrices: inverseBindMatrices,
 		};
 
-		meshes[j] = meshData;
+		data[j] = meshData;
 	}
 
-	return meshes;
+	return data;
 }
 
 function assertAccessor(accessor: any, componentType: number, accessorType: string): boolean {

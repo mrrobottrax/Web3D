@@ -7,7 +7,4 @@ export class Transform extends Component {
 	scale: vec3 = vec3.one();
 	rotation: quaternion = quaternion.identity();
 	worldMatrix: mat4 = mat4.identity();
-
-	children: Transform[] = [];
-	parent: Transform | null = null;
 }
