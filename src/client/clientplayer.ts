@@ -14,6 +14,6 @@ export class ClientPlayer extends SharedPlayer {
 
 	override update(): void {
 		this.transform.translation = PlayerUtil.getFeet(this);
-		this.transform.rotation = quaternion.eulerRad(0, this.yaw, 0);
+		this.transform.rotation = quaternion.eulerRad(0, this.yaw + Math.PI, 0);
 	}
 }
