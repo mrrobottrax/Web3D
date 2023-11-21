@@ -95,13 +95,17 @@ function mouse(button: number, down: boolean) {
 	}
 }
 
-const quakeSens = (1 / 16385) * 2 * Math.PI;
+const quakeSens = (1 / 16384) * 2 * Math.PI;
 function mouseLook(x: number, y: number, player: SharedPlayer) {
 	if (!pointerLocked)
 		return;
 
 	player.yaw -= x * quakeSens * config.sensitivity;
 	player.pitch -= y * quakeSens * config.sensitivity;
+
+	player.yaw %= 2 * Math.PI;
+	player.pitch %= 2 * Math.PI;
+
 	player.camRotation = quaternion.eulerRad(player.pitch, player.yaw, 0);
 }
 
