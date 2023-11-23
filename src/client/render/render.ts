@@ -10,10 +10,10 @@ import { SharedPlayer } from "../../common/sharedplayer.js";
 import { Client } from "../client.js";
 import { PlayerUtil } from "../../common/playerutil.js";
 import { DynamicProp, PropBase } from "../mesh/prop.js";
-import { loadGltfFromWeb } from "../mesh/gltfloader.js";
 import { entityList } from "../../common/entitysystem/entity.js";
 import { Transform } from "../../common/entitysystem/transform.js";
 import { ClientPlayer } from "../clientplayer.js";
+import { ClientGltfLoader } from "../mesh/gltfloader.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -24,7 +24,7 @@ export let uiMatrix: mat4;
 
 let debugModel: DynamicProp;
 export async function initRender() {
-	debugModel = new DynamicProp(await loadGltfFromWeb("./data/models/sci_player"));
+	debugModel = new DynamicProp(await ClientGltfLoader.loadGltfFromWeb("./data/models/sci_player"));
 	debugModel.transform.translation = new vec3(0, 0, -2);
 	const length = debugModel.model.animations.length;
 	const index = Math.floor(Math.random() * length);

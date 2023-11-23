@@ -8,7 +8,7 @@ import { setLevelServer } from "./level.js";
 import { Time } from "../common/time.js";
 import { GameContext, setGameContext } from "../common/context.js";
 import { setPlayerModel } from "../common/sharedplayer.js";
-import { loadGltfFromDisk } from "./mesh/gltfloader.js";
+import { ServerGltfLoader } from "./mesh/gltfloader.js";
 
 export class Server {
 	wss!: WebSocketServer;
@@ -47,7 +47,7 @@ export class Server {
 
 		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
 		setLevelServer("./data/levels/_testlvl");
-		setPlayerModel(await loadGltfFromDisk("./data/models/sci_player"));
+		setPlayerModel(await ServerGltfLoader.loadGltfFromDisk("./data/models/sci_player"));
 
 		console.log("SERVER OPENED");
 	}

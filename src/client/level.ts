@@ -1,9 +1,9 @@
-import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../common/mesh/halfedge.js";
 import { LevelFile } from "../common/levelfile.js";
 import { setLevelCollision } from "../common/physics.js";
 import { Entity } from "../common/entitysystem/entity.js";
 import { StaticProp } from "./mesh/prop.js";
+import { ClientGltfLoader } from "./mesh/gltfloader.js";
 
 export class Level extends Entity {
 	collision!: HalfEdgeMesh;
@@ -29,7 +29,7 @@ export async function setLevelClient(url: string): Promise<void> {
 	}
 
 	const file: LevelFile = JSON.parse(res.response);
-	const model = loadGltfFromWeb(url);
+	const model = ClientGltfLoader.loadGltfFromWeb(url);
 
 	if (!model) {
 		console.error("Failed to load level model");
