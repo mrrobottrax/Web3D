@@ -1,6 +1,6 @@
 import { Model } from "../../common/mesh/model.js";
 import { GltfLoader } from "../../common/mesh/gltfloader.js";
-import { Server } from "../server.js";
+import { Server } from "../system/server.js";
 
 export class ServerGltfLoader extends GltfLoader {
 	static async loadGltfFromDisk(url: string): Promise<Model> {

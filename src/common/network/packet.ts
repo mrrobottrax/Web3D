@@ -1,5 +1,5 @@
 import { vec3 } from "../math/vector.js";
-import { UserCmd } from "../usercmd.js";
+import { UserCmd } from "../input/usercmd.js";
 import { PacketType } from "./netenums.js";
 
 export interface Packet {

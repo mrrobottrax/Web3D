@@ -1,14 +1,14 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { readFileSync } from "fs";
-import { LevelFile } from "../common/levelfile.js";
-import { ServerPlayer } from "./serverplayer.js";
-import { PacketType } from "../common/network/netenums.js";
-import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../common/network/packet.js";
-import { setLevelServer } from "./level.js";
-import { Time } from "../common/time.js";
-import { GameContext, setGameContext } from "../common/context.js";
-import { setPlayerModel } from "../common/sharedplayer.js";
-import { ServerGltfLoader } from "./mesh/gltfloader.js";
+import { LevelFile } from "../../common/system/levelfile.js";
+import { ServerPlayer } from "../entities/serverplayer.js";
+import { PacketType } from "../../common/network/netenums.js";
+import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
+import { setLevelServer } from "../entities/level.js";
+import { Time } from "../../common/system/time.js";
+import { GameContext, setGameContext } from "../../common/system/context.js";
+import { setPlayerModel } from "../../common/player/sharedplayer.js";
+import { ServerGltfLoader } from "../mesh/gltfloader.js";
 
 export class Server {
 	wss!: WebSocketServer;

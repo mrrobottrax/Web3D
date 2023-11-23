@@ -1,4 +1,4 @@
-import { HalfEdgeMesh } from "./mesh/halfedge.js";
+import { HalfEdgeMesh } from "../mesh/halfedge.js";
 
 export interface LevelFile {
 	collision: HalfEdgeMesh;

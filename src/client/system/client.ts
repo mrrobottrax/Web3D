@@ -1,17 +1,17 @@
-import { CircularBuffer } from "../common/circularbuffer.js";
-import { vec3 } from "../common/math/vector.js";
-import { GameContext, setGameContext } from "../common/context.js";
-import { PacketType } from "../common/network/netenums.js";
-import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../common/network/packet.js";
-import { SharedPlayer } from "../common/sharedplayer.js";
-import { Time } from "../common/time.js";
-import { UserCmd } from "../common/usercmd.js";
-import { ClientPlayer } from "./clientplayer.js";
-import { createUserCMD, initInput } from "./input.js";
-import { initGl, resizeCanvas } from "./render/gl.js";
-import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "./render/render.js";
-import { initUi } from "./render/ui.js";
-import { tickViewmodel } from "./render/viewmodel.js";
+import { CircularBuffer } from "../../common/collections/circularbuffer.js";
+import { vec3 } from "../../common/math/vector.js";
+import { GameContext, setGameContext } from "../../common/system/context.js";
+import { PacketType } from "../../common/network/netenums.js";
+import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
+import { SharedPlayer } from "../../common/player/sharedplayer.js";
+import { Time } from "../../common/system/time.js";
+import { UserCmd } from "../../common/input/usercmd.js";
+import { ClientPlayer } from "../player/clientplayer.js";
+import { createUserCMD, initInput } from "../player/input.js";
+import { initGl, resizeCanvas } from "../render/gl.js";
+import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
+import { initUi } from "../render/ui.js";
+import { tickViewmodel } from "../render/viewmodel.js";
 
 interface PlayerData {
 	position: vec3,

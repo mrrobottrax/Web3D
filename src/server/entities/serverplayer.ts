@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { SharedPlayer } from "../common/sharedplayer.js";
+import { SharedPlayer } from "../../common/player/sharedplayer.js";
 
 export class ServerPlayer extends SharedPlayer {
 	lastCmd: number = -1;

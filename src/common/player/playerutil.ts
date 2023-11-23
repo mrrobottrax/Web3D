@@ -1,9 +1,9 @@
-import { UserCmd } from "./usercmd.js";
-import { Buttons } from "./buttons.js";
+import { UserCmd } from "../input/usercmd.js";
+import { Buttons } from "../input/buttons.js";
 import { SharedPlayer } from "./sharedplayer.js";
-import gMath from "./math/gmath.js";
-import { vec3 } from "./math/vector.js";
-import { castAABB } from "./physics.js";
+import gMath from "../math/gmath.js";
+import { vec3 } from "../math/vector.js";
+import { castAABB } from "../system/physics.js";
 
 const minWalkableY = 0.7;
 const hullSize = new vec3(1, 2, 1);

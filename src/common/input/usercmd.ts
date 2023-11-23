@@ -1,4 +1,4 @@
-import { vec3 } from "./math/vector";
+import { vec3 } from "../math/vector";
 
 export interface UserCmd {
 	wishDir: vec3;

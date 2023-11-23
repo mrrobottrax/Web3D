@@ -1,4 +1,4 @@
-import gMath from "./math/gmath.js";
+import gMath from "../math/gmath.js";
 
 export class CircularBuffer<Type> {
 	array: Array<Type>;

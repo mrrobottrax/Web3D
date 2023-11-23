@@ -1,4 +1,4 @@
-import { AnimationChannel, ChannelTarget, Animation } from "../animation.js";
+import { AnimationChannel, ChannelTarget, Animation } from "./animation.js";
 import { HierarchyNode, Model, NodeData, Primitive, PrimitiveData } from "./model.js";
 import { mat4 } from "../math/matrix.js";
 import { quaternion, vec3 } from "../math/vector.js";

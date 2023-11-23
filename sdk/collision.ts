@@ -1,4 +1,4 @@
-import { LevelFile } from "../src/common/levelfile.js";
+import { LevelFile } from "../src/common/system/levelfile.js";
 import { HalfEdgeMesh } from "../src/common/mesh/halfedge.js";
 import { drawLine } from "../src/client/render/render.js";
 import { GltfLoader } from "../src/common/mesh/gltfloader.js";

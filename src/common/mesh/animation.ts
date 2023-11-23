@@ -1,6 +1,6 @@
-import { quaternion, vec3 } from "./math/vector.js";
-import { Transform } from "./entitysystem/transform.js";
-import { Time } from "./time.js";
+import { quaternion, vec3 } from "../math/vector.js";
+import { Transform } from "../entitysystem/transform.js";
+import { Time } from "../system/time.js";
 
 export enum ChannelTarget {
 	none,

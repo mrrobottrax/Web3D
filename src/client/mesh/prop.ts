@@ -1,6 +1,6 @@
 import { Entity } from "../../common/entitysystem/entity.js";
 import { Transform } from "../../common/entitysystem/transform.js";
-import { AnimationController } from "../../common/animation.js";
+import { AnimationController } from "../../common/mesh/animation.js";
 import { Model, SetUpNodeTransforms } from "../../common/mesh/model.js";
 
 export class PropBase extends Entity {

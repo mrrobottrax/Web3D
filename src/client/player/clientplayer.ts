@@ -1,7 +1,7 @@
-import { quaternion } from "../common/math/vector.js";
-import { PlayerUtil } from "../common/playerutil.js";
-import { SharedPlayer, playerModel } from "../common/sharedplayer.js";
-import { Model } from "../common/mesh/model.js";
+import { quaternion } from "../../common/math/vector.js";
+import { PlayerUtil } from "../../common/player/playerutil.js";
+import { SharedPlayer, playerModel } from "../../common/player/sharedplayer.js";
+import { Model } from "../../common/mesh/model.js";
 
 export class ClientPlayer extends SharedPlayer {
 	model: Model;

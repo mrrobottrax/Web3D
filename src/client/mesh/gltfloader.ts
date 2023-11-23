@@ -1,4 +1,4 @@
-import { GameContext, gameContext } from "../../common/context.js";
+import { GameContext, gameContext } from "../../common/system/context.js";
 import { GltfLoader } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
 import { SharedAttribs, gl, loadTexture, solidTex } from "../render/gl.js";
