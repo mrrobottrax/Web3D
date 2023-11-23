@@ -60,7 +60,8 @@ export class SharedPlayer extends Entity {
 		this.nodeTransforms = [];
 		SetupNodeTransforms(this.nodeTransforms, playerModel);
 		this.controller = new PlayerAnimController(this.nodeTransforms,
-			this.model.findAnimation("idle1"),
+			// this.model.findAnimation("idle1"),
+			this.model.findAnimation("flinch1"),
 			this.model.findAnimation("walk"),
 		);
 	}

@@ -170,8 +170,8 @@ function drawDebug(player: SharedPlayer) {
 
 function drawPlayersDebug(otherPlayers: IterableIterator<ClientPlayer>) {
 	for (let player of otherPlayers) {
-		const pos = PlayerUtil.getFeet(player);
-		drawLine(pos, pos.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
+		// const pos = PlayerUtil.getFeet(player);
+		// drawLine(pos, pos.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
 
 		drawPropSkinned(player.nodeTransforms, player.model, player.transform.worldMatrix, skinnedShader);
 	}
