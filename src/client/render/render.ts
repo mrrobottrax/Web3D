@@ -72,20 +72,7 @@ export function drawFrame(client: Client): void {
 	viewMatrix.rotate(client.localPlayer.camRotation.inverse());
 	viewMatrix.translate(camPos.inverse());
 
-	if (currentLevel != undefined) {
-		for (let i = 0; i < entityList.length; ++i) {
-			// update scripts
-			entityList[i].update();
-
-			// update positions
-			const trans = entityList[i].transform;
-			const mat = trans.worldMatrix;
-			mat.setIdentity();
-			mat.translate(trans.translation);
-			mat.rotate(trans.rotation);
-			mat.scale(trans.scale);
-		}
-
+	if (currentLevel) {
 		gl.useProgram(defaultShader.program);
 		drawProp(currentLevel.prop, defaultShader);
 

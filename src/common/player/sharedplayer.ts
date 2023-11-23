@@ -10,6 +10,7 @@ import { PlayerAnimController } from "./playeranimcontroller.js";
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {
 	playerModel = model;
+	// console.log(playerModel.animations);
 }
 
 export class SharedPlayer extends Entity {
@@ -59,10 +60,11 @@ export class SharedPlayer extends Entity {
 
 		this.nodeTransforms = [];
 		SetupNodeTransforms(this.nodeTransforms, playerModel);
-		this.controller = new PlayerAnimController(this.nodeTransforms,
-			// this.model.findAnimation("idle1"),
-			this.model.findAnimation("flinch1"),
-			this.model.findAnimation("walk"),
+		this.controller = new PlayerAnimController(
+			this.nodeTransforms,
+			this,
+			this.model.findAnimation("idle1"),
+			this.model.findAnimation("run"),
 		);
 	}
 

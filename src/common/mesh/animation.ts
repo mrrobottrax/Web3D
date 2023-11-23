@@ -55,16 +55,22 @@ export class Animation {
 }
 
 export class AnimationController {
+	public time: number = 0;
+
 	private nodeTransforms: Transform[];
 	private currentAnimation: Animation | null = null;
-	private time: number = 0;
 	private keyframeIndices: number[] = [];
+	private ignoreIndices: number | null;
 
-	constructor(nodeTransforms: Transform[]) {
+	constructor(nodeTransforms: Transform[], ignoreIndices: number | null = null) {
 		this.nodeTransforms = nodeTransforms;
+
+		this.ignoreIndices = ignoreIndices;
 	}
 
 	public setAnimation(anim: Animation) {
+		this.time = 0;
+
 		this.keyframeIndices = [];
 		this.currentAnimation = anim;
 
@@ -80,6 +86,12 @@ export class AnimationController {
 
 		for (let i = 0; i < this.currentAnimation.channels.length; ++i) {
 			const channel = this.currentAnimation.channels[i];
+
+			// don't animate the base node
+			if (channel.targetNode == this.ignoreIndices) {
+				continue;
+			}
+
 			const keyframes = channel.keyframes;
 
 			const next = (i: number) => {

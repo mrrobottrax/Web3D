@@ -1,3 +1,5 @@
+import { GameContext, gameContext } from "./context.js";
+
 export let Time =
 {
 	deltaTime: 0,
@@ -5,7 +7,7 @@ export let Time =
 	elapsed: 0,
 	canTick: false,
 	nextTick: 0,
-	fract: 0,
+	fract: 0
 }
 
 let lastTime = Date.now();
@@ -33,18 +35,21 @@ export function updateTime(): void {
 
 	lastTime = time;
 
-	if (time >= Time.nextTick) {
-		if (time - Time.nextTick > Time.fixedDeltaTime * 1000) {
-			console.log("more than 1 tick behind, starting over");
-			Time.nextTick = Date.now();
+	// handle ticks on client
+	if (gameContext != GameContext.server) {
+		if (time >= Time.nextTick) {
+			if (time - Time.nextTick > Time.fixedDeltaTime * 3000) {
+				console.log("more than 3 ticks behind, starting over");
+				Time.nextTick = Date.now();
+			}
+			Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
+			if (!pause || advance) {
+				Time.canTick = true;
+				advance = false;
+			}
+		} else {
+			Time.canTick = false;
 		}
-		Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
-		if (!pause || advance) {
-			Time.canTick = true;
-			advance = false;
-		}
-	} else {
-		Time.canTick = false;
 	}
 
 	if (!pause) {

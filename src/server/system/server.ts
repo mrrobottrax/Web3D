@@ -5,10 +5,11 @@ import { ServerPlayer } from "../entities/serverplayer.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
 import { setLevelServer } from "../entities/level.js";
-import { Time } from "../../common/system/time.js";
+import { Time, updateTime } from "../../common/system/time.js";
 import { GameContext, setGameContext } from "../../common/system/context.js";
 import { setPlayerModel } from "../../common/player/sharedplayer.js";
 import { ServerGltfLoader } from "../mesh/gltfloader.js";
+import { updateEntities } from "../../common/entitysystem/update.js";
 
 export class Server {
 	wss!: WebSocketServer;
@@ -61,8 +62,11 @@ export class Server {
 	}
 
 	tick() {
-		this.generateSnapshot();
+		updateTime();
+		updateEntities();
 
+		// send snapshot of world
+		this.generateSnapshot();
 		for (let player of this.players.values()) {
 			const res: SnapshotPacket = {
 				type: PacketType.snapshot,
@@ -147,6 +151,8 @@ export class Server {
 				position: player.position,
 				pitch: player.pitch,
 				yaw: player.yaw,
+				anim: player.controller.state,
+				time: player.controller.time
 			}
 
 			++i;

@@ -12,6 +12,7 @@ import { initGl, resizeCanvas } from "../render/gl.js";
 import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
 import { initUi } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
+import { updateEntities } from "../../common/entitysystem/update.js";
 
 interface PlayerData {
 	position: vec3,
@@ -116,6 +117,7 @@ export class Client {
 
 		updateInterp(this);
 		resizeCanvas();
+		updateEntities();
 		drawFrame(this);
 	}
 
@@ -137,6 +139,8 @@ export class Client {
 				player.position.copy(playerSnapshot.position);
 				player.yaw = playerSnapshot.yaw;
 				player.pitch = playerSnapshot.pitch;
+				player.controller.setState(playerSnapshot.anim);
+				player.controller.time = playerSnapshot.time;
 			}
 		}
 	}
