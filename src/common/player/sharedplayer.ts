@@ -4,8 +4,8 @@ import { PlayerUtil, PositionData } from "./playerutil.js";
 import { Time } from "../system/time.js";
 import { Entity } from "../entitysystem/entity.js";
 import { Transform } from "../entitysystem/transform.js";
-import { AnimationController } from "../mesh/animation.js";
 import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "../mesh/model.js";
+import { PlayerAnimController } from "./playeranimcontroller.js";
 
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {
@@ -29,11 +29,15 @@ export class SharedPlayer extends Entity {
 
 	id: number;
 
-	controller: AnimationController;
+	controller: PlayerAnimController;
 	nodeTransforms: Transform[];
+
+	model: Model;
 
 	constructor(id: number) {
 		super();
+
+		this.model = playerModel;
 
 		this.position = vec3.origin();
 		this.pitch = 0;
@@ -55,7 +59,10 @@ export class SharedPlayer extends Entity {
 
 		this.nodeTransforms = [];
 		SetupNodeTransforms(this.nodeTransforms, playerModel);
-		this.controller = new AnimationController(this.nodeTransforms);
+		this.controller = new PlayerAnimController(this.nodeTransforms,
+			this.model.findAnimation("idle1"),
+			this.model.findAnimation("walk"),
+		);
 	}
 
 	processCmd(cmd: UserCmd, positionOnly: boolean = false): void {
@@ -67,5 +74,11 @@ export class SharedPlayer extends Entity {
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 
 		// todo: firing
+	}
+
+	override update(): void {
+		this.controller.frame();
+
+		super.update();
 	}
 }

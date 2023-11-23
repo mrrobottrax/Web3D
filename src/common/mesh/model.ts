@@ -12,6 +12,15 @@ export class Model {
 	hierarchy: HierarchyNode[] = [];
 	nodes: Node[] = [];
 	animations: Animation[] = [];
+
+	findAnimation(name: string): Animation {
+		const anim = this.animations.find(anim => { return anim.name.match(name) });
+
+		// todo: error animation?
+		if (!anim) { console.error("Could not find animation: " + name); return new Animation("ERROR"); }
+
+		return anim;
+	}
 }
 
 export interface Node {
