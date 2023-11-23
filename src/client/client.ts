@@ -1,11 +1,11 @@
 import { CircularBuffer } from "../common/circularbuffer.js";
 import { vec3 } from "../common/math/vector.js";
-import { Context, setContext } from "../context.js";
-import { PacketType } from "../network/netenums.js";
-import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
-import { SharedPlayer } from "../sharedplayer.js";
-import { Time } from "../time.js";
-import { UserCmd } from "../usercmd.js";
+import { GameContext, setGameContext } from "../common/context.js";
+import { PacketType } from "../common/network/netenums.js";
+import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../common/network/packet.js";
+import { SharedPlayer } from "../common/sharedplayer.js";
+import { Time } from "../common/time.js";
+import { UserCmd } from "../common/usercmd.js";
 import { ClientPlayer } from "./clientplayer.js";
 import { createUserCMD, initInput } from "./input.js";
 import { initGl, resizeCanvas } from "./render/gl.js";
@@ -30,7 +30,7 @@ export class Client {
 	otherPlayers!: Map<number, ClientPlayer>;
 
 	public constructor() {
-		setContext(Context.client);
+		setGameContext(GameContext.client);
 		this.ws = null;
 		(window as any).connect = (url: string) => this.connect(url);
 		this.cmdBuffer = new CircularBuffer(1 / Time.fixedDeltaTime);
@@ -49,7 +49,7 @@ export class Client {
 		initInput(this.localPlayer);
 	}
 
-	public connect(url: string) {
+	public connect(url: string): void {
 		console.log("Connecting to: " + url);
 
 		this.ws = new WebSocket(url);

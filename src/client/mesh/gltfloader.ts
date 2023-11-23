@@ -1,5 +1,5 @@
-import { loadGltf } from "../../mesh/gltfloader.js";
-import { Model } from "./model.js";
+import { loadGltf } from "../../common/mesh/gltfloader.js";
+import { Model } from "../../common/mesh/model.js";
 
 export async function loadGltfFromWeb(url: string): Promise<Model> {
 	// send requests

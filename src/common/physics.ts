@@ -1,4 +1,4 @@
-import { vec3 } from "./common/math/vector.js";
+import { vec3 } from "./math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "./mesh/halfedge.js";
 
 export let levelCollision: HalfEdgeMesh;

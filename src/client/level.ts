@@ -1,8 +1,8 @@
 import { loadGltfFromWeb } from "./mesh/gltfloader.js";
-import { HalfEdgeMesh } from "../mesh/halfedge.js";
-import { LevelFile } from "../levelfile.js";
-import { setLevelCollision } from "../physics.js";
-import { Entity } from "../entitysystem/entity.js";
+import { HalfEdgeMesh } from "../common/mesh/halfedge.js";
+import { LevelFile } from "../common/levelfile.js";
+import { setLevelCollision } from "../common/physics.js";
+import { Entity } from "../common/entitysystem/entity.js";
 import { StaticProp } from "./mesh/prop.js";
 
 export class Level extends Entity {

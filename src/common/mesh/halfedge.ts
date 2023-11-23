@@ -1,6 +1,6 @@
-import { mat4 } from "../common/math/matrix.js";
-import { vec3 } from "../common/math/vector.js";
-import { NodeData } from "../client/mesh/model.js";
+import { mat4 } from "../math/matrix.js";
+import { vec3 } from "../math/vector.js";
+import { NodeData } from "./model.js";
 
 export interface Vertex {
 	position: vec3;

@@ -1,13 +1,13 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { readFileSync } from "fs";
-import { LevelFile } from "../levelfile.js";
+import { LevelFile } from "../common/levelfile.js";
 import { ServerPlayer } from "./serverplayer.js";
-import { PacketType } from "../network/netenums.js";
-import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../network/packet.js";
+import { PacketType } from "../common/network/netenums.js";
+import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../common/network/packet.js";
 import { setLevelServer } from "./level.js";
-import { Time } from "../time.js";
-import { Context, setContext } from "../context.js";
-import { setPlayerModel } from "../sharedplayer.js";
+import { Time } from "../common/time.js";
+import { GameContext, setGameContext } from "../common/context.js";
+import { setPlayerModel } from "../common/sharedplayer.js";
 import { loadGltfFromDisk } from "./mesh/gltfloader.js";
 
 export class Server {
@@ -22,7 +22,7 @@ export class Server {
 	snapshot!: Snapshot;
 
 	public async init() {
-		setContext(Context.server);
+		setGameContext(GameContext.server);
 
 		this.wss = new WebSocketServer({ port: 80 })
 		this.wss.on('connection', ws => {

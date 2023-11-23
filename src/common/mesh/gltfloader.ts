@@ -1,10 +1,10 @@
-import { AnimationChannel, ChannelTarget, Animation } from "../client/animation.js";
-import { HierarchyNode, Model, NodeData, Primitive, PrimitiveData } from "../client/mesh/model.js";
-import { textures } from "../client/mesh/textures.js";
-import { SharedAttribs, gl, loadTexture, solidTex } from "../client/render/gl.js";
-import { mat4 } from "../common/math/matrix.js";
-import { quaternion, vec3 } from "../common/math/vector.js";
-import { Context, context } from "../context.js";
+import { AnimationChannel, ChannelTarget, Animation } from "../animation.js";
+import { HierarchyNode, Model, NodeData, Primitive, PrimitiveData } from "./model.js";
+import { textures } from "../../client/mesh/textures.js";
+import { SharedAttribs, gl, loadTexture, solidTex } from "../../client/render/gl.js";
+import { mat4 } from "../math/matrix.js";
+import { quaternion, vec3 } from "../math/vector.js";
+import { GameContext, gameContext } from "../context.js";
 
 const magicNumber: number = 1179937895;
 const version: number = 2;
@@ -217,7 +217,7 @@ export function loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): M
 function genBuffers(data: PrimitiveData[]): Primitive[] {
 	let primitives: Primitive[] = [];
 
-	if (context == Context.server) {
+	if (gameContext == GameContext.server) {
 		return primitives;
 	}
 

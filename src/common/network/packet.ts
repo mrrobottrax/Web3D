@@ -1,4 +1,4 @@
-import { vec3 } from "../common/math/vector.js";
+import { vec3 } from "../math/vector.js";
 import { UserCmd } from "../usercmd.js";
 import { PacketType } from "./netenums.js";
 

@@ -1,8 +1,8 @@
 import { UserCmd } from "./usercmd.js";
 import { Buttons } from "./buttons.js";
 import { SharedPlayer } from "./sharedplayer.js";
-import gMath from "./common/math/gmath.js";
-import { vec3 } from "./common/math/vector.js";
+import gMath from "./math/gmath.js";
+import { vec3 } from "./math/vector.js";
 import { castAABB } from "./physics.js";
 
 const minWalkableY = 0.7;

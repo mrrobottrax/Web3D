@@ -1,11 +1,11 @@
 import { UserCmd } from "./usercmd.js";
-import { quaternion, vec3 } from "./common/math/vector.js";
+import { quaternion, vec3 } from "./math/vector.js";
 import { PlayerUtil, PositionData } from "./playerutil.js";
 import { Time } from "./time.js";
 import { Entity } from "./entitysystem/entity.js";
 import { Transform } from "./entitysystem/transform.js";
-import { AnimationController } from "./client/animation.js";
-import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "./client/mesh/model.js";
+import { AnimationController } from "./animation.js";
+import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "./mesh/model.js";
 
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {

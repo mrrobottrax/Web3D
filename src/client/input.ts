@@ -1,12 +1,12 @@
 import { config } from "./config.js";
 import { quaternion, vec3 } from "../common/math/vector.js";
-import { castRay } from "../physics.js";
+import { castRay } from "../common/physics.js";
 import { lockCursor, unlockCursor } from "./pointerlock.js"
 import { drawLine, toggleDraw } from "./render/render.js";
-import { advanceGame, pauseGame } from "../time.js";
-import { Buttons } from "../buttons.js";
-import { SharedPlayer } from "../sharedplayer.js";
-import { UserCmd } from "../usercmd.js";
+import { advanceGame, pauseGame } from "../common/time.js";
+import { Buttons } from "../common/buttons.js";
+import { SharedPlayer } from "../common/sharedplayer.js";
+import { UserCmd } from "../common/usercmd.js";
 
 export let moveVector = vec3.origin();
 export let pointerLocked: boolean = false;

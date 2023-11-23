@@ -2,17 +2,17 @@ import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader
 import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
-import { HierarchyNode, Model, Primitive } from "../mesh/model.js";
+import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
 import { currentLevel } from "../level.js";
-import { Time } from "../../time.js";
+import { Time } from "../../common/time.js";
 import { drawUi } from "./ui.js";
-import { SharedPlayer } from "../../sharedplayer.js";
+import { SharedPlayer } from "../../common/sharedplayer.js";
 import { Client } from "../client.js";
-import { PlayerUtil } from "../../playerutil.js";
+import { PlayerUtil } from "../../common/playerutil.js";
 import { DynamicProp, PropBase } from "../mesh/prop.js";
 import { loadGltfFromWeb } from "../mesh/gltfloader.js";
-import { entityList } from "../../entitysystem/entity.js";
-import { Transform } from "../../entitysystem/transform.js";
+import { entityList } from "../../common/entitysystem/entity.js";
+import { Transform } from "../../common/entitysystem/transform.js";
 import { ClientPlayer } from "../clientplayer.js";
 
 const nearClip = 0.015;

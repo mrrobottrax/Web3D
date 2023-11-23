@@ -1,7 +1,7 @@
-import { Entity } from "../../entitysystem/entity.js";
-import { Transform } from "../../entitysystem/transform.js";
-import { AnimationController } from "../animation.js";
-import { Model, SetUpNodeTransforms } from "./model.js";
+import { Entity } from "../../common/entitysystem/entity.js";
+import { Transform } from "../../common/entitysystem/transform.js";
+import { AnimationController } from "../../common/animation.js";
+import { Model, SetUpNodeTransforms } from "../../common/mesh/model.js";
 
 export class PropBase extends Entity {
 	nodeTransforms: Transform[];

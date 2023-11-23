@@ -1,5 +1,5 @@
-import { mat4 } from "../common/math/matrix.js";
-import { quaternion, vec3 } from "../common/math/vector.js";
+import { mat4 } from "../math/matrix.js";
+import { quaternion, vec3 } from "../math/vector.js";
 
 export class Transform {
 	translation: vec3 = vec3.origin();

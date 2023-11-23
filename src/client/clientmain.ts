@@ -1,7 +1,7 @@
 import { Client } from "./client.js";
 import { setLevelClient } from "./level.js";
-import { Time, startTicking, updateTime } from "../time.js";
-import { setPlayerModel } from "../sharedplayer.js";
+import { Time, startTicking, updateTime } from "../common/time.js";
+import { setPlayerModel } from "../common/sharedplayer.js";
 import { loadGltfFromWeb } from "./mesh/gltfloader.js";
 
 let running: boolean = false;
