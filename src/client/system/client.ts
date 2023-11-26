@@ -10,7 +10,7 @@ import { ClientPlayer } from "../player/clientplayer.js";
 import { createUserCMD, initInput } from "../player/input.js";
 import { initGl, resizeCanvas } from "../render/gl.js";
 import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
-import { initUi } from "../render/ui.js";
+import { drawText, initUi } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 
@@ -48,6 +48,8 @@ export class Client {
 		this.otherPlayers = new Map();
 		this.cmdNumber = 0;
 		initInput(this.localPlayer);
+
+		drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
 	}
 
 	public connect(url: string): void {
