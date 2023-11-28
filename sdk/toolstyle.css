@@ -1,0 +1,19 @@
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+#game {
+	image-rendering: pixelated;
+	width: 50%;
+	height: 50%;
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+
+.center {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
