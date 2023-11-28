@@ -151,8 +151,8 @@ export function drawText(position: vec3, text: string,
 		const charIndex = text.charCodeAt(i);
 
 		const s = 1 / 16;
-		const ox = ((charIndex % 16) + 0.25 / 16) / 16;
-		const oy = (Math.floor(charIndex / 16) + 0.25 / 16) / 16;
+		const ox = Math.floor(charIndex % 16) / 16 + 1 / 256;
+		const oy = Math.floor(charIndex / 16) / 16 + 1 / 256;
 
 		glyphVerts = glyphVerts.concat([
 			-0.5 + x, -0.5, 1, ox, s + oy,
