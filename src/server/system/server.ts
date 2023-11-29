@@ -47,7 +47,7 @@ export class Server {
 		});
 
 		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
-		setLevelServer("./data/levels/_testlvl");
+		setLevelServer("./data/levels/styletest");
 		setPlayerModel(await ServerGltfLoader.loadGltfFromDisk("./data/models/sci_player"));
 
 		console.log("SERVER OPENED");

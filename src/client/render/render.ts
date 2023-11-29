@@ -14,6 +14,7 @@ import { entityList } from "../../common/entitysystem/entity.js";
 import { Transform } from "../../common/entitysystem/transform.js";
 import { ClientPlayer } from "../player/clientplayer.js";
 import { ClientGltfLoader } from "../mesh/gltfloader.js";
+import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
 
 const nearClip = 0.015;
 const farClip = 1000;
@@ -264,6 +265,16 @@ export function drawLine(start: vec3, end: vec3, color: number[], time: number =
 let screenLines: Line[] = [];
 export function drawLineScreen(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
 	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
+}
+
+export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[]) {
+	for (let i = 0; i < mesh.edges.length; ++i) {
+		drawLine(
+			mesh.vertices[mesh.halfEdges[mesh.edges[i].halfEdge].vert].position,
+			mesh.vertices[mesh.halfEdges[mesh.halfEdges[mesh.edges[i].halfEdge].next].vert].position,
+			color
+		);
+	}
 }
 
 function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase) {

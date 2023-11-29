@@ -43,14 +43,15 @@ export class HalfEdgeMesh {
 		for (let m = 0; m < meshes.length; ++m) {
 			const mesh = meshes[m];
 			for (let p = 0; p < mesh.primitives.length; ++p) {
-				const vertCount = mesh.primitives[p].positions.length / 3;
+				const positions = new Float32Array(mesh.primitives[p].positions.buffer);
+				const vertCount = positions.length / 3;
 				for (let i = 0; i < vertCount; ++i) {
 					const index = i * 3;
 
 					let pos = new vec3(
-						mesh.primitives[p].positions[index],
-						mesh.primitives[p].positions[index + 1],
-						mesh.primitives[p].positions[index + 2]
+						positions[index],
+						positions[index + 1],
+						positions[index + 2]
 					);
 
 					let mat = new mat4(1);
@@ -68,6 +69,7 @@ export class HalfEdgeMesh {
 			}
 		}
 
+		// faces and edges
 		let vertOffset = 0;
 		let edgeOffset = 0;
 		let faceOffset = 0;
@@ -121,7 +123,7 @@ export class HalfEdgeMesh {
 					};
 				}
 
-				vertOffset += primitive.positions.length / 3;
+				vertOffset += primitive.positions.length / (3 * 4);
 				edgeOffset += primitive.elements.length;
 				faceOffset += triCount;
 			}

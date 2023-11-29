@@ -99,7 +99,7 @@ export class ClientGltfLoader extends GltfLoader {
 			let vertData = new Uint8Array(length);
 
 			// merge into one array
-			const vertCount = data[i].positions.length / 3;
+			const vertCount = data[i].positions.length / (3 * 4);
 			for (let j = 0; j < vertCount; ++j) {
 				const index = j * (data[i].skinned ? 40 : 20);
 				const posIndex = j * 12;
