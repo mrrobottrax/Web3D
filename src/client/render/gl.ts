@@ -196,7 +196,7 @@ export async function initDefaultShaders() {
 }
 
 export function initCanvas() {
-	const c: HTMLCanvasElement | null = document.querySelector("#view");
+	const c: HTMLCanvasElement | null = document.querySelector("#game");
 
 	if (!c) {
 		console.error("Could not find canvas");
