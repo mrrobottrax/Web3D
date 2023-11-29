@@ -1,12 +1,7 @@
-html, body {
-	height: 100%;
-	margin: 0;
-}
-
-#game {
+#view {
 	image-rendering: pixelated;
-	width: 50%;
-	height: 50%;
+	width: 80%;
+	height: 100%;
 	position: fixed;
 	top: 0;
 	left: 0;

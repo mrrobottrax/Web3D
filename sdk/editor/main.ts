@@ -1,12 +1,29 @@
-import { gl, initGl } from "../../src/client/render/gl.js";
+import { gl } from "../../src/client/render/gl.js";
+import { updateTime } from "../../src/common/system/time.js";
+import { Editor } from "./editor.js";
+import { initEditorGl } from "./gl.js";
 
 let running: boolean = false;
+const editor = new Editor();
 
+init();
 async function init() {
 	running = true;
 
-	await initGl();
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	await initEditorGl();
+	editor.init();
+
+	window.requestAnimationFrame(editorLoop);
+
+	gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 }
 
-init();
+function editorLoop(): void {
+	if (!running)
+		return;
+
+	window.requestAnimationFrame(editorLoop);
+	updateTime();
+
+	editor.frame();
+}

@@ -86,41 +86,43 @@ export let uiShader: UiShader = {
 
 export let solidTex: WebGLTexture;
 
-// vertex shader program
-const fallbackVSource = `
+export const fallBackShaders = {
+	// vertex shader program
+	fallbackVSource: `
 attribute vec4 aVertexPosition;
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 void main() {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
 }
-`;
+`,
 
-// fragment shader program
-const fallbackFSource = `
+	// fragment shader program
+	fallbackFSource: `
 void main() {
   gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
 }
-`;
+`,
 
-// vertex shader program
-const solidVSource = `
+	// vertex shader program
+	solidVSource: `
 attribute vec4 aVertexPosition;
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 void main() {
 	gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
 }
-`;
+`,
 
-// fragment shader program
-const solidFSource = `
+	// fragment shader program
+	solidFSource: `
 precision mediump float;
 uniform vec4 uColor;
 void main() {
   gl_FragColor = uColor;
 }
-`;
+`
+}
 
 // ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
@@ -128,49 +130,22 @@ export let canvas: HTMLCanvasElement;
 
 export let lineBuffer: WebGLBuffer | null;
 export async function initGl(): Promise<void> {
-	const c: HTMLCanvasElement | null = document.querySelector("#game");
+	initCanvas();
+	initializeGl();
+	await initDefaultShaders();
+	initLineBuffer();
+}
 
-	if (!c) {
-		console.error("Could not find canvas");
-		return;
-	}
-
-	canvas = c;
-
-	// initialize the GL context
-	const _gl: WebGL2RenderingContext | null = canvas.getContext("webgl2", {
-		antialias: false,
-		alpha: true,
-	});
-
-	// only continue if WebGL is available and working
-	if (!_gl) {
-		alert(
-			"Unable to initialize WebGL. Your browser or machine may not support it.",
-		);
-		return;
-	}
-
-	// initialize gl context
-	gl = _gl;
-
-	gl.clearColor(0.15, 0.15, 0.15, 1.0);
-	gl.clearDepth(1.0);
-
-	gl.enable(gl.DEPTH_TEST);
-	gl.depthFunc(gl.LEQUAL);
-	gl.enable(gl.CULL_FACE);
-	gl.cullFace(gl.BACK);
-
+export async function initDefaultShaders() {
 	// create fallback program
-	const fallbackProgram: WebGLProgram | null = initShaderProgram(fallbackVSource, fallbackFSource);
+	const fallbackProgram: WebGLProgram | null = initShaderProgram(fallBackShaders.fallbackVSource, fallBackShaders.fallbackFSource);
 	if (!fallbackProgram) {
 		console.error("Failed to init fallback shader");
 		return;
 	}
 	fallbackShader.program = fallbackProgram;
 
-	const solidProgram: WebGLProgram | null = initShaderProgram(solidVSource, solidFSource);
+	const solidProgram: WebGLProgram | null = initShaderProgram(fallBackShaders.solidVSource, fallBackShaders.solidFSource);
 	if (!solidProgram) {
 		console.error("Failed to init solid shader");
 		return;
@@ -190,9 +165,9 @@ export async function initGl(): Promise<void> {
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
 		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
 	]).then((results) => {
-		defaultShader.program 	= results[0];
-		uiShader.program 		= results[1];
-		skinnedShader.program 	= results[2];
+		defaultShader.program = results[0];
+		uiShader.program = results[1];
+		skinnedShader.program = results[2];
 	});
 
 	// get shader locations
@@ -218,11 +193,43 @@ export async function initGl(): Promise<void> {
 	skinnedShader.samplerUnif = gl.getUniformLocation(skinnedShader.program, "uSampler");
 	skinnedShader.colorUnif = gl.getUniformLocation(skinnedShader.program, "uColor");
 	skinnedShader.boneMatricesUnif = gl.getUniformLocation(skinnedShader.program, "uBoneMatrices");
+}
 
-	lineBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1]), gl.DYNAMIC_DRAW);
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+export function initCanvas() {
+	const c: HTMLCanvasElement | null = document.querySelector("#view");
+
+	if (!c) {
+		console.error("Could not find canvas");
+		return;
+	}
+
+	canvas = c;
+}
+
+export function initializeGl() {
+	// initialize gl context
+	const _gl: WebGL2RenderingContext | null = canvas.getContext("webgl2", {
+		antialias: false,
+		alpha: true,
+	});
+
+	// only continue if WebGL is available and working
+	if (!_gl) {
+		alert(
+			"Unable to initialize WebGL. Your browser or machine may not support it.",
+		);
+		return;
+	}
+
+	gl = _gl;
+
+	gl.clearColor(0.15, 0.15, 0.15, 1.0);
+	gl.clearDepth(1.0);
+
+	gl.enable(gl.DEPTH_TEST);
+	gl.depthFunc(gl.LEQUAL);
+	gl.enable(gl.CULL_FACE);
+	gl.cullFace(gl.BACK);
 }
 
 export function resizeCanvas() {
@@ -246,7 +253,7 @@ export function resizeCanvas() {
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~
 
-async function initProgramFromWeb(vs: string, fs: string): Promise<WebGLProgram | null> {
+export async function initProgramFromWeb(vs: string, fs: string): Promise<WebGLProgram | null> {
 	// send requests
 	const reqV = new XMLHttpRequest();
 	const reqF = new XMLHttpRequest();
@@ -279,7 +286,7 @@ async function initProgramFromWeb(vs: string, fs: string): Promise<WebGLProgram 
 	// fall back when request fails
 	if (!shader) {
 		console.error(`Failed to load shader ${vs}, ${fs}`);
-		shader = initShaderProgram(fallbackVSource, fallbackFSource);
+		shader = initShaderProgram(fallBackShaders.fallbackVSource, fallBackShaders.fallbackFSource);
 	}
 
 	return shader;
@@ -287,7 +294,7 @@ async function initProgramFromWeb(vs: string, fs: string): Promise<WebGLProgram 
 
 // ~~~~~~~~~~~~~ create shader program ~~~~~~~~~~~~~~
 
-function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | null {
+export function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | null {
 	const vertexShader: WebGLShader | null = loadShader(gl.VERTEX_SHADER, vsSource);
 	const fragmentShader: WebGLShader | null = loadShader(gl.FRAGMENT_SHADER, fsSource);
 
@@ -324,6 +331,13 @@ function initShaderProgram(vsSource: string, fsSource: string): WebGLProgram | n
 	return shaderProgram;
 }
 
+export function initLineBuffer() {
+	lineBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1]), gl.DYNAMIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+}
+
 // ~~~~~~~~~~~~~ load shader from text ~~~~~~~~~~~~~~
 
 function loadShader(type: number, source: string): WebGLShader | null {
@@ -356,7 +370,7 @@ function loadShader(type: number, source: string): WebGLShader | null {
 
 // ~~~~~~~~~~~~~ default solid texture ~~~~~~~~~~~~~~
 
-function createSolidTexture(): void {
+export function createSolidTexture(): void {
 	// create texture
 	const t = gl.createTexture();
 	if (!t) {
@@ -396,12 +410,12 @@ function createSolidTexture(): void {
 
 // ~~~~~~~~~~~~~ load a texture from url ~~~~~~~~~~~~~~
 
-export async function loadTexture(url: string): Promise<{tex: WebGLTexture | null, image: HTMLImageElement}> {
+export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | null, image: HTMLImageElement }> {
 	// create texture
 	const texture = gl.createTexture();
 	if (!texture) {
 		console.error("Failed to create texture: " + url);
-		return {tex: null, image: new Image()};
+		return { tex: null, image: new Image() };
 	}
 
 	// set to fallback texture
@@ -454,7 +468,7 @@ export async function loadTexture(url: string): Promise<{tex: WebGLTexture | nul
 	};
 	image.src = url;
 
-	return {tex: texture, image: image};
+	return { tex: texture, image: image };
 }
 
 function isPowerOf2(value: number): boolean {
