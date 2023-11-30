@@ -13,4 +13,16 @@ export abstract class EditorWindow {
 	}
 
 	abstract draw(): void;
+
+	key(code: string, pressed: boolean): void {
+		
+	}
+
+	mouse(button: number, pressed: boolean): void {
+		
+	}
+
+	mouseMove(x: number, y: number): void {
+		
+	}
 }

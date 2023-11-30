@@ -3,7 +3,7 @@ import { Editor } from "./system/editor.js";
 import { initEditorGl } from "./render/gl.js";
 
 let running: boolean = false;
-const editor = new Editor();
+export const editor = new Editor();
 
 init();
 async function init() {
