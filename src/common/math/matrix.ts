@@ -24,6 +24,12 @@ export class mat4 {
 		this.values[column * 4 + row] = value;
 	}
 
+	setAll(value: number) {
+		this.values.forEach(element => {
+			element = value;
+		});
+	}
+
 	setIdentity() {
 		for (let row = 0; row < 4; ++row) {
 			for (let column = 0; column < 4; ++column) {

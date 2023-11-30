@@ -1,3 +1,4 @@
+import { Camera } from "./camera.js";
 import { initProjection } from "./render.js";
 
 export let glProperties = {
@@ -132,11 +133,12 @@ export let lineBuffer: WebGLBuffer | null;
 export async function initGl(): Promise<void> {
 	initCanvas();
 	initializeGl();
-	await initDefaultShaders();
+	initDefaultShaders();
+	await initGameShaders();
 	initLineBuffer();
 }
 
-export async function initDefaultShaders() {
+export function initDefaultShaders() {
 	// create fallback program
 	const fallbackProgram: WebGLProgram | null = initShaderProgram(fallBackShaders.fallbackVSource, fallBackShaders.fallbackFSource);
 	if (!fallbackProgram) {
@@ -152,13 +154,19 @@ export async function initDefaultShaders() {
 	}
 	solidShader.program = solidProgram;
 
-	defaultShader.program = fallbackShader.program;
-	uiShader.program = fallbackShader.program;
-	skinnedShader.program = fallbackShader.program;
-
 	// create default solid texture
 	createSolidTexture();
 
+	// get shader locations
+	fallbackShader.modelViewMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uModelViewMatrix");
+	fallbackShader.projectionMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uProjectionMatrix");
+
+	solidShader.modelViewMatrixUnif = gl.getUniformLocation(solidShader.program, "uModelViewMatrix");
+	solidShader.projectionMatrixUnif = gl.getUniformLocation(solidShader.program, "uProjectionMatrix");
+	solidShader.colorUnif = gl.getUniformLocation(solidShader.program, "uColor");
+}
+
+async function initGameShaders() {
 	// create remaining shader programs
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
@@ -170,13 +178,8 @@ export async function initDefaultShaders() {
 		skinnedShader.program = results[2];
 	});
 
-	// get shader locations
-	fallbackShader.modelViewMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uModelViewMatrix");
-	fallbackShader.projectionMatrixUnif = gl.getUniformLocation(fallbackShader.program, "uProjectionMatrix");
-
-	solidShader.modelViewMatrixUnif = gl.getUniformLocation(solidShader.program, "uModelViewMatrix");
-	solidShader.projectionMatrixUnif = gl.getUniformLocation(solidShader.program, "uProjectionMatrix");
-	solidShader.colorUnif = gl.getUniformLocation(solidShader.program, "uColor");
+	if (!defaultShader.program || !uiShader.program || !skinnedShader.program)
+		return;
 
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
@@ -232,7 +235,7 @@ export function initializeGl() {
 	gl.cullFace(gl.BACK);
 }
 
-export function resizeCanvas() {
+export function resizeCanvas(camera: Camera) {
 	const ratio = window.devicePixelRatio;
 	const width = canvas.clientWidth * ratio;
 	const height = canvas.clientHeight * ratio;

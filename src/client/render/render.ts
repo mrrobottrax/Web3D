@@ -1,26 +1,18 @@
 import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
-import gMath from "../../common/math/gmath.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
 import { currentLevel } from "../entities/level.js";
 import { Time } from "../../common/system/time.js";
 import { drawUi } from "./ui.js";
-import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Client } from "../system/client.js";
-import { PlayerUtil } from "../../common/player/playerutil.js";
 import { DynamicProp, PropBase } from "../mesh/prop.js";
-import { entityList } from "../../common/entitysystem/entity.js";
 import { Transform } from "../../common/entitysystem/transform.js";
 import { ClientPlayer } from "../player/clientplayer.js";
 import { ClientGltfLoader } from "../mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
+import { Camera } from "./camera.js";
 
-const nearClip = 0.015;
-const farClip = 1000;
-
-let perspectiveMatrix: mat4;
-let viewMatrix: mat4 = mat4.identity();
 export let uiMatrix: mat4;
 
 let debugModel: DynamicProp;
@@ -34,28 +26,14 @@ export async function initRender() {
 }
 
 export function initProjection() {
-	perspectiveMatrix = calcPerspectiveMatrix(90, glProperties.width, glProperties.height);
 	uiMatrix = calcUiMatrix(glProperties.width, glProperties.height);
-
-	gl.useProgram(fallbackShader.program);
-	gl.uniformMatrix4fv(fallbackShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
-
-	gl.useProgram(defaultShader.program);
-	gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
-
-	gl.useProgram(skinnedShader.program);
-	gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
-
-	gl.useProgram(solidShader.program);
-	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
-
-	gl.useProgram(null);
 }
 
 export let lastCamPos: vec3 = vec3.origin();
 export let camPos: vec3;
 export function updateInterp(client: Client) {
 	camPos = vec3.lerp(lastCamPos, client.localPlayer.camPosition, Time.fract);
+	client.camera.position = camPos;
 }
 
 let shouldDrawLevel = true;
@@ -69,35 +47,33 @@ export function drawFrame(client: Client): void {
 
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	viewMatrix.setIdentity();
-	viewMatrix.rotate(client.localPlayer.camRotation.inverse());
-	viewMatrix.translate(camPos.inverse());
+	client.camera.updateViewMatrix();
+	const perspectiveMatrix = client.camera.perspectiveMatrix;
 
 	if (currentLevel) {
 		gl.useProgram(defaultShader.program);
-		drawProp(currentLevel.prop, defaultShader);
-
+		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+		drawProp(currentLevel.prop, defaultShader, client.camera);
+		
 		gl.useProgram(skinnedShader.program);
-		drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader);
-		drawPlayersDebug(client.otherPlayers.values());
+		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+		drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
+		drawPlayersDebug(client.otherPlayers.values(), client.camera);
 
 		gl.useProgram(null);
 	}
 
-	drawDebug(client.localPlayer);
+	renderDebug(perspectiveMatrix, client.camera.viewMatrix);
 
 	drawUi();
 }
 
-function drawDebug(player: SharedPlayer) {
+export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 	// draw lines
 	gl.useProgram(solidShader.program);
 
-	let mat = mat4.identity();
-	mat.rotate(player.camRotation.inverse());
-	mat.translate(camPos.inverse());
-
-	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewMatrix.getData());
 
 	gl.disable(gl.DEPTH_TEST);
 
@@ -156,16 +132,16 @@ function drawDebug(player: SharedPlayer) {
 	gl.useProgram(null);
 }
 
-function drawPlayersDebug(otherPlayers: IterableIterator<ClientPlayer>) {
+function drawPlayersDebug(otherPlayers: IterableIterator<ClientPlayer>, camera: Camera) {
 	for (let player of otherPlayers) {
 		// const pos = PlayerUtil.getFeet(player);
 		// drawLine(pos, pos.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
 
-		drawPropSkinned(player.nodeTransforms, player.model, player.transform.worldMatrix, skinnedShader);
+		drawPropSkinned(player.nodeTransforms, player.model, player.transform.worldMatrix, skinnedShader, camera);
 	}
 }
 
-function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
+function drawProp(prop: PropBase, shader: UninstancedShaderBase, camera: Camera) {
 	// apply hierarchy
 	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
 		const transform = prop.nodeTransforms[node.index];
@@ -186,7 +162,7 @@ function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
 
 	for (let i = 0; i < prop.model.nodes.length; ++i) {
 		const node = prop.model.nodes[i];
-		const mat = viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
+		const mat = camera.viewMatrix.multiply(prop.nodeTransforms[i].worldMatrix);
 
 		// bone
 		if (node.primitives.length == 0) {
@@ -200,7 +176,7 @@ function drawProp(prop: PropBase, shader: UninstancedShaderBase) {
 	}
 }
 
-function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix: mat4, shader: UninstancedShaderBase) {
+function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix: mat4, shader: UninstancedShaderBase, camera: Camera) {
 	// apply hierarchy
 	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
 		const transform = nodeTransforms[node.index];
@@ -246,7 +222,7 @@ function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix:
 
 		gl.uniformMatrix4fv((shader as SkinnedShaderBase).boneMatricesUnif, false, floatArray);
 		for (let j = 0; j < node.primitives.length; ++j) {
-			drawPrimitive(node.primitives[j], viewMatrix, shader);
+			drawPrimitive(node.primitives[j], camera.viewMatrix, shader);
 		}
 	}
 }
@@ -294,27 +270,10 @@ function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShade
 	gl.bindVertexArray(null);
 }
 
-function calcPerspectiveMatrix(fov: number, width: number, height: number): mat4 {
-	const scale = getFrustumScale(fov);
-
-	let matrix = mat4.empty();
-	matrix.setValue(0, 0, scale * (height / width));
-	matrix.setValue(1, 1, scale);
-	matrix.setValue(2, 2, (farClip + nearClip) / (nearClip - farClip));
-	matrix.setValue(3, 2, (2 * farClip * nearClip) / (nearClip - farClip));
-	matrix.setValue(2, 3, -1);
-
-	return matrix;
-}
-
 function calcUiMatrix(width: number, height: number): mat4 {
 	let matrix = mat4.identity();
 
 	matrix.setValue(0, 0, height / width);
 
 	return matrix;
-}
-
-function getFrustumScale(fov: number): number {
-	return 1 / Math.tan(gMath.deg2Rad(fov) / 2);
 }

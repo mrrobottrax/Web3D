@@ -1,5 +1,5 @@
 import { CircularBuffer } from "../../common/collections/circularbuffer.js";
-import { vec3 } from "../../common/math/vector.js";
+import { quaternion, vec3 } from "../../common/math/vector.js";
 import { GameContext, setGameContext } from "../../common/system/context.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
@@ -8,11 +8,12 @@ import { Time } from "../../common/system/time.js";
 import { UserCmd } from "../../common/input/usercmd.js";
 import { ClientPlayer } from "../player/clientplayer.js";
 import { createUserCMD, initInput } from "../player/input.js";
-import { initGl, resizeCanvas } from "../render/gl.js";
+import { glProperties, initGl, resizeCanvas } from "../render/gl.js";
 import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
 import { drawText, initUi } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
+import { Camera } from "../render/camera.js";
 
 interface PlayerData {
 	position: vec3,
@@ -30,11 +31,14 @@ export class Client {
 
 	otherPlayers!: Map<number, ClientPlayer>;
 
+	camera: Camera;
+
 	public constructor() {
 		setGameContext(GameContext.client);
 		this.ws = null;
 		(window as any).connect = (url: string) => this.connect(url);
 		this.cmdBuffer = new CircularBuffer(1 / Time.fixedDeltaTime);
+		this.camera = new Camera(90, vec3.origin(), quaternion.identity());
 	}
 
 	public async init() {
@@ -117,9 +121,14 @@ export class Client {
 		if (!this.isConnected)
 			return;
 
-		updateInterp(this);
-		resizeCanvas();
 		updateEntities();
+		updateInterp(this);
+
+		this.camera.rotation = this.localPlayer.camRotation;
+
+		resizeCanvas(this.camera);
+		this.camera.calcPerspectiveMatrix(glProperties.width, glProperties.height);
+
 		drawFrame(this);
 	}
 
@@ -162,7 +171,7 @@ export class Client {
 
 			console.error("Prediction Error! " + playerData.position.dist(playerData.position));
 
-			// snap to position and resim all userCmds
+			// snap to position and resimulate all userCmds
 			this.localPlayer.position = vec3.copy(playerSnapshot.position);
 
 			for (let i = offset; i <= 0; --i) {
