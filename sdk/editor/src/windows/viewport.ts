@@ -1,5 +1,5 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { gl, glProperties, solidShader } from "../../../../src/client/render/gl.js";
+import { gl, glProperties } from "../../../../src/client/render/gl.js";
 import { renderDebug } from "../../../../src/client/render/render.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { EditorWindow } from "./window.js";
@@ -14,8 +14,9 @@ export class Viewport extends EditorWindow {
 	}
 
 	override draw(): void {
-		if (glProperties.resolutionChanged)
+		if (glProperties.resolutionChanged) {
 			this.camera.calcPerspectiveMatrix(this.sizeX, this.sizeY);
+		}
 
 		this.camera.updateViewMatrix();
 

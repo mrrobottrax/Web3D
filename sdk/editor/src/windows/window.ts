@@ -15,7 +15,7 @@ export abstract class EditorWindow {
 	abstract draw(): void;
 
 	key(code: string, pressed: boolean): void {
-		
+		console.log(code);
 	}
 
 	mouse(button: number, pressed: boolean): void {

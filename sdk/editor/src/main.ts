@@ -1,7 +1,5 @@
 import { updateTime } from "../../../src/common/system/time.js";
 import { Editor } from "./system/editor.js";
-import { initEditorGl } from "./render/gl.js";
-
 let running: boolean = false;
 export const editor = new Editor();
 
@@ -9,8 +7,7 @@ init();
 async function init() {
 	running = true;
 
-	await initEditorGl();
-	editor.init();
+	await editor.init();
 
 	window.requestAnimationFrame(editorLoop);
 }
