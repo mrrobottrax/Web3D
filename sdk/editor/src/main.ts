@@ -1,4 +1,3 @@
-import { gl } from "../../../src/client/render/gl.js";
 import { updateTime } from "../../../src/common/system/time.js";
 import { Editor } from "./system/editor.js";
 import { initEditorGl } from "./render/gl.js";

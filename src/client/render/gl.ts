@@ -1,4 +1,3 @@
-import { Camera } from "./camera.js";
 import { initProjection as updateUiMatrix } from "./render.js";
 
 export let glProperties = {

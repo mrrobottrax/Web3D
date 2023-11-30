@@ -1,4 +1,4 @@
-import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, fallbackShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
