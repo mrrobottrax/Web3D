@@ -1,9 +1,10 @@
 import { Camera } from "./camera.js";
-import { initProjection } from "./render.js";
+import { initProjection as updateUiMatrix } from "./render.js";
 
 export let glProperties = {
 	width: 0,
-	height: 0
+	height: 0,
+	resolutionChanged: false
 }
 export let gl: WebGL2RenderingContext;
 
@@ -235,12 +236,13 @@ export function initializeGl() {
 	gl.cullFace(gl.BACK);
 }
 
-export function resizeCanvas(camera: Camera) {
+export function resizeCanvas() {
 	const ratio = window.devicePixelRatio;
 	const width = canvas.clientWidth * ratio;
 	const height = canvas.clientHeight * ratio;
 
 	if (glProperties.width == width && glProperties.height == height) {
+		glProperties.resolutionChanged = false;
 		return;
 	}
 
@@ -249,9 +251,11 @@ export function resizeCanvas(camera: Camera) {
 	canvas.width = width;
 	canvas.height = height;
 
+	glProperties.resolutionChanged = true;
+
 	gl.viewport(0, 0, width, height);
 
-	initProjection();
+	updateUiMatrix();
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~

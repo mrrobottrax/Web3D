@@ -14,8 +14,6 @@ async function init() {
 	editor.init();
 
 	window.requestAnimationFrame(editorLoop);
-
-	gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 }
 
 function editorLoop(): void {

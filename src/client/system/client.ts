@@ -126,8 +126,9 @@ export class Client {
 
 		this.camera.rotation = this.localPlayer.camRotation;
 
-		resizeCanvas(this.camera);
-		this.camera.calcPerspectiveMatrix(glProperties.width, glProperties.height);
+		resizeCanvas();
+		if (glProperties.resolutionChanged)
+			this.camera.calcPerspectiveMatrix(glProperties.width, glProperties.height);
 
 		drawFrame(this);
 	}
@@ -144,7 +145,7 @@ export class Client {
 
 				if (!player) {
 					player = new ClientPlayer(playerSnapshot.id);
-					this.otherPlayers.set(playerSnapshot.id, player);	
+					this.otherPlayers.set(playerSnapshot.id, player);
 				}
 
 				player.position.copy(playerSnapshot.position);
