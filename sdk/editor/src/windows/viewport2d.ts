@@ -37,7 +37,8 @@ export class Viewport2D extends EditorWindow {
 				break;
 		}
 
-		this.camera = new Camera(0.1, vec3.origin(), orientation);
+		this.camera = new Camera(1, vec3.origin(), orientation);
+		console.log(this.getPixelsPerUnit());
 	}
 
 	override frame(): void {
@@ -64,7 +65,10 @@ export class Viewport2D extends EditorWindow {
 
 		gl.uniform3f(gridShader.fillColorUnif, 0.15, 0.15, 0.15);
 		gl.uniform1f(gridShader.gridSizeUnif, ppu);
-		gl.uniform2f(gridShader.offsetUnif, this.camera.position.x * ppu, this.camera.position.y * ppu);
+		gl.uniform2f(gridShader.offsetUnif,
+			this.camera.position.x * ppu - this.sizeX * 0.5 - this.posX,
+			this.camera.position.y * ppu - this.sizeY * 0.5 - this.posY
+		);
 
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
@@ -109,7 +113,7 @@ export class Viewport2D extends EditorWindow {
 		if (!this.looking) return;
 
 		let add = new vec3(-dx, dy, 0);
-		add = add.times(1 / (this.camera.fov * this.sizeY * 0.5));
+		add = add.times(1 / this.getPixelsPerUnit());
 		this.camera.position.add(add);
 	}
 

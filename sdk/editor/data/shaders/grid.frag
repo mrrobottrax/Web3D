@@ -13,6 +13,7 @@ float grid(vec2 fragCoord, float size)
 	vec2 a = a2 - a1;
 	
 	float g = min(a.x, a.y);
+
 	return step(g, 0.0);
 }
 
