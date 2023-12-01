@@ -5,6 +5,7 @@ import { drawUi, rectVao } from "../../../../src/client/render/ui.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
+import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { EditorWindow } from "./window.js";
 
@@ -38,7 +39,6 @@ export class Viewport2D extends EditorWindow {
 		}
 
 		this.camera = new Camera(1, vec3.origin(), orientation);
-		console.log(this.getPixelsPerUnit());
 	}
 
 	override frame(): void {
@@ -64,7 +64,7 @@ export class Viewport2D extends EditorWindow {
 		const ppu = this.getPixelsPerUnit();
 
 		gl.uniform3f(gridShader.fillColorUnif, 0.15, 0.15, 0.15);
-		gl.uniform1f(gridShader.gridSizeUnif, ppu);
+		gl.uniform1f(gridShader.gridSizeUnif, ppu * editor.gridSize);
 		gl.uniform2f(gridShader.offsetUnif,
 			this.camera.position.x * ppu - this.sizeX * 0.5 - this.posX,
 			this.camera.position.y * ppu - this.sizeY * 0.5 - this.posY

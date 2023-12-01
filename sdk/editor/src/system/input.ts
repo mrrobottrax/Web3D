@@ -10,7 +10,9 @@ export function initEditorInput() {
 	document.addEventListener('keydown', event => {
 		event.preventDefault();
 		keys[event.code] = true;
-		editor.windowManager.activeWindow?.key(event.code, true);
+
+		if (!tryShortcut(event.code))
+			editor.windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
 		event.preventDefault();
@@ -56,4 +58,28 @@ export function initEditorInput() {
 
 export function getKeyDown(code: string): boolean {
 	return keys[code];
+}
+
+interface Shortcut {
+	keyCode: string;
+	function: Function;
+}
+let shortcuts: Shortcut[] = [
+	{
+		keyCode: "BracketLeft",
+		function: () => editor.gridSize /= 2
+	},
+	{
+		keyCode: "BracketRight",
+		function: () => editor.gridSize *= 2
+	}
+];
+function tryShortcut(code: string): boolean {
+	shortcuts.forEach(shortcut => {
+		if (code == shortcut.keyCode) {
+			shortcut.function();
+		}
+	});
+
+	return false;
 }

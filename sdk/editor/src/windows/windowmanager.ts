@@ -1,6 +1,6 @@
 import { gl, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
-import { EditorWindow } from "../windows/window.js";
+import { EditorWindow } from "./window.js";
 
 export class WindowManager {
 	windows: EditorWindow[] = [];

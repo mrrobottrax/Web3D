@@ -4,7 +4,7 @@ import { drawHalfEdgeMesh, drawLine } from "../../../../src/client/render/render
 import { vec3 } from "../../../../src/common/math/vector.js";
 import { EditorMesh } from "../mesh/editormesh.js";
 import { initEditorGl } from "../render/gl.js";
-import { WindowManager } from "../render/windowmanager.js";
+import { WindowManager } from "../windows/windowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
@@ -12,6 +12,8 @@ import { initEditorInput } from "./input.js";
 export class Editor {
 	meshes: EditorMesh[] = [];
 	windowManager: WindowManager;
+
+	gridSize: number = 1;
 
 	constructor() {
 		this.windowManager = new WindowManager();
