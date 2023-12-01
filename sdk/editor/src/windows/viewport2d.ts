@@ -55,8 +55,8 @@ export class Viewport2D extends EditorWindow {
 
 	override mouse(button: number, pressed: boolean): void {
 		switch (button) {
-			// move
-			case 1:
+			// pan
+			case 2:
 				if (pressed)
 					this.startLook();
 				else
@@ -66,12 +66,10 @@ export class Viewport2D extends EditorWindow {
 	}
 
 	startLook() {
-		// lockCursor();
 		this.looking = true;
 	}
-
+	
 	stopLook() {
-		// unlockCursor();
 		this.looking = false;
 	}
 
@@ -80,10 +78,6 @@ export class Viewport2D extends EditorWindow {
 
 		let add = new vec3(-dx, dy, 0);
 		add = add.times(1 / (this.camera.fov * this.sizeY * 0.5));
-
-		// let mat = mat4.identity();
-		// mat.rotate(this.camera.rotation);
-		// add = add.multMat4(mat);
 		add.rotate(this.camera.rotation);
 
 		this.camera.position.add(add);

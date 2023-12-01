@@ -16,18 +16,22 @@ let buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 
 export function initInput(player: SharedPlayer) {
 	document.addEventListener('keydown', event => {
+		event.preventDefault();
 		key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
+		event.preventDefault();
 		key(event.code, false);
 	});
 
 	document.addEventListener("mousedown", event => {
+		event.preventDefault();
 		lockCursor();
 		mouse(event.button, true);
 	});
 
 	document.addEventListener("mouseup", event => {
+		event.preventDefault();
 		mouse(event.button, false);
 	});
 
