@@ -86,6 +86,17 @@ export class Viewport2D extends EditorWindow {
 		}
 	}
 
+	override wheel(dy: number): void {
+		const scrollAmt = 0.02;
+		// this.camera.fov *= (dy > 0 ? 1 / -dy : /*-dy * scrollAmt*/ 0);
+		if (dy > 0) {
+			this.camera.fov *= 1 / dy / scrollAmt;
+		} else {
+			this.camera.fov *= -dy * scrollAmt;
+		}
+		this.camera.calcOrthographicMatrix(this.sizeX, this.sizeY);
+	}
+
 	startLook() {
 		this.looking = true;
 	}

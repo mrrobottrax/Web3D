@@ -37,6 +37,10 @@ export function initEditorInput() {
 		editor.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
 	});
 
+	document.addEventListener("wheel", event => {
+		editor.windowManager.activeWindow?.wheel(event.deltaY);
+	});
+
 	document.oncontextmenu = event => {
 		event.preventDefault();
 	}

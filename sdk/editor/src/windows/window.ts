@@ -23,6 +23,10 @@ export abstract class EditorWindow {
 		
 	}
 
+	wheel(dy: number): void {
+		
+	}
+
 	mouseMove(dx: number, dy: number): void {
 
 	}
