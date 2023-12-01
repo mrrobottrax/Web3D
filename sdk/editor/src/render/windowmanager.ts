@@ -1,4 +1,4 @@
-import { gl, glProperties, resizeCanvas } from "../../../../src/client/render/gl.js";
+import { gl, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
 import { EditorWindow } from "../windows/window.js";
 
@@ -24,14 +24,13 @@ export class WindowManager {
 		});
 	}
 
-	findWindowUnderMouse(): EditorWindow | null {
+	findWindowUnderMouse(): void {
 		this.windows.forEach(window => {
 			if ((mousePosX > window.posX && mousePosX < window.posX + window.sizeX) && (mousePosY > window.posY && mousePosY < window.posY + window.sizeY)) {
 				this.activeWindow = window;
+				console.log("set active window");
 				return;
 			}
 		});
-	
-		return null;
 	}
 }

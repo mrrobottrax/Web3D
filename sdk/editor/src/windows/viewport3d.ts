@@ -4,7 +4,7 @@ import { renderDebug } from "../../../../src/client/render/render.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { EditorWindow } from "./window.js";
 
-export class Viewport extends EditorWindow {
+export class Viewport3D extends EditorWindow {
 	camera: Camera;
 
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number) {

@@ -13,7 +13,7 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("mousedown", event => {
-		editor.windowManager.activeWindow = editor.windowManager.findWindowUnderMouse();
+		editor.windowManager.findWindowUnderMouse();
 		editor.windowManager.activeWindow?.mouse(event.button, true);
 	});
 	
