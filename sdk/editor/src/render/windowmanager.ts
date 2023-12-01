@@ -28,7 +28,6 @@ export class WindowManager {
 		this.windows.forEach(window => {
 			if ((mousePosX > window.posX && mousePosX < window.posX + window.sizeX) && (mousePosY > window.posY && mousePosY < window.posY + window.sizeY)) {
 				this.activeWindow = window;
-				console.log("set active window");
 				return;
 			}
 		});

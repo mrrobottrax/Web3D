@@ -10,7 +10,7 @@ export class Viewport3D extends EditorWindow {
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number) {
 		super(posX, posY, sizeX, sizeY);
 
-		this.camera = new Camera(90, new vec3(0, 0, 5), quaternion.identity());
+		this.camera = new Camera(90, new vec3(0, 5, 5), quaternion.identity());
 	}
 
 	override draw(): void {

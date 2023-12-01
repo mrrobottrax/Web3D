@@ -243,12 +243,13 @@ export function drawLineScreen(start: vec3, end: vec3, color: number[], time: nu
 	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
-export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[]) {
+export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: number = Time.fixedDeltaTime) {
 	for (let i = 0; i < mesh.edges.length; ++i) {
 		drawLine(
 			mesh.vertices[mesh.halfEdges[mesh.edges[i].halfEdge].vert].position,
 			mesh.vertices[mesh.halfEdges[mesh.halfEdges[mesh.edges[i].halfEdge].next].vert].position,
-			color
+			color,
+			time
 		);
 	}
 }

@@ -44,4 +44,11 @@ export class Camera {
 	getFrustumScale(fov: number): number {
 		return 1 / Math.tan(gMath.deg2Rad(fov) / 2);
 	}
+
+	calcOrthographicMatrix(width: number, height: number) {
+		this.perspectiveMatrix.setAll(0);
+		this.perspectiveMatrix.setValue(0, 0, this.fov * (height / width));
+		this.perspectiveMatrix.setValue(1, 1, this.fov);
+		this.perspectiveMatrix.setValue(3, 3, 1);
+	}
 }
