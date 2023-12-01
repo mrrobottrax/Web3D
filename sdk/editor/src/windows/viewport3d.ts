@@ -32,21 +32,24 @@ export class Viewport3D extends EditorWindow {
 		this.moveCamera()
 		this.draw();
 	}
-	
+
 	moveCamera() {
 		if (!this.looking) return;
 
 		let moveVector = vec3.origin();
 
-		if (getKeyDown("KeyW")) moveVector.z -= 1;
 		if (getKeyDown("KeyA")) moveVector.x -= 1;
-		if (getKeyDown("KeyS")) moveVector.z += 1;
 		if (getKeyDown("KeyD")) moveVector.x += 1;
+		if (getKeyDown("KeyW")) moveVector.z -= 1;
+		if (getKeyDown("KeyS")) moveVector.z += 1;
 
 		moveVector = moveVector.rotatePitch(this.pitch);
 		moveVector = moveVector.rotateYaw(this.yaw);
 
-		moveVector.normalise();
+		if (getKeyDown("Space")) moveVector.y += 1;
+		if (getKeyDown("ShiftLeft")) moveVector.y -= 1;
+
+		// moveVector.normalise();
 
 		this.camera.position = this.camera.position.add(moveVector.mult(Time.deltaTime * editorConfig.moveSpeed));
 	}
@@ -55,9 +58,9 @@ export class Viewport3D extends EditorWindow {
 		if (glProperties.resolutionChanged) {
 			this.camera.calcPerspectiveMatrix(this.sizeX, this.sizeY);
 		}
-	
+
 		this.camera.updateViewMatrix();
-	
+
 		gl.viewport(this.posX, this.posY, this.sizeX, this.sizeY);
 		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
 	}

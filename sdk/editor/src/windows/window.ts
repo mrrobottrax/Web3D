@@ -16,7 +16,7 @@ export abstract class EditorWindow {
 	tick(): void {};
 
 	key(code: string, pressed: boolean): void {
-		
+		// console.log(code);
 	}
 
 	mouse(button: number, pressed: boolean): void {
