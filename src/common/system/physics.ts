@@ -19,17 +19,17 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin() };
 	}
 
-	const moveDir = move.mult(1 / moveDist);
+	const moveDir = move.times(1 / moveDist);
 
 	// check aabb of start and end
-	let v = size.mult(0.5);
-	let minA = start.sub(v);
-	let maxA = start.add(v);
+	let v = size.times(0.5);
+	let minA = start.minus(v);
+	let maxA = start.plus(v);
 
-	const end: vec3 = start.add(move);
+	const end: vec3 = start.plus(move);
 
-	let totalMin = vec3.min(start.sub(v), end.sub(v));
-	let totalMax = vec3.max(start.add(v), end.add(v));
+	let totalMin = vec3.min(start.minus(v), end.minus(v));
+	let totalMax = vec3.max(start.plus(v), end.plus(v));
 
 	// find all tris in totalMin/totalMax
 	// temp: get all tris everywhere
@@ -203,13 +203,13 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 					const triEdge: HalfEdge = triEdges[i];
 					const triPos = vec3.origin();
 					triPos.copy(level.vertices[triEdge.vert].position);
-					const triEdgeDir = triPos.sub(
+					const triEdgeDir = triPos.minus(
 						level.vertices[level.halfEdges[triEdge.next].vert].position);
 
 					for (let j = 0; j < box.edges.length; ++j) {
 						const boxEdge = box.halfEdges[box.edges[j].halfEdge];
 						const boxPos = vec3.copy(box.vertices[boxEdge.vert].position);
-						const boxEdgeDir = boxPos.sub(
+						const boxEdgeDir = boxPos.minus(
 							box.vertices[box.halfEdges[boxEdge.next].vert].position);
 
 						// check if edges build face on minkowski diff
@@ -249,7 +249,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 							let axis = vec3.cross(triEdgeDir, boxEdgeDir).normalised();
 
 							// align
-							if (vec3.dot(axis, boxPos.sub(start)) > 0) {
+							if (vec3.dot(axis, boxPos.minus(start)) > 0) {
 								axis = axis.inverse();
 							}
 
@@ -303,7 +303,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 export function castRay(start: vec3, move: vec3): CastResult {
 	const maxDist = move.magnitide();
 	let dist = maxDist;
-	const dir = move.mult(1 / dist);
+	const dir = move.times(1 / dist);
 
 	// find all tris with aabb that intersects ray
 	// temp: get all tris everywhere
@@ -343,10 +343,10 @@ export function castRay(start: vec3, move: vec3): CastResult {
 		triVerts[1] = vec3.copy(level.vertices[triEdges[1].vert].position);
 		triVerts[2] = vec3.copy(level.vertices[triEdges[2].vert].position);
 
-		const x = triVerts[1].sub(triVerts[0]).normalised();
+		const x = triVerts[1].minus(triVerts[0]).normalised();
 		const y = vec3.cross(tri.normal, x).normalised();
 
-		const point = start.add(dir.mult(t));
+		const point = start.plus(dir.times(t));
 		const pointTrans = new vec3(vec3.dot(x, point), vec3.dot(y, point), 0);
 
 		let insideTri = true;
@@ -355,7 +355,7 @@ export function castRay(start: vec3, move: vec3): CastResult {
 		for (let i = 0; i < 3; ++i) {
 			// check if point is inside
 			const nextPoint = triVerts[(i + 1) % 3];
-			const edgeDir = nextPoint.sub(triVerts[i]);
+			const edgeDir = nextPoint.minus(triVerts[i]);
 
 			const vertTrans = new vec3(vec3.dot(x, triVerts[i]), vec3.dot(y, triVerts[i]), 0);
 			const edgeDirTrans = new vec3(vec3.dot(edgeDir, x), vec3.dot(edgeDir, y), 0);

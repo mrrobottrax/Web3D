@@ -59,8 +59,8 @@ export function createUserCMD(player: SharedPlayer): UserCmd {
 		if (!lastButtons[Buttons.fire1]) {
 			// fire tracer from player face
 			const start = player.camPosition;
-			const result = castRay(start, new vec3(0, 0, -1).rotatePitch(player.pitch).rotateYaw(player.yaw).mult(1000));
-			drawLine(start, start.add(result.dir.mult(result.dist)), [0, 0, 1, 1], 8);
+			const result = castRay(start, new vec3(0, 0, -1).rotatePitch(player.pitch).rotateYaw(player.yaw).times(1000));
+			drawLine(start, start.plus(result.dir.times(result.dist)), [0, 0, 1, 1], 8);
 		}
 	}
 

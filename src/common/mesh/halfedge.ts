@@ -113,8 +113,8 @@ export class HalfEdgeMesh {
 						vert: vert2
 					}
 
-					let dir0 = vertices[vert1].position.sub(vertices[vert0].position);
-					let dir1 = vertices[vert2].position.sub(vertices[vert0].position);
+					let dir0 = vertices[vert1].position.minus(vertices[vert0].position);
+					let dir1 = vertices[vert2].position.minus(vertices[vert0].position);
 					const normal = vec3.cross(dir0, dir1).normalised();
 					faces[faceIndex] = {
 						halfEdge: edgeIndex,

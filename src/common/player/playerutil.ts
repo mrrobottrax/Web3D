@@ -53,9 +53,9 @@ export class PlayerUtil {
 
 	static getFeet(player: SharedPlayer): vec3 {
 		if (player.isDucked) {
-			return player.position.sub(new vec3(0, hullDuckSize.y / 2, 0));
+			return player.position.minus(new vec3(0, hullDuckSize.y / 2, 0));
 		} else {
-			return player.position.sub(new vec3(0, hullSize.y / 2, 0));
+			return player.position.minus(new vec3(0, hullSize.y / 2, 0));
 		}
 	}
 
@@ -75,10 +75,10 @@ export class PlayerUtil {
 
 		let blocked = 0;
 		for (let bumpCount = 0; bumpCount < maxBumps; ++bumpCount) {
-			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, pos, vel.mult(timeStep));
+			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, pos, vel.times(timeStep));
 
 			if (cast.fract > 0) {
-				pos = pos.add(cast.dir.mult(cast.dist));
+				pos.add(cast.dir.times(cast.dist));
 				numplanes = 0;
 			}
 
@@ -107,7 +107,7 @@ export class PlayerUtil {
 			let i;
 			for (i = 0; i < numplanes; ++i) {
 				// clip vel
-				vel.copy(primalVel.add(cast.normal.mult(-vec3.dot(cast.normal, primalVel) + 0.001)));
+				vel.copy(primalVel.plus(cast.normal.times(-vec3.dot(cast.normal, primalVel) + 0.001)));
 				vel.x = vel.x > -stopEpsilon && vel.x < stopEpsilon ? 0 : vel.x;
 				vel.y = vel.y > -stopEpsilon && vel.y < stopEpsilon ? 0 : vel.y;
 				vel.z = vel.z > -stopEpsilon && vel.z < stopEpsilon ? 0 : vel.z;
@@ -139,7 +139,7 @@ export class PlayerUtil {
 				const dir = vec3.cross(planes[0], planes[1]);
 				dir.normalise();
 				const d = vec3.dot(dir, vel);
-				vel = dir.mult(d);
+				vel = dir.times(d);
 			}
 
 			//
@@ -170,7 +170,7 @@ export class PlayerUtil {
 			newSpeed = 0;
 		newSpeed /= speed;
 
-		return vel.mult(newSpeed);
+		return vel.times(newSpeed);
 	}
 
 	static accel(curVel: vec3, wishDir: vec3, wishSpeed: number, accel: number, delta: number): vec3 {
@@ -185,7 +185,7 @@ export class PlayerUtil {
 			accelSpeed = addSpeed;
 		}
 
-		return curVel.add(vec3.copy(wishDir).mult(accelSpeed));
+		return curVel.plus(vec3.copy(wishDir).times(accelSpeed));
 	}
 
 	static catagorizePosition(player: SharedPlayer): PositionData {
@@ -207,7 +207,7 @@ export class PlayerUtil {
 
 			if (data.groundEnt != -1) {
 				// move down
-				player.position.copy(player.position.add(cast.dir.mult(cast.dist)));
+				player.position.copy(player.position.plus(cast.dir.times(cast.dist)));
 			}
 		}
 
@@ -226,7 +226,7 @@ export class PlayerUtil {
 		// try higher move
 		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, maxStepHeight, 0));
 		// player.velocity.y -= 0.1; // this fixes movement bugs?
-		const stepMove = this.flyMove(player.position.add(new vec3(0, castUp.dist, 0)), player.velocity, delta, player);
+		const stepMove = this.flyMove(player.position.plus(new vec3(0, castUp.dist, 0)), player.velocity, delta, player);
 		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 3, 0));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
@@ -235,7 +235,7 @@ export class PlayerUtil {
 			return;
 		}
 
-		const stepPos = stepMove.endPos.add(new vec3(0, -castDown.dist, 0));
+		const stepPos = stepMove.endPos.plus(new vec3(0, -castDown.dist, 0));
 
 		const moveDist = move.endPos.sqrDist(player.position);
 		const stepDist = stepPos.sqrDist(player.position);
@@ -305,10 +305,9 @@ export class PlayerUtil {
 						if (cast1.fract == 1) {
 							// movement tech???
 							const playerSpeed = player.velocity.magnitide();
-							player.velocity = player.velocity.sub(
-								cast0.normal.mult(vec3.dot(player.velocity, cast0.normal)));
+							player.velocity.sub(cast0.normal.times(vec3.dot(player.velocity, cast0.normal)));
 							player.velocity.normalise();
-							player.velocity = player.velocity.mult(playerSpeed);
+							player.velocity = player.velocity.times(playerSpeed);
 
 							player.position = newPos;
 
@@ -375,12 +374,12 @@ export class PlayerUtil {
 	}
 
 	static getCameraPosition(player: SharedPlayer): vec3 {
-		return player.position.add(new vec3(0, this.getViewOffset(player), 0));
+		return player.position.plus(new vec3(0, this.getViewOffset(player), 0));
 	}
 
 	static debugMove(player: SharedPlayer, cmd: UserCmd, delta: number): void {
-		const cast = castAABB(hullSize, player.position, cmd.wishDir.mult(delta * 10));
-		player.position = player.position.add(cast.dir.mult(cast.dist));
-		player.camPosition = player.position.add(new vec3(0, this.getViewOffset(player), 0));
+		const cast = castAABB(hullSize, player.position, cmd.wishDir.times(delta * 10));
+		player.position.add(cast.dir.times(cast.dist));
+		player.camPosition = player.position.plus(new vec3(0, this.getViewOffset(player), 0));
 	}
 }

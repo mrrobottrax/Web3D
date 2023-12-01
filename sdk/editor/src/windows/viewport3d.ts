@@ -51,7 +51,7 @@ export class Viewport3D extends EditorWindow {
 
 		// moveVector.normalise();
 
-		this.camera.position = this.camera.position.add(moveVector.mult(Time.deltaTime * editorConfig.moveSpeed));
+		this.camera.position.add(moveVector.times(Time.deltaTime * editorConfig.moveSpeed));
 	}
 
 	draw() {

@@ -20,16 +20,34 @@ export class vec3 {
 		return this.x == v.x && this.y == v.y && this.z == v.z;
 	}
 
-	public add(vec: vec3): vec3 {
+	public plus(vec: vec3): vec3 {
 		return new vec3(this.x + vec.x, this.y + vec.y, this.z + vec.z);
 	}
 
-	public sub(vec: vec3): vec3 {
+	public minus(vec: vec3): vec3 {
 		return new vec3(this.x - vec.x, this.y - vec.y, this.z - vec.z);
 	}
 
-	public mult(s: number): vec3 {
+	public times(s: number): vec3 {
 		return new vec3(this.x * s, this.y * s, this.z * s);
+	}
+
+	public add(vec: vec3): void {
+		this.x += vec.x;
+		this.y += vec.y;
+		this.z += vec.z;
+	}
+
+	public sub(vec: vec3): void {
+		this.x -= vec.x;
+		this.y -= vec.y;
+		this.z -= vec.z;
+	}
+
+	public mult(s: number): void {
+		this.x *= s;
+		this.y *= s;
+		this.z *= s;
 	}
 
 	public copy(v: vec3): void {
@@ -76,6 +94,31 @@ export class vec3 {
 		return v;
 	}
 
+	public rotate(q: quaternion): void {
+		// qvqc
+
+		const qx2 = q.x * q.x;
+		const qy2 = q.y * q.y;
+		const qz2 = q.z * q.z;
+
+		const qxqy = q.x * q.y;
+		const qxqz = q.x * q.z;
+		const qxqw = q.x * q.w;
+		const qyqz = q.y * q.z;
+		const qyqw = q.y * q.w;
+		const qzqw = q.z * q.w;
+
+		let rotatedVector = vec3.origin();
+
+		rotatedVector.x = (1 - 2 * qy2 - 2 * qz2) * this.x + 2 * (qxqy - qzqw) * this.y + 2 * (qxqz + qyqw) * this.z;
+		rotatedVector.y = 2 * (qxqy + qzqw) * this.x + (1 - 2 * qx2 - 2 * qz2) * this.y + 2 * (qyqz - qxqw) * this.z;
+		rotatedVector.z = 2 * (qxqz - qyqw) * this.x + 2 * (qyqz + qxqw) * this.y + (1 - 2 * qx2 - 2 * qy2) * this.z;
+
+		this.x = rotatedVector.x;
+		this.y = rotatedVector.y;
+		this.z = rotatedVector.z;
+	}
+
 	public sqrMagnitude(): number {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
@@ -99,7 +142,7 @@ export class vec3 {
 		if (m == 0)
 			return this;
 
-		return this.mult(1 / m);
+		return this.times(1 / m);
 	}
 
 	public multMat4(mat: mat4): vec3 {
@@ -128,11 +171,11 @@ export class vec3 {
 	}
 
 	public sqrDist(v: vec3): number {
-		return this.sub(v).sqrMagnitude();
+		return this.minus(v).sqrMagnitude();
 	}
 
 	public dist(v: vec3): number {
-		return this.sub(v).magnitide();
+		return this.minus(v).magnitide();
 	}
 
 	public static dot(a: vec3, b: vec3): number {

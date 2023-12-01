@@ -167,8 +167,8 @@ export class Client {
 		}
 
 		if (!playerData.position.equals(playerSnapshot.position)) {
-			drawLine(playerSnapshot.position, vec3.copy(playerSnapshot.position).add(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
-			drawLine(playerData.position, playerData.position.add(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
+			drawLine(playerSnapshot.position, vec3.copy(playerSnapshot.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
+			drawLine(playerData.position, playerData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
 
 			console.error("Prediction Error! " + playerData.position.dist(playerData.position));
 
