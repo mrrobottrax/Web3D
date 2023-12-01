@@ -5,6 +5,7 @@ import { rectVao } from "../../../../src/client/render/ui.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
+import { mousePosX, mousePosY } from "../system/input.js";
 import { EditorWindow } from "./window.js";
 
 export enum Viewport2DAngle {
@@ -90,12 +91,21 @@ export class Viewport2D extends EditorWindow {
 
 	override wheel(dy: number): void {
 		const scrollAmt = 0.02;
-		// this.camera.fov *= (dy > 0 ? 1 / -dy : /*-dy * scrollAmt*/ 0);
+
+		const vpMouse = new vec3(mousePosX - this.posX - this.sizeX * 0.5, mousePosY - this.posY - this.sizeY * 0.5, 0);
+		const startWorldMouse = vpMouse.times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+		
 		if (dy > 0) {
 			this.camera.fov *= 1 / dy / scrollAmt;
 		} else {
 			this.camera.fov *= -dy * scrollAmt;
 		}
+
+		const endWorldMouse = vpMouse.times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+
+		const delta = startWorldMouse.minus(endWorldMouse);
+		this.camera.position.add(delta);
+
 		this.camera.calcOrthographicMatrix(this.sizeX, this.sizeY);
 	}
 
