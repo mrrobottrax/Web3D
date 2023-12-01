@@ -25,7 +25,7 @@ export async function initRender() {
 	debugModel.controller.setAnimation(debugModel.model.animations[index]);
 }
 
-export function initProjection() {
+export function updateUiMaterix() {
 	uiMatrix = calcUiMatrix(glProperties.width, glProperties.height);
 }
 

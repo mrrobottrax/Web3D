@@ -5,7 +5,7 @@ import { SharedAttribs, gl, glProperties, loadTexture, uiShader } from "./gl.js"
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
 
-let vao: WebGLVertexArrayObject | null;
+export let rectVao: WebGLVertexArrayObject | null;
 let squareVertsBuffer: WebGLBuffer | null;
 
 const squareVerts: number[] = [
@@ -21,22 +21,6 @@ let crossSizeX = 1;
 let crossSizeY = 1;
 
 export function initUi() {
-	vao = gl.createVertexArray();
-	gl.bindVertexArray(vao);
-
-	squareVertsBuffer = gl.createBuffer();
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, squareVertsBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVerts), gl.STATIC_DRAW);
-
-	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
-	gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
-
-	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
-	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
-
-	gl.bindVertexArray(null);
-
 	initViewmodel();
 
 	loadTexture("data/textures/cross.png").then((result) => {
@@ -61,9 +45,27 @@ export function initUi() {
 	});
 }
 
+export function initUiBuffers() {
+	rectVao = gl.createVertexArray();
+	gl.bindVertexArray(rectVao);
+
+	squareVertsBuffer = gl.createBuffer();
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVertsBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVerts), gl.STATIC_DRAW);
+
+	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
+	gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
+
+	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
+	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
+
+	gl.bindVertexArray(null);
+}
+
 export function drawUi() {
 	gl.useProgram(uiShader.program);
-	gl.bindVertexArray(vao);
+	gl.bindVertexArray(rectVao);
 
 	gl.clear(gl.DEPTH_BUFFER_BIT);
 

@@ -10,7 +10,7 @@ import { ClientPlayer } from "../player/clientplayer.js";
 import { createUserCMD, initInput } from "../player/input.js";
 import { glProperties, initGl, resizeCanvas } from "../render/gl.js";
 import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
-import { drawText, initUi } from "../render/ui.js";
+import { drawText, initUi, initUiBuffers } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 import { Camera } from "../render/camera.js";
@@ -43,6 +43,7 @@ export class Client {
 
 	public async init() {
 		await initGl();
+		initUiBuffers();
 		initUi();
 		initRender();
 	}

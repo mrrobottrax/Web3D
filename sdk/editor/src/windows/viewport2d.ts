@@ -1,9 +1,11 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { gl, glProperties } from "../../../../src/client/render/gl.js";
-import { renderDebug } from "../../../../src/client/render/render.js";
+import { fallBackShaders, gl, glProperties, solidTex, uiShader } from "../../../../src/client/render/gl.js";
+import { renderDebug, uiMatrix } from "../../../../src/client/render/render.js";
+import { drawUi, rectVao } from "../../../../src/client/render/ui.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
+import { gridShader } from "../render/gl.js";
 import { EditorWindow } from "./window.js";
 
 export enum Viewport2DAngle {
@@ -47,9 +49,28 @@ export class Viewport2D extends EditorWindow {
 			this.camera.calcOrthographicMatrix(this.sizeX, this.sizeY);
 		}
 
+		const startPos = vec3.copy(this.camera.position);
+		this.camera.position.rotate(this.camera.rotation);
 		this.camera.updateViewMatrix();
+		this.camera.position = startPos;
 
 		gl.viewport(this.posX, this.posY, this.sizeX, this.sizeY);
+
+		// grid background
+		gl.useProgram(gridShader.program);
+		gl.bindVertexArray(rectVao);
+
+		const ppu = this.getPixelsPerUnit();
+
+		gl.uniform3f(gridShader.fillColorUnif, 0.15, 0.15, 0.15);
+		gl.uniform1f(gridShader.gridSizeUnif, ppu);
+		gl.uniform2f(gridShader.offsetUnif, this.camera.position.x * ppu, this.camera.position.y * ppu);
+
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+		gl.bindVertexArray(null);
+		gl.useProgram(null);
+
 		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
 	}
 
@@ -68,7 +89,7 @@ export class Viewport2D extends EditorWindow {
 	startLook() {
 		this.looking = true;
 	}
-	
+
 	stopLook() {
 		this.looking = false;
 	}
@@ -78,12 +99,14 @@ export class Viewport2D extends EditorWindow {
 
 		let add = new vec3(-dx, dy, 0);
 		add = add.times(1 / (this.camera.fov * this.sizeY * 0.5));
-		add.rotate(this.camera.rotation);
-
 		this.camera.position.add(add);
 	}
 
 	override mouseUnlock(): void {
 		this.stopLook();
+	}
+
+	getPixelsPerUnit(): number {
+		return this.camera.fov * this.sizeY * 0.5;
 	}
 }

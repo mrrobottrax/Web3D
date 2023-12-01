@@ -1,4 +1,4 @@
-import { initProjection as updateUiMatrix } from "./render.js";
+import { updateUiMaterix } from "./render.js";
 
 export let glProperties = {
 	width: 0,
@@ -16,7 +16,7 @@ export enum SharedAttribs {
 
 // ~~~~~~~~~~~~~ shaders ~~~~~~~~~~~~~~
 
-interface ShaderBase {
+export interface ShaderBase {
 	program: WebGLProgram | null;
 }
 
@@ -254,7 +254,7 @@ export function resizeCanvas() {
 
 	gl.viewport(0, 0, width, height);
 
-	updateUiMatrix();
+	updateUiMaterix();
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~
