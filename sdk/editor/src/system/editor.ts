@@ -21,10 +21,10 @@ export class Editor {
 		await initEditorGl();
 		initEditorInput();
 
-		this.windowManager.addWindow(new Viewport3D(0, 300, 400, 300));
-		this.windowManager.addWindow(new Viewport2D(400, 300, 400, 300, Viewport2DAngle.Top));
-		this.windowManager.addWindow(new Viewport2D(0, 0, 400, 300, Viewport2DAngle.Side));
-		this.windowManager.addWindow(new Viewport2D(400, 0, 400, 300, Viewport2DAngle.Front));
+		this.windowManager.addWindow(new Viewport3D(0, 450, 600, 450));
+		this.windowManager.addWindow(new Viewport2D(600, 450, 600, 450, Viewport2DAngle.Top));
+		this.windowManager.addWindow(new Viewport2D(0, 0, 600, 450, Viewport2DAngle.Side));
+		this.windowManager.addWindow(new Viewport2D(600, 0, 600, 450, Viewport2DAngle.Front));
 
 		drawLine(new vec3(0, 0, 0), new vec3(0, 1, 0), [1, 0, 0, 1], Infinity);
 		await setLevelClient("./data/levels/styletest");
@@ -32,6 +32,6 @@ export class Editor {
 	}
 
 	frame() {
-		this.windowManager.renderWindows();
+		this.windowManager.updateWindows();
 	}
 }

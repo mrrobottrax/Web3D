@@ -65,13 +65,13 @@ export class vec3 {
 	}
 
 	public rotatePitch(angle: number): vec3 {
-		let v = new vec3(0, this.y, 0);
+		let v = new vec3(this.x, 0, 0);
 
-		const s = Math.sin(-angle);
+		const s = Math.sin(angle);
 		const c = Math.cos(angle);
 
-		v.y = this.z * s + this.y * c;
-		v.z = this.z * c - this.x * s;
+		v.y = this.y * c - this.z * s;
+		v.z = this.y * s + this.z * c;
 
 		return v;
 	}

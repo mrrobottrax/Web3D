@@ -95,7 +95,7 @@ function mouse(button: number, down: boolean) {
 	}
 }
 
-const quakeSens = (1 / 16384) * 2 * Math.PI;
+export const quakeSens = (1 / 16384) * 2 * Math.PI;
 function mouseLook(x: number, y: number, player: SharedPlayer) {
 	if (!pointerLocked)
 		return;

@@ -30,10 +30,10 @@ export class Viewport2D extends EditorWindow {
 				break;
 		}
 
-		this.camera = new Camera(0.1, new vec3(5, 5, 5), orientation);
+		this.camera = new Camera(0.1, vec3.origin(), orientation);
 	}
 
-	override draw(): void {
+	override frame(): void {
 		if (glProperties.resolutionChanged) {
 			this.camera.calcOrthographicMatrix(this.sizeX, this.sizeY);
 		}

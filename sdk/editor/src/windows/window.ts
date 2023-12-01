@@ -12,17 +12,22 @@ export abstract class EditorWindow {
 		this.sizeY = sizeY;
 	}
 
-	abstract draw(): void;
+	abstract frame(): void;
+	tick(): void {};
 
 	key(code: string, pressed: boolean): void {
-		console.log(code);
+		
 	}
 
 	mouse(button: number, pressed: boolean): void {
 		
 	}
 
-	mouseMove(x: number, y: number): void {
-		
+	mouseMove(dx: number, dy: number): void {
+
+	}
+
+	mouseUnlock() {
+
 	}
 }

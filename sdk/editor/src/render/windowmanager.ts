@@ -14,13 +14,13 @@ export class WindowManager {
 		this.windows.push(window);
 	}
 	
-	renderWindows() {
+	updateWindows() {
 		resizeCanvas();
 		
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 		this.windows.forEach(window => {
-			window.draw();
+			window.frame();
 		});
 	}
 
