@@ -1,9 +1,7 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { fallBackShaders, gl, glProperties, solidTex, uiShader } from "../../../../src/client/render/gl.js";
-import { renderDebug, uiMatrix } from "../../../../src/client/render/render.js";
-import { drawUi, rectVao } from "../../../../src/client/render/ui.js";
-import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
-import { mat4 } from "../../../../src/common/math/matrix.js";
+import { gl, glProperties } from "../../../../src/client/render/gl.js";
+import { renderDebug } from "../../../../src/client/render/render.js";
+import { rectVao } from "../../../../src/client/render/ui.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
@@ -38,7 +36,7 @@ export class Viewport2D extends EditorWindow {
 				break;
 		}
 
-		this.camera = new Camera(1, vec3.origin(), orientation);
+		this.camera = new Camera(0.05, vec3.origin(), orientation);
 	}
 
 	override frame(): void {
