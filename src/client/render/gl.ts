@@ -255,8 +255,7 @@ export function resizeCanvas() {
 	glProperties.width = width;
 	glProperties.height = height;
 	glProperties.offsetX = canvas.offsetLeft * ratio;
-	glProperties.offsetY = canvas.offsetTop * ratio + window.innerHeight - glProperties.height;
-	console.log(glProperties.offsetY);
+	glProperties.offsetY = window.innerHeight - (canvas.offsetTop * ratio + glProperties.height);
 	canvas.width = width;
 	canvas.height = height;
 

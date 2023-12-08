@@ -34,7 +34,7 @@ export function initEditorInput() {
 	document.addEventListener("mousemove", event => {
 		event.preventDefault();
 		mousePosX = event.pageX;
-		mousePosY = glProperties.height - event.pageY; // match webgl
+		mousePosY = window.innerHeight - event.pageY; // match webgl
 
 		editor.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
 	});

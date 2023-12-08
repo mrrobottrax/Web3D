@@ -5,7 +5,7 @@ import { EditorWindow } from "./window.js";
 export class WindowManager {
 	windows: EditorWindow[] = [];
 	activeWindow: EditorWindow | null;
-	
+
 	constructor() {
 		this.activeWindow = null;
 	}
@@ -13,10 +13,10 @@ export class WindowManager {
 	addWindow(window: EditorWindow) {
 		this.windows.push(window);
 	}
-	
+
 	updateWindows() {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	
+
 		this.windows.forEach(window => {
 			if (glProperties.resolutionChanged) {
 				window.recalculateSize();
@@ -28,7 +28,8 @@ export class WindowManager {
 
 	findWindowUnderMouse(): void {
 		this.windows.forEach(window => {
-			if ((mousePosX > window.posX && mousePosX < window.posX + window.sizeX) && (mousePosY > window.posY && mousePosY < window.posY + window.sizeY)) {
+			if ((mousePosX - glProperties.offsetX > window.posX && mousePosX - glProperties.offsetX < window.posX + window.sizeX)
+				&& (mousePosY - glProperties.offsetY > window.posY && mousePosY - glProperties.offsetY < window.posY + window.sizeY)) {
 				this.activeWindow = window;
 				return;
 			}
