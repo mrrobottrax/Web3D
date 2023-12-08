@@ -1,4 +1,4 @@
-import { gl, resizeCanvas } from "../../../../src/client/render/gl.js";
+import { gl, glProperties } from "../../../../src/client/render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
 import { EditorWindow } from "./window.js";
 
@@ -15,11 +15,13 @@ export class WindowManager {
 	}
 	
 	updateWindows() {
-		resizeCanvas();
-		
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 		this.windows.forEach(window => {
+			if (glProperties.resolutionChanged) {
+				window.recalculateSize();
+			}
+
 			window.frame();
 		});
 	}

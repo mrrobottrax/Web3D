@@ -3,6 +3,8 @@ import { updateUiMaterix } from "./render.js";
 export let glProperties = {
 	width: 0,
 	height: 0,
+	offsetX: 0,
+	offsetY: 0,
 	resolutionChanged: false
 }
 export let gl: WebGL2RenderingContext;
@@ -236,17 +238,25 @@ export function initializeGl() {
 }
 
 export function resizeCanvas() {
+	var computedStyle = getComputedStyle(canvas);
+
 	const ratio = window.devicePixelRatio;
-	const width = canvas.clientWidth * ratio;
-	const height = canvas.clientHeight * ratio;
+	const canvasW = canvas.clientWidth;
+	const canvasH = canvas.clientHeight;
+	const cssWidth = canvasW - parseFloat(computedStyle.paddingLeft) - parseFloat(computedStyle.paddingRight);
+	const cssHeight = canvasH - parseFloat(computedStyle.paddingTop) - parseFloat(computedStyle.paddingBottom);
+	const width = ratio * cssWidth;
+	const height = ratio * cssHeight;
 
 	if (glProperties.width == width && glProperties.height == height) {
-		glProperties.resolutionChanged = false;
 		return;
 	}
 
 	glProperties.width = width;
 	glProperties.height = height;
+	glProperties.offsetX = canvas.offsetLeft * ratio;
+	glProperties.offsetY = canvas.offsetTop * ratio + window.innerHeight - glProperties.height;
+	console.log(glProperties.offsetY);
 	canvas.width = width;
 	canvas.height = height;
 
@@ -255,6 +265,10 @@ export function resizeCanvas() {
 	gl.viewport(0, 0, width, height);
 
 	updateUiMaterix();
+}
+
+export function glEndFrame() {
+	glProperties.resolutionChanged = false;
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~

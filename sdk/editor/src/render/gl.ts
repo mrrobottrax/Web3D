@@ -1,4 +1,4 @@
-import { ShaderBase, defaultShader, gl, initCanvas, initDefaultShaders, initLineBuffer, initProgramFromWeb, initializeGl, skinnedShader, uiShader } from "../../../../src/client/render/gl.js";
+import { ShaderBase, defaultShader, gl, initCanvas, initDefaultShaders, initLineBuffer, initProgramFromWeb, initializeGl, resizeCanvas, skinnedShader, uiShader } from "../../../../src/client/render/gl.js";
 import { initUiBuffers } from "../../../../src/client/render/ui.js";
 
 interface GridShader extends ShaderBase {
@@ -21,6 +21,8 @@ export async function initEditorGl(): Promise<void> {
 
 	initLineBuffer();
 	initUiBuffers();
+
+	resizeCanvas();
 }
 
 export async function initEditorShaders() {

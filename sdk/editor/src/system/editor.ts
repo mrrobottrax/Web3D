@@ -8,6 +8,7 @@ import { WindowManager } from "../windows/windowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
+import { glEndFrame, glProperties, resizeCanvas } from "../../../../src/client/render/gl.js";
 
 export class Editor {
 	meshes: EditorMesh[] = [];
@@ -23,10 +24,13 @@ export class Editor {
 		await initEditorGl();
 		initEditorInput();
 
-		this.windowManager.addWindow(new Viewport3D(0, 450, 600, 450));
-		this.windowManager.addWindow(new Viewport2D(600, 450, 600, 450, Viewport2DAngle.Top));
-		this.windowManager.addWindow(new Viewport2D(0, 0, 600, 450, Viewport2DAngle.Side));
-		this.windowManager.addWindow(new Viewport2D(600, 0, 600, 450, Viewport2DAngle.Front));
+		const w = 0.5;
+		const h = 0.5;
+
+		this.windowManager.addWindow(new Viewport3D(0, h, w, h));
+		this.windowManager.addWindow(new Viewport2D(w, h, w, h, Viewport2DAngle.Top));
+		this.windowManager.addWindow(new Viewport2D(0, 0, w, h, Viewport2DAngle.Side));
+		this.windowManager.addWindow(new Viewport2D(w, 0, w, h, Viewport2DAngle.Front));
 
 		drawLine(new vec3(0, 0, 0), new vec3(0, 1, 0), [1, 0, 0, 1], Infinity);
 		await setLevelClient("./data/levels/styletest");
@@ -34,6 +38,8 @@ export class Editor {
 	}
 
 	frame() {
+		resizeCanvas();
 		this.windowManager.updateWindows();
+		glEndFrame();
 	}
 }
