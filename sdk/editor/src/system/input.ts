@@ -40,6 +40,7 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("wheel", event => {
+		editor.windowManager.findWindowUnderMouse();
 		editor.windowManager.activeWindow?.wheel(event.deltaY);
 	});
 
