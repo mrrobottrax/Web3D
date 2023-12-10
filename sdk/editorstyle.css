@@ -16,14 +16,18 @@
 #toolbar {
 	width: 50px;
 	height: 100%;
-	background-color: aqua;
+	background-color: rgb(20, 20, 20);
+	border-width: 1px;
+	border-style: dotted;
+	border-radius: 1px;
+	border-color: rgb(55, 55, 55);
 }
 
 #game {
 	image-rendering: pixelated;
 	position: absolute;
-	left: 50px;
+	left: 52px;
 	top: 25px;
-	width: calc(100% - 50px);
+	width: calc(100% - 52px);
 	height: calc(100% - 25px);
 }
