@@ -1,9 +1,8 @@
 import { Client } from "./system/client.js";
-import { currentLevel, setLevelClient } from "./entities/level.js";
+import { setLevelClient } from "./entities/level.js";
 import { Time, startTicking, updateTime } from "../common/system/time.js";
 import { setPlayerModel } from "../common/player/sharedplayer.js";
 import { ClientGltfLoader } from "./mesh/gltfloader.js";
-import { drawHalfEdgeMesh } from "./render/render.js";
 
 let running: boolean = false;
 let client: Client;

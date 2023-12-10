@@ -55,10 +55,21 @@ export function initEditorInput() {
 			editor.windowManager.activeWindow?.mouseUnlock();
 		}
 	}
+
+	(window as any).selectTool = selectTool;
+	(window as any).blockTool = blockTool;
 }
 
 export function getKeyDown(code: string): boolean {
 	return keys[code];
+}
+
+function selectTool() {
+	console.log("Select")
+}
+
+function blockTool() {
+	console.log("Block")
 }
 
 interface Shortcut {
@@ -73,6 +84,14 @@ let shortcuts: Shortcut[] = [
 	{
 		keyCode: "BracketRight",
 		function: () => editor.gridSize *= 2
+	},
+	{
+		keyCode: "KeyQ",
+		function: selectTool
+	},
+	{
+		keyCode: "KeyB",
+		function: blockTool
 	}
 ];
 function tryShortcut(code: string): boolean {

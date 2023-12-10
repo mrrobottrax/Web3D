@@ -14,20 +14,38 @@
 }
 
 #toolbar {
-	width: 50px;
+	width: 40px;
 	height: 100%;
 	background-color: rgb(20, 20, 20);
 	border-width: 1px;
 	border-style: dotted;
 	border-radius: 1px;
 	border-color: rgb(55, 55, 55);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 5px;
+	gap: 5px;
 }
 
 #game {
 	image-rendering: pixelated;
 	position: absolute;
-	left: 52px;
+	left: 42px;
 	top: 25px;
-	width: calc(100% - 52px);
+	width: calc(100% - 42px);
 	height: calc(100% - 25px);
+}
+
+.toolbar-button {
+	width: 32px;
+	height: 32px;
+}
+
+.toolbar-button:hover {
+	background-color: rgb(91, 91, 91);
+}
+
+.toolbar-button:active {
+	background-color: rgb(69, 69, 69);
 }

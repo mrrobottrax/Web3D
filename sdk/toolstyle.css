@@ -12,3 +12,11 @@ body {
 	margin: 0;
 	padding: 0;
 }
+
+img {
+	image-rendering: pixelated;
+}
+
+.pixelated {
+	image-rendering: pixelated;
+}
