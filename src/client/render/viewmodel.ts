@@ -5,7 +5,7 @@ import { Time } from "../../common/system/time.js";
 import { gl, loadTexture, uiShader } from "./gl.js";
 
 let viewModelLocation = new vec3(0.8, -0.65, 0);
-let viewModelScale = new vec3(0.75, 0.75, 1);
+let viewModelScale = new vec3(0.375, 0.375, 1);
 
 let gunTex: WebGLTexture;
 let gunFire: WebGLTexture[] = [];

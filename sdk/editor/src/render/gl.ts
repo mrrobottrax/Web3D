@@ -13,6 +13,10 @@ export let gridShader: GridShader = {
 	offsetUnif: null
 };
 
+export let borderShader: ShaderBase = {
+	program: null
+};
+
 export async function initEditorGl(): Promise<void> {
 	initCanvas();
 	initializeGl();
@@ -32,14 +36,17 @@ export async function initEditorShaders() {
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
 		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("sdk/editor/data/shaders/grid.vert", "sdk/editor/data/shaders/grid.frag"),
+		initProgramFromWeb("sdk/editor/data/shaders/border.vert", "sdk/editor/data/shaders/border.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
 		uiShader.program = results[1];
 		skinnedShader.program = results[2];
 		gridShader.program = results[3];
+		borderShader.program = results[4];
 	});
 
-	if (!defaultShader.program || !uiShader.program || !skinnedShader.program || !gridShader.program)
+	if (!defaultShader.program || !uiShader.program || !skinnedShader.program || !gridShader.program
+		|| !borderShader.program)
 		return;
 
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");

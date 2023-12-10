@@ -1,21 +1,16 @@
 import { quakeSens } from "../../../../src/client/player/input.js";
 import { Camera } from "../../../../src/client/render/camera.js";
 import { gl, glProperties } from "../../../../src/client/render/gl.js";
-import { renderDebug } from "../../../../src/client/render/render.js";
-import { config } from "../../../../src/client/system/config.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { Time } from "../../../../src/common/system/time.js";
 import { editorConfig } from "../system/editorconfig.js";
 import { getKeyDown } from "../system/input.js";
-import { EditorWindow } from "./window.js";
+import { Viewport } from "./viewport.js";
 
-export class Viewport3D extends EditorWindow {
-	camera: Camera;
+export class Viewport3D extends Viewport {
 	pitch: number;
 	yaw: number;
-
-	looking: boolean;
 
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number) {
 		super(posX, posY, sizeX, sizeY);
@@ -62,7 +57,9 @@ export class Viewport3D extends EditorWindow {
 		this.camera.updateViewMatrix();
 
 		gl.viewport(this.posX, this.posY, this.sizeX, this.sizeY);
-		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
+		
+		this.drawMeshOutlines(this.camera.perspectiveMatrix, this.camera.viewMatrix)
+		this.drawBorder();
 	}
 
 	override mouse(button: number, pressed: boolean): void {

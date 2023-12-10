@@ -9,10 +9,10 @@ export let rectVao: WebGLVertexArrayObject | null;
 let squareVertsBuffer: WebGLBuffer | null;
 
 const squareVerts: number[] = [
-	-0.5, -0.5, 1, 0, 1,
-	0.5, -0.5, 1, 1, 1,
-	0.5, 0.5, 1, 1, 0,
-	-0.5, 0.5, 1, 0, 0,
+	-1, -1, 1, 0, 1,
+	1, -1, 1, 1, 1,
+	1, 1, 1, 1, 0,
+	-1, 1, 1, 0, 0,
 ];
 
 let crossTex: WebGLTexture;
@@ -91,7 +91,7 @@ function drawCrosshair() {
 
 	mat = mat4.identity();
 
-	mat.scale(new vec3(2 * crossSizeX / glProperties.height, 2 * crossSizeY / glProperties.height, 1));
+	mat.scale(new vec3(crossSizeX / glProperties.height, crossSizeY / glProperties.height, 1));
 
 	gl.uniformMatrix4fv(uiShader.modelViewMatrixUnif, false, mat.getData());
 	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);

@@ -6,7 +6,7 @@ import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
-import { EditorWindow } from "./window.js";
+import { Viewport } from "./viewport.js";
 
 export enum Viewport2DAngle {
 	Top,
@@ -14,11 +14,7 @@ export enum Viewport2DAngle {
 	Side
 }
 
-export class Viewport2D extends EditorWindow {
-	camera: Camera;
-
-	looking: boolean;
-
+export class Viewport2D extends Viewport {
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number, angle: Viewport2DAngle) {
 		super(posX, posY, sizeX, sizeY);
 		this.looking = false;
@@ -74,7 +70,8 @@ export class Viewport2D extends EditorWindow {
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
 
-		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
+		this.drawMeshOutlines(this.camera.perspectiveMatrix, this.camera.viewMatrix);
+		this.drawBorder();
 	}
 
 	override mouse(button: number, pressed: boolean): void {
@@ -92,7 +89,7 @@ export class Viewport2D extends EditorWindow {
 	override wheel(dy: number): void {
 		const scrollAmt = 0.02;
 
-		const vpMouse = new vec3(mousePosX - this.posX - this.sizeX * 0.5, mousePosY - this.posY - this.sizeY * 0.5, 0);
+		const vpMouse = new vec3(mousePosX - glProperties.offsetX - this.posX - this.sizeX * 0.5, mousePosY - glProperties.offsetY - this.posY - this.sizeY * 0.5, 0);
 		const startWorldMouse = vpMouse.times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
 		
 		if (dy > 0) {
