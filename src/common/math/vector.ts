@@ -223,6 +223,147 @@ export class vec3 {
 	}
 }
 
+export class vec2 {
+	x: number;
+	y: number;
+
+	public constructor(x: number, y: number) {
+		this.x = x;
+		this.y = y;
+	}
+
+	public inverse(): vec2 {
+		return new vec2(-this.x, -this.y);
+	}
+
+	public equals(v: vec2): boolean {
+		return this.x == v.x && this.y == v.y;
+	}
+
+	public plus(vec: vec2): vec2 {
+		return new vec2(this.x + vec.x, this.y + vec.y);
+	}
+
+	public minus(vec: vec2): vec2 {
+		return new vec2(this.x - vec.x, this.y - vec.y);
+	}
+
+	public times(s: number): vec2 {
+		return new vec2(this.x * s, this.y * s);
+	}
+
+	public add(vec: vec2): void {
+		this.x += vec.x;
+		this.y += vec.y;
+	}
+
+	public sub(vec: vec2): void {
+		this.x -= vec.x;
+		this.y -= vec.y;
+	}
+
+	public mult(s: number): void {
+		this.x *= s;
+		this.y *= s;
+	}
+
+	public copy(v: vec2): void {
+		this.x = v.x;
+		this.y = v.y;
+	}
+
+	public static copy(v: vec2): vec2 {
+		let vec = new vec2(0, 0);
+
+		vec.x = v.x;
+		vec.y = v.y;
+
+		return vec;
+	}
+
+	public static dist(a: vec2, b: vec2): number {
+		return a.dist(b);
+	}
+
+	public rotateYaw(angle: number): vec2 {
+		let v = new vec2(this.x, this.y);
+
+		const s = Math.sin(angle);
+		const c = Math.cos(angle);
+
+		v.x = this.y * s + this.x * c;
+		v.y = this.y * c - this.x * s;
+
+		return v;
+	}
+
+	public sqrMagnitude(): number {
+		return this.x * this.x + this.y * this.y
+	}
+
+	public magnitide(): number {
+		return Math.sqrt(this.sqrMagnitude());
+	}
+
+	public normalise() {
+		const m = this.magnitide();
+		if (m == 0)
+			return;
+
+		this.x /= m;
+		this.y /= m;
+	}
+
+	public normalised(): vec2 {
+		const m = this.magnitide();
+		if (m == 0)
+			return this;
+
+		return this.times(1 / m);
+	}
+
+	public sqrDist(v: vec2): number {
+		return this.minus(v).sqrMagnitude();
+	}
+
+	public dist(v: vec2): number {
+		return this.minus(v).magnitide();
+	}
+
+	public static dot(a: vec2, b: vec2): number {
+		return a.x * b.x + a.y * b.y;
+	}
+
+	public static origin(): vec2 {
+		return new vec2(0, 0);
+	}
+
+	public static one(): vec2 {
+		return new vec2(1, 1);
+	}
+
+	public static min(a: vec2, b: vec2): vec2 {
+		return new vec2(
+			Math.min(a.x, b.x),
+			Math.min(a.y, b.y)
+		);
+	}
+
+	public static max(a: vec2, b: vec2): vec2 {
+		return new vec2(
+			Math.max(a.x, b.x),
+			Math.max(a.y, b.y)
+		);
+	}
+
+	public static lerp(a: vec2, b: vec2, t: number): vec2 {
+		return new vec2(
+			a.x + (b.x - a.x) * t,
+			a.y + (b.y - a.y) * t
+		);
+	}
+}
+
 export class quaternion {
 	w: number;
 	x: number;

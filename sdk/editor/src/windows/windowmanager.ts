@@ -28,8 +28,8 @@ export class WindowManager {
 
 	findWindowUnderMouse(): void {
 		for (const window of this.windows) {
-			if ((mousePosX - glProperties.offsetX > window.posX && mousePosX - glProperties.offsetX < window.posX + window.sizeX)
-				&& (mousePosY - glProperties.offsetY > window.posY && mousePosY - glProperties.offsetY < window.posY + window.sizeY)) {
+			const pos = window.getRelativeMousePos();
+			if ((pos.x > 0 && pos.x < window.size.x) && (pos.y > 0 && pos.y < window.size.y)) {
 				this.activeWindow = window;
 				return;
 			}

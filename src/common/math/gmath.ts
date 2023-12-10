@@ -23,4 +23,8 @@ export default class gMath {
 	static modulo(a: number, b: number) {
 		return ((a % b) + b) % b;
 	}
+
+	static clamp(x: number, min: number, max: number) {
+		return Math.min(Math.max(x, min), max);
+	}
 }

@@ -2,6 +2,7 @@ import { Camera } from "../../../../src/client/render/camera.js";
 import { gl, glProperties } from "../../../../src/client/render/gl.js";
 import { renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
+import gMath from "../../../../src/common/math/gmath.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
@@ -42,7 +43,7 @@ export class Viewport2D extends Viewport {
 
 	drawFrame() {
 		if (glProperties.resolutionChanged) {
-			this.camera.calcOrthographicMatrix(this.sizeX, this.sizeY);
+			this.camera.calcOrthographicMatrix(this.size.x, this.size.y);
 		}
 
 		const startPos = vec3.copy(this.camera.position);
@@ -50,7 +51,7 @@ export class Viewport2D extends Viewport {
 		this.camera.updateViewMatrix();
 		this.camera.position = startPos;
 
-		gl.viewport(this.posX, this.posY, this.sizeX, this.sizeY);
+		gl.viewport(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
 		// grid background
 		gl.useProgram(gridShader.program);
@@ -61,8 +62,8 @@ export class Viewport2D extends Viewport {
 		gl.uniform3f(gridShader.fillColorUnif, 0.15, 0.15, 0.15);
 		gl.uniform1f(gridShader.gridSizeUnif, ppu * editor.gridSize);
 		gl.uniform2f(gridShader.offsetUnif,
-			this.camera.position.x * ppu - this.sizeX * 0.5 - this.posX,
-			this.camera.position.y * ppu - this.sizeY * 0.5 - this.posY
+			this.camera.position.x * ppu - this.size.x * 0.5 - this.pos.x,
+			this.camera.position.y * ppu - this.size.y * 0.5 - this.pos.y
 		);
 
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
@@ -87,23 +88,25 @@ export class Viewport2D extends Viewport {
 	}
 
 	override wheel(dy: number): void {
-		const scrollAmt = 0.02;
+		const scrollAmt = 1.1;
 
-		const vpMouse = new vec3(mousePosX - glProperties.offsetX - this.posX - this.sizeX * 0.5, mousePosY - glProperties.offsetY - this.posY - this.sizeY * 0.5, 0);
+		const vpMouse = new vec3(mousePosX - glProperties.offsetX - this.pos.x - this.size.x * 0.5, mousePosY - glProperties.offsetY - this.pos.y - this.size.y * 0.5, 0);
 		const startWorldMouse = vpMouse.times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
-		
+
 		if (dy > 0) {
-			this.camera.fov *= 1 / dy / scrollAmt;
+			this.camera.fov /= scrollAmt;
 		} else {
-			this.camera.fov *= -dy * scrollAmt;
+			this.camera.fov *= scrollAmt;
 		}
+
+		this.camera.fov = gMath.clamp(this.camera.fov, 0.001, 20);
 
 		const endWorldMouse = vpMouse.times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
 
 		const delta = startWorldMouse.minus(endWorldMouse);
 		this.camera.position.add(delta);
 
-		this.camera.calcOrthographicMatrix(this.sizeX, this.sizeY);
+		this.camera.calcOrthographicMatrix(this.size.x, this.size.y);
 	}
 
 	startLook() {
@@ -127,6 +130,6 @@ export class Viewport2D extends Viewport {
 	}
 
 	getPixelsPerUnit(): number {
-		return this.camera.fov * this.sizeY * 0.5;
+		return this.camera.fov * this.size.y * 0.5;
 	}
 }
