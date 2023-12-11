@@ -7,6 +7,8 @@ import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
+import { BlockTool } from "../tools/blocktool.js";
+import { Tool } from "../tools/tools.js";
 import { Viewport } from "./viewport.js";
 
 export enum Viewport2DAngle {
@@ -73,6 +75,8 @@ export class Viewport2D extends Viewport {
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
 
+		editor.blockTool.drawCurrentBlock();
+
 		this.drawMeshOutlines(this.camera.perspectiveMatrix, this.camera.viewMatrix);
 		this.drawBorder();
 	}
@@ -81,8 +85,14 @@ export class Viewport2D extends Viewport {
 		switch (button) {
 			// left
 			case 0:
-				if (pressed) {
-					console.log(this.getMouseWorldRounded());
+				switch (editor.activeTool) {
+					case Tool.Block:
+						if (pressed) {
+							editor.blockTool.startDrag(this.getMouseWorldRounded(), this.getMask());
+						} else {
+							editor.blockTool.stopDrag();
+						}
+						break;
 				}
 				break;
 			// pan
@@ -126,11 +136,21 @@ export class Viewport2D extends Viewport {
 	}
 
 	mouseMove(dx: number, dy: number): void {
-		if (!this.looking) return;
+		(() => {
+			if (!this.looking) return;
 
-		let add = new vec3(-dx, dy, 0);
-		add = add.times(1 / this.getPixelsPerUnit());
-		this.camera.position.add(add);
+			let add = new vec3(-dx, dy, 0);
+			add = add.times(1 / this.getPixelsPerUnit());
+			this.camera.position.add(add);
+		})();
+
+		(() => {
+			switch (editor.activeTool) {
+				case Tool.Block:
+					editor.blockTool.drag(this.getMouseWorldRounded(), this.getMask());
+					break;
+			}
+		})();
 	}
 
 	override mouseUnlock(): void {
@@ -169,5 +189,11 @@ export class Viewport2D extends Viewport {
 
 	getMouseWorldRounded(): vec3 {
 		return this.gridToWorld(this.mouseToGrid());
+	}
+
+	getMask(): vec3 {
+		let v = new vec3(0, 0, 1).rotate(this.camera.rotation);
+		v.abs();
+		return v;
 	}
 }

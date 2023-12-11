@@ -1,6 +1,6 @@
 import { glProperties } from "../../../../src/client/render/gl.js";
 import { editor } from "../main.js";
-import { Tool, useTool } from "./tools.js";
+import { Tool, useTool } from "../tools/tools.js";
 
 export let mousePosX: number;
 export let mousePosY: number;

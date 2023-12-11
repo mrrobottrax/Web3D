@@ -8,17 +8,21 @@ import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
 import { glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
-import { Tool } from "./tools.js";
+import { Tool } from "../tools/tools.js";
+import { BlockTool } from "../tools/blocktool.js";
 
 export class Editor {
 	meshes: EditorMesh[] = [];
-	windowManager: WindowManager;
 	activeTool: Tool = Tool.Select;
-
+	
 	gridSize: number = 1;
+	
+	windowManager: WindowManager;
+	blockTool: BlockTool;
 
 	constructor() {
 		this.windowManager = new WindowManager();
+		this.blockTool = new BlockTool();
 	}
 
 	async init() {
@@ -40,7 +44,9 @@ export class Editor {
 
 	frame() {
 		resizeCanvas();
+
 		this.windowManager.updateWindows();
+		
 		glEndFrame();
 	}
 }

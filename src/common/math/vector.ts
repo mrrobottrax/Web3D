@@ -168,6 +168,22 @@ export class vec3 {
 		return result;
 	}
 
+	public abs() {
+		this.x = Math.abs(this.x);
+		this.y = Math.abs(this.y);
+		this.z = Math.abs(this.z);
+	}
+
+	public timesComponent(v: vec3) {
+		let vec: vec3 = vec3.origin();
+
+		vec.x *= v.x;
+		vec.y *= v.y;
+		vec.z *= v.z;
+
+		return vec;
+	}
+
 	public sqrDist(v: vec3): number {
 		return this.minus(v).sqrMagnitude();
 	}
