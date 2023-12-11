@@ -60,6 +60,8 @@ export class Viewport2D extends Viewport {
 		const ppu = this.getPixelsPerUnit();
 
 		gl.uniform3f(gridShader.fillColorUnif, 0.15, 0.15, 0.15);
+		gl.uniform3f(gridShader.bigFillColorUnif, 0.25, 0.25, 0.25);
+		gl.uniform3f(gridShader.zeroFillColorUnif, 0.35, 0.15, 0);
 		gl.uniform1f(gridShader.gridSizeUnif, ppu * editor.gridSize);
 		gl.uniform2f(gridShader.offsetUnif,
 			this.camera.position.x * ppu - this.size.x * 0.5 - this.pos.x,

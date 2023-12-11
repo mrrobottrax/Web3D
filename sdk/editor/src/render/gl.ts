@@ -3,12 +3,16 @@ import { initUiBuffers } from "../../../../src/client/render/ui.js";
 
 interface GridShader extends ShaderBase {
 	fillColorUnif: WebGLUniformLocation | null
+	bigFillColorUnif: WebGLUniformLocation | null
+	zeroFillColorUnif: WebGLUniformLocation | null
 	gridSizeUnif: WebGLUniformLocation | null
 	offsetUnif: WebGLUniformLocation | null
 }
 export let gridShader: GridShader = {
 	program: null,
 	fillColorUnif: null,
+	bigFillColorUnif: null,
+	zeroFillColorUnif: null,
 	gridSizeUnif: null,
 	offsetUnif: null
 };
@@ -66,6 +70,8 @@ export async function initEditorShaders() {
 	skinnedShader.boneMatricesUnif = gl.getUniformLocation(skinnedShader.program, "uBoneMatrices");
 
 	gridShader.fillColorUnif = gl.getUniformLocation(gridShader.program, "uFillColor");
+	gridShader.bigFillColorUnif = gl.getUniformLocation(gridShader.program, "uBigFillColor");
+	gridShader.zeroFillColorUnif = gl.getUniformLocation(gridShader.program, "uZeroFillColor");
 	gridShader.gridSizeUnif = gl.getUniformLocation(gridShader.program, "uGridSize");
 	gridShader.offsetUnif = gl.getUniformLocation(gridShader.program, "uOffset");
 }
