@@ -150,7 +150,7 @@ export class Viewport2D extends Viewport {
 	}
 
 	gridToWorld(v: vec2): vec3 {
-		let a = new vec3(Math.round(v.x), Math.round(v.y), 0);
+		let a = new vec3(Math.round(v.x / editor.gridSize) * editor.gridSize, Math.round(v.y / editor.gridSize) * editor.gridSize, 0);
 		a = a.rotate(this.camera.rotation);
 
 		// Imprecision
