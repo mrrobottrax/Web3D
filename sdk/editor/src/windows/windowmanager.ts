@@ -26,7 +26,7 @@ export class WindowManager {
 		});
 	}
 
-	findWindowUnderMouse(): void {
+	setActiveWindowUnderMouse(): void {
 		for (const window of this.windows) {
 			const pos = window.getRelativeMousePos();
 			if ((pos.x > 0 && pos.x < window.size.x) && (pos.y > 0 && pos.y < window.size.y)) {

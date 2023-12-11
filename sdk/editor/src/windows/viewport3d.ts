@@ -2,7 +2,7 @@ import { quakeSens } from "../../../../src/client/player/input.js";
 import { Camera } from "../../../../src/client/render/camera.js";
 import { gl, glProperties } from "../../../../src/client/render/gl.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
-import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
+import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Time } from "../../../../src/common/system/time.js";
 import { editor } from "../main.js";
 import { editorConfig } from "../system/editorconfig.js";
@@ -98,5 +98,15 @@ export class Viewport3D extends Viewport {
 
 	override mouseUnlock(): void {
 		this.stopLook();
+	}
+
+	screenToGrid(v: vec2): vec2 {
+		throw new Error("Method not implemented.");
+	}
+	gridToWorld(v: vec2): vec3 {
+		throw new Error("Method not implemented.");
+	}
+	getMask(): vec3 {
+		throw new Error("Method not implemented.");
 	}
 }

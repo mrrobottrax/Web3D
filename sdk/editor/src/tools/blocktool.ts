@@ -1,13 +1,15 @@
 import { drawLine } from "../../../../src/client/render/render.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
-import { Time } from "../../../../src/common/system/time.js";
+import { editor } from "../main.js";
+import { Viewport } from "../windows/viewport.js";
+import { Tool } from "./tool.js";
 
 export interface Block {
 	min: vec3;
 	max: vec3;
 }
 
-export class BlockTool {
+export class BlockTool extends Tool {
 	currentBlock: Block = {
 		min: new vec3(-1, -1, -1),
 		max: new vec3(1, 1, 1)
@@ -70,5 +72,36 @@ export class BlockTool {
 		this.currentBlock.max.x = (1 - mask.x) * Math.max(this.dragStart.x, this.dragEnd.x) + mask.x * this.currentBlock.max.x;
 		this.currentBlock.max.y = (1 - mask.y) * Math.max(this.dragStart.y, this.dragEnd.y) + mask.y * this.currentBlock.max.y;
 		this.currentBlock.max.z = (1 - mask.z) * Math.max(this.dragStart.z, this.dragEnd.z) + mask.z * this.currentBlock.max.z;
+	}
+
+	override mouse(button: number, pressed: boolean): boolean {
+		const active = editor.windowManager.activeWindow as Viewport;
+
+		if (active && button == 0) {
+			if (pressed) {
+				this.startDrag(active.getMouseWorldRounded(), active.getMask());
+			} else {
+				this.stopDrag();
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	override mouseMove(dx: number, dy: number): boolean {
+		if (!this.dragging)
+			return false;
+
+		const active = editor.windowManager.activeWindow as Viewport;
+
+		if (active) {
+			this.drag(active.getMouseWorldRounded(), active.getMask());
+
+			return true;
+		}
+
+		return false;
 	}
 }

@@ -1,6 +1,6 @@
 import { glProperties } from "../../../../src/client/render/gl.js";
 import { editor } from "../main.js";
-import { Tool, useTool } from "../tools/tools.js";
+import { ToolEnum, setTool } from "../tools/tool.js";
 
 export let mousePosX: number;
 export let mousePosY: number;
@@ -23,12 +23,16 @@ export function initEditorInput() {
 
 	document.addEventListener("mousedown", event => {
 		event.preventDefault();
-		editor.windowManager.findWindowUnderMouse();
+		editor.windowManager.setActiveWindowUnderMouse();
+
+		if (editor.activeTool.mouse(event.button, true)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, true);
 	});
 
 	document.addEventListener("mouseup", event => {
 		event.preventDefault();
+
+		if (editor.activeTool.mouse(event.button, false)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, false);
 	});
 
@@ -37,11 +41,12 @@ export function initEditorInput() {
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl
 
+		if (editor.activeTool.mouseMove(event.movementX, event.movementY)) return;
 		editor.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
 	});
 
 	document.addEventListener("wheel", event => {
-		editor.windowManager.findWindowUnderMouse();
+		editor.windowManager.setActiveWindowUnderMouse();
 		editor.windowManager.activeWindow?.wheel(event.deltaY);
 	});
 
@@ -57,8 +62,8 @@ export function initEditorInput() {
 		}
 	}
 
-	(window as any).selectTool = () => useTool(Tool.Select);
-	(window as any).blockTool = () => useTool(Tool.Block);
+	(window as any).selectTool = () => setTool(ToolEnum.Select);
+	(window as any).blockTool = () => setTool(ToolEnum.Block);
 }
 
 export function getKeyDown(code: string): boolean {
@@ -80,11 +85,11 @@ let shortcuts: Shortcut[] = [
 	},
 	{
 		keyCode: "KeyQ",
-		function: () => useTool(Tool.Select)
+		function: () => setTool(ToolEnum.Select)
 	},
 	{
 		keyCode: "KeyB",
-		function: () => useTool(Tool.Block)
+		function: () => setTool(ToolEnum.Block)
 	}
 ];
 function tryShortcut(code: string): boolean {

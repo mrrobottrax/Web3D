@@ -6,7 +6,7 @@ import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
-import { Tool } from "../tools/tools.js";
+import { ToolEnum } from "../tools/tool.js";
 import { Viewport } from "./viewport.js";
 
 export enum Viewport2DAngle {
@@ -81,18 +81,6 @@ export class Viewport2D extends Viewport {
 
 	override mouse(button: number, pressed: boolean): void {
 		switch (button) {
-			// left
-			case 0:
-				switch (editor.activeTool) {
-					case Tool.Block:
-						if (pressed) {
-							editor.blockTool.startDrag(this.getMouseWorldRounded(), this.getMask());
-						} else {
-							editor.blockTool.stopDrag();
-						}
-						break;
-				}
-				break;
 			// pan
 			case 2:
 				if (pressed)
@@ -134,21 +122,11 @@ export class Viewport2D extends Viewport {
 	}
 
 	mouseMove(dx: number, dy: number): void {
-		(() => {
-			if (!this.looking) return;
+		if (!this.looking) return;
 
-			let add = new vec3(-dx, dy, 0);
-			add = add.times(1 / this.getPixelsPerUnit());
-			this.camera.position.add(add);
-		})();
-
-		(() => {
-			switch (editor.activeTool) {
-				case Tool.Block:
-					editor.blockTool.drag(this.getMouseWorldRounded(), this.getMask());
-					break;
-			}
-		})();
+		let add = new vec3(-dx, dy, 0);
+		add = add.times(1 / this.getPixelsPerUnit());
+		this.camera.position.add(add);
 	}
 
 	override mouseUnlock(): void {
@@ -159,15 +137,15 @@ export class Viewport2D extends Viewport {
 		return this.camera.fov * this.size.y * 0.5;
 	}
 
-	mouseToGrid(): vec2 {
+	override mouseToGrid(): vec2 {
 		return this.screenToGrid(this.getRelativeMousePos());
 	}
 
-	screenToGrid(v: vec2): vec2 {
+	override screenToGrid(v: vec2): vec2 {
 		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
 	}
 
-	gridToWorld(v: vec2): vec3 {
+	override gridToWorld(v: vec2): vec3 {
 		let a = new vec3(v.x, v.y, 0);
 		a = a.rotate(this.camera.rotation);
 
@@ -179,11 +157,11 @@ export class Viewport2D extends Viewport {
 		return a;
 	}
 
-	getMouseWorldRounded(): vec3 {
+	override getMouseWorldRounded(): vec3 {
 		return this.gridToWorld(this.mouseToGrid());
 	}
 
-	getMask(): vec3 {
+	override getMask(): vec3 {
 		let v = new vec3(0, 0, 1).rotate(this.camera.rotation);
 		v.abs();
 		v.x = Math.round(v.x);
