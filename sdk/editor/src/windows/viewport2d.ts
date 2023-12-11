@@ -172,9 +172,9 @@ export class Viewport2D extends Viewport {
 		a = a.rotate(this.camera.rotation);
 
 		// Snap
-		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize
-		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize
-		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize
+		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize;
+		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize;
+		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize;
 
 		return a;
 	}
@@ -186,6 +186,9 @@ export class Viewport2D extends Viewport {
 	getMask(): vec3 {
 		let v = new vec3(0, 0, 1).rotate(this.camera.rotation);
 		v.abs();
+		v.x = Math.round(v.x);
+		v.y = Math.round(v.y);
+		v.z = Math.round(v.z);
 		return v;
 	}
 }
