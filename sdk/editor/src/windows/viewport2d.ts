@@ -1,13 +1,11 @@
 import { Camera } from "../../../../src/client/render/camera.js";
 import { gl, glProperties } from "../../../../src/client/render/gl.js";
-import { renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
-import { BlockTool } from "../tools/blocktool.js";
 import { Tool } from "../tools/tools.js";
 import { Viewport } from "./viewport.js";
 
@@ -170,19 +168,13 @@ export class Viewport2D extends Viewport {
 	}
 
 	gridToWorld(v: vec2): vec3 {
-		let a = new vec3(Math.round(v.x / editor.gridSize) * editor.gridSize, Math.round(v.y / editor.gridSize) * editor.gridSize, 0);
+		let a = new vec3(v.x, v.y, 0);
 		a = a.rotate(this.camera.rotation);
 
-		// Imprecision
-		if (Math.abs(a.x) < 0.00001) {
-			a.x = 0;
-		}
-		if (Math.abs(a.y) < 0.00001) {
-			a.y = 0;
-		}
-		if (Math.abs(a.z) < 0.00001) {
-			a.z = 0;
-		}
+		// Snap
+		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize
+		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize
+		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize
 
 		return a;
 	}
