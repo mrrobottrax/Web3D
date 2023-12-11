@@ -1,5 +1,4 @@
 import { currentLevel, setLevelClient } from "../../../../src/client/entities/level.js";
-import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
 import { drawHalfEdgeMesh, drawLine } from "../../../../src/client/render/render.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
 import { EditorMesh } from "../mesh/editormesh.js";

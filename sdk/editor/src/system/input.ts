@@ -1,5 +1,6 @@
 import { glProperties } from "../../../../src/client/render/gl.js";
 import { editor } from "../main.js";
+import { Tool, useTool } from "./tools.js";
 
 export let mousePosX: number;
 export let mousePosY: number;
@@ -56,20 +57,12 @@ export function initEditorInput() {
 		}
 	}
 
-	(window as any).selectTool = selectTool;
-	(window as any).blockTool = blockTool;
+	(window as any).selectTool = () => useTool(Tool.Select);
+	(window as any).blockTool = () => useTool(Tool.Block);
 }
 
 export function getKeyDown(code: string): boolean {
 	return keys[code];
-}
-
-function selectTool() {
-	console.log("Select")
-}
-
-function blockTool() {
-	console.log("Block")
 }
 
 interface Shortcut {
@@ -87,11 +80,11 @@ let shortcuts: Shortcut[] = [
 	},
 	{
 		keyCode: "KeyQ",
-		function: selectTool
+		function: () => useTool(Tool.Select)
 	},
 	{
 		keyCode: "KeyB",
-		function: blockTool
+		function: () => useTool(Tool.Block)
 	}
 ];
 function tryShortcut(code: string): boolean {
