@@ -73,7 +73,7 @@ export class Viewport2D extends Viewport {
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
 
-		editor.blockTool.drawCurrentBlock();
+		this.drawTool();
 
 		this.drawMeshOutlines(this.camera.perspectiveMatrix, this.camera.viewMatrix);
 		this.drawBorder();

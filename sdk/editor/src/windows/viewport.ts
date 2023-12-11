@@ -5,6 +5,7 @@ import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
+import { Tool } from "../tools/tools.js";
 import { EditorWindow } from "./window.js";
 
 export abstract class Viewport extends EditorWindow {
@@ -27,5 +28,13 @@ export abstract class Viewport extends EditorWindow {
 
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
+	}
+
+	drawTool() {
+		switch (editor.activeTool) {
+			case Tool.Block:
+				editor.blockTool.drawCurrentBlock();
+				break;
+		}
 	}
 }
