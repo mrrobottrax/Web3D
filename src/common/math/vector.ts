@@ -94,7 +94,7 @@ export class vec3 {
 		return v;
 	}
 
-	public rotate(q: quaternion): void {
+	public rotate(q: quaternion): vec3 {
 		// qvqc
 
 		const qx2 = q.x * q.x;
@@ -114,9 +114,7 @@ export class vec3 {
 		rotatedVector.y = 2 * (qxqy + qzqw) * this.x + (1 - 2 * qx2 - 2 * qz2) * this.y + 2 * (qyqz - qxqw) * this.z;
 		rotatedVector.z = 2 * (qxqz - qyqw) * this.x + 2 * (qyqz + qxqw) * this.y + (1 - 2 * qx2 - 2 * qy2) * this.z;
 
-		this.x = rotatedVector.x;
-		this.y = rotatedVector.y;
-		this.z = rotatedVector.z;
+		return rotatedVector;
 	}
 
 	public sqrMagnitude(): number {

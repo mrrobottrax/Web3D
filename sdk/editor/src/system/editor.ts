@@ -7,11 +7,13 @@ import { WindowManager } from "../windows/windowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
-import { glEndFrame, glProperties, resizeCanvas } from "../../../../src/client/render/gl.js";
+import { glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
+import { Tool } from "./tools.js";
 
 export class Editor {
 	meshes: EditorMesh[] = [];
 	windowManager: WindowManager;
+	activeTool: Tool = Tool.Select;
 
 	gridSize: number = 1;
 

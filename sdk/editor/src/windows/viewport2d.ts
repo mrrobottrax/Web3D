@@ -3,7 +3,7 @@ import { gl, glProperties } from "../../../../src/client/render/gl.js";
 import { renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
-import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
+import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
@@ -47,7 +47,7 @@ export class Viewport2D extends Viewport {
 		}
 
 		const startPos = vec3.copy(this.camera.position);
-		this.camera.position.rotate(this.camera.rotation);
+		this.camera.position = this.camera.position.rotate(this.camera.rotation);
 		this.camera.updateViewMatrix();
 		this.camera.position = startPos;
 
@@ -79,6 +79,12 @@ export class Viewport2D extends Viewport {
 
 	override mouse(button: number, pressed: boolean): void {
 		switch (button) {
+			// left
+			case 0:
+				if (pressed) {
+					console.log(this.getMouseWorldRounded());
+				}
+				break;
 			// pan
 			case 2:
 				if (pressed)
@@ -133,5 +139,35 @@ export class Viewport2D extends Viewport {
 
 	getPixelsPerUnit(): number {
 		return this.camera.fov * this.size.y * 0.5;
+	}
+
+	mouseToGrid(): vec2 {
+		return this.screenToGrid(this.getRelativeMousePos());
+	}
+
+	screenToGrid(v: vec2): vec2 {
+		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+	}
+
+	gridToWorld(v: vec2): vec3 {
+		let a = new vec3(Math.round(v.x), Math.round(v.y), 0);
+		a = a.rotate(this.camera.rotation);
+
+		// Imprecision
+		if (Math.abs(a.x) < 0.00001) {
+			a.x = 0;
+		}
+		if (Math.abs(a.y) < 0.00001) {
+			a.y = 0;
+		}
+		if (Math.abs(a.z) < 0.00001) {
+			a.z = 0;
+		}
+
+		return a;
+	}
+
+	getMouseWorldRounded(): vec3 {
+		return this.gridToWorld(this.mouseToGrid());
 	}
 }
