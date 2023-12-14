@@ -117,50 +117,42 @@ export class BlockTool extends Tool {
 
 		let a: EditorVertex = {
 			position: new vec3(min.x, min.y, min.z),
-			edge: null,
-			uv: new vec2(0, 0)
+			edges: new Set()
 		}
 		vertsSet.add(a);
 		let b: EditorVertex = {
 			position: new vec3(max.x, min.y, min.z),
-			edge: null,
-			uv: new vec2(1, 0)
+			edges: new Set()
 		}
 		vertsSet.add(b);
 		let c: EditorVertex = {
 			position: new vec3(max.x, min.y, max.z),
-			edge: null,
-			uv: new vec2(1, 1)
+			edges: new Set()
 		}
 		vertsSet.add(c);
 		let d: EditorVertex = {
 			position: new vec3(min.x, min.y, max.z),
-			edge: null,
-			uv: new vec2(0, 1)
+			edges: new Set()
 		}
 		vertsSet.add(d);
 		let e: EditorVertex = {
 			position: new vec3(min.x, max.y, min.z),
-			edge: null,
-			uv: new vec2(0, 0)
+			edges: new Set()
 		}
 		vertsSet.add(e);
 		let f: EditorVertex = {
 			position: new vec3(max.x, max.y, min.z),
-			edge: null,
-			uv: new vec2(0, 0)
+			edges: new Set()
 		}
 		vertsSet.add(f);
 		let g: EditorVertex = {
 			position: new vec3(max.x, max.y, max.z),
-			edge: null,
-			uv: new vec2(0, 0)
+			edges: new Set()
 		}
 		vertsSet.add(g);
 		let h: EditorVertex = {
 			position: new vec3(min.x, max.y, max.z),
-			edge: null,
-			uv: new vec2(0, 0)
+			edges: new Set()
 		}
 		vertsSet.add(h);
 
@@ -169,7 +161,9 @@ export class BlockTool extends Tool {
 		let createFace = (a: EditorVertex, b: EditorVertex, c: EditorVertex, d: EditorVertex): EditorFace => {
 			let face: EditorFace = {
 				halfEdge: null,
-				texture: "null"
+				texture: "./data/levels/textures/brick.png",
+				u: new vec3(1, 0, 0),
+				v: new vec3(0, 1, 0)
 			}
 
 			let ab: EditorHalfEdge = {
@@ -181,7 +175,7 @@ export class BlockTool extends Tool {
 				full: null
 			}
 			halfEdgesSet.add(ab);
-			a.edge = ab;
+			a.edges.add(ab);
 			let bc: EditorHalfEdge = {
 				prev: ab,
 				next: null,
@@ -192,7 +186,7 @@ export class BlockTool extends Tool {
 			}
 			halfEdgesSet.add(bc);
 			ab.next = bc;
-			b.edge = bc;
+			b.edges.add(bc);
 			let cd: EditorHalfEdge = {
 				prev: bc,
 				next: null,
@@ -203,7 +197,7 @@ export class BlockTool extends Tool {
 			}
 			halfEdgesSet.add(cd);
 			bc.next = cd;
-			c.edge = cd;
+			c.edges.add(cd);
 			let da: EditorHalfEdge = {
 				prev: cd,
 				next: ab,
@@ -215,9 +209,13 @@ export class BlockTool extends Tool {
 			halfEdgesSet.add(da);
 			cd.next = da;
 			ab.prev = da;
-			d.edge = da;
+			d.edges.add(da);
 
 			face.halfEdge = ab;
+
+			const uv = EditorMesh.getBoxUvForFace(face);
+			face.u = uv.u;
+			face.v = uv.v;
 
 			return face;
 		};
@@ -287,7 +285,7 @@ export class BlockTool extends Tool {
 		connectEdges(nz, 2, px, 2);
 		connectEdges(nz, 4, nx, 4);
 
-		// dont need to connect top & bottom since they are implicitly connected
+		// dont need to others since they are implicitly connected
 
 		const mesh = new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet);
 
