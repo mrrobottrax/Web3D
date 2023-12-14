@@ -158,7 +158,7 @@ export class BlockTool extends Tool {
 		}
 		vertsSet.add(g);
 		let h: EditorVertex = {
-			position: new vec3(max.x, max.y, max.z),
+			position: new vec3(min.x, max.y, max.z),
 			edge: null,
 			uv: new vec2(0, 0)
 		}
@@ -166,10 +166,9 @@ export class BlockTool extends Tool {
 
 		let halfEdgesSet: Set<EditorHalfEdge> = new Set();
 
-		let createFace = (a: EditorVertex, b: EditorVertex, c: EditorVertex, d: EditorVertex, normal: vec3): EditorFace => {
+		let createFace = (a: EditorVertex, b: EditorVertex, c: EditorVertex, d: EditorVertex): EditorFace => {
 			let face: EditorFace = {
 				halfEdge: null,
-				normal: normal,
 				texture: "null"
 			}
 
@@ -215,7 +214,7 @@ export class BlockTool extends Tool {
 			}
 			halfEdgesSet.add(da);
 			cd.next = da;
-			ab.prev = cd;
+			ab.prev = da;
 			d.edge = da;
 
 			face.halfEdge = ab;
@@ -225,29 +224,144 @@ export class BlockTool extends Tool {
 
 		let facesSet: Set<EditorFace> = new Set();
 
-		const nz = createFace(e, f, b, a, new vec3(0, 0, -1)); // -z face
+		const nz = createFace(e, f, b, a); // -z face
+		const pz = createFace(g, h, d, c); // +z face
+		const nx = createFace(a, d, h, e); // -x face
+		const px = createFace(c, b, f, g); // +x face
+		const ny = createFace(a, b, c, d); // -y face
+		const py = createFace(e, h, g, f); // +y face
 		facesSet.add(nz);
+		facesSet.add(pz);
+		facesSet.add(nx);
+		facesSet.add(px);
+		facesSet.add(ny);
+		facesSet.add(py);
 
-		let edgesSet: Set<EditorFullEdge> = new Set();
+		// connect edges
+		let edgesSet: Set<EditorFullEdge> = new Set(); // full edges
+		const connectEdges = (faceA: EditorFace, indexA: number, faceB: EditorFace, indexB: number) => {
+			if (!(faceA.halfEdge && faceB.halfEdge)) {
+				console.error("PROBLEM IN BLOCK TOOL!");
+				return;
+			}
 
-		// create full edges
-		const fullEdgesRecursive = (start: EditorHalfEdge, halfEdge: EditorHalfEdge) => {
-			if (!halfEdge.full) halfEdge.full = {
-				halfA: halfEdge,
-				halfB: halfEdge.twin
-			};
+			let edgeA: EditorHalfEdge = faceA.halfEdge;
+			for (let i = 1; i < indexA; ++i) {
+				if (edgeA?.next)
+					edgeA = edgeA.next;
+			}
 
-			edgesSet.add(halfEdge.full);
+			let edgeB: EditorHalfEdge = faceB.halfEdge;
+			for (let i = 1; i < indexB; ++i) {
+				if (edgeB?.next)
+					edgeB = edgeB.next;
+			}
 
-			if (halfEdge.twin) halfEdge.twin.full = halfEdge.full;
+			edgeA.twin = edgeB;
+			edgeB.twin = edgeA;
 
-			if (halfEdge.next && halfEdge.next != start) fullEdgesRecursive(start, halfEdge.next);
+			edgeA.full = {
+				halfA: edgeA,
+				halfB: edgeB
+			}
+			edgeB.full = edgeA.full;
+
+			edgesSet.add(edgeA.full);
 		}
 
-		if (nz.halfEdge) fullEdgesRecursive(nz.halfEdge, nz.halfEdge);
+		// py
+		connectEdges(py, 1, nx, 3);
+		connectEdges(py, 2, pz, 1);
+		connectEdges(py, 3, px, 3);
+		connectEdges(py, 4, nz, 1);
 
-		if (nz.halfEdge)
-			editor.meshes.push(new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet));
+		// ny
+		connectEdges(ny, 1, nz, 3);
+		connectEdges(ny, 2, px, 1);
+		connectEdges(ny, 3, pz, 3);
+		connectEdges(ny, 4, nx, 1);
+
+		// vertical edges
+		connectEdges(pz, 2, nx, 2);
+		connectEdges(pz, 4, px, 4);
+		connectEdges(nz, 2, px, 2);
+		connectEdges(nz, 4, nx, 4);
+
+		// dont need to connect top & bottom since they are implicitly connected
+
+		const mesh = new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet);
+
+		// todo: remove later
+		if (!this.verifyMesh(mesh)) {
+			console.error("BLOCK MESH ERROR");
+		}
+
+		editor.meshes.push(mesh);
+
+		return true;
+	}
+
+	verifyMesh(mesh: EditorMesh): boolean {
+		const verifyHalfEdgeRecursive = (start: EditorHalfEdge, next: EditorHalfEdge): boolean => {
+			// check that next leads back to me
+			if (next.next?.prev != next) {
+				console.error("NEXT DOES NOT LEAD BACK");
+				if (next.tail?.position && next.next?.tail?.position && next.next.next?.tail?.position) {
+					drawLine(next.tail.position, next.next.tail.position, [1, 0, 0, 1], 10000);
+					drawLine(next.tail.position, next.next.next?.tail?.position, [0, 1, 0, 1], 10);
+				}
+				return false;
+			}
+
+			// check that my twin leads back to me
+			if (next.twin?.twin != next) {
+				console.error("TWIN DOES NOT LEAD BACK");
+				if (next.tail?.position && next.next?.tail?.position)
+					drawLine(next.tail.position, next.next.tail.position, [1, 0, 0, 1], 10000);
+				return false;
+			}
+
+			// check that I have a face
+			if (!next.face) return false;
+
+			if (next.next) {
+				if (next.next != start)
+					return verifyHalfEdgeRecursive(start, next.next);
+				else
+					return true;
+			}
+			else
+				return false;
+		}
+
+		// faces
+		{
+			const it = mesh.faces.values();
+			let i = it.next();
+			while (!i.done) {
+				const f = i.value;
+
+				if (f.halfEdge?.face != f) return false;
+
+				if (!verifyHalfEdgeRecursive(f.halfEdge, f.halfEdge)) return false;
+
+				i = it.next();
+			}
+		}
+
+		// edges
+		{
+			const it = mesh.edges.values();
+			let i = it.next();
+			while (!i.done) {
+				const e = i.value;
+
+				if (e.halfA?.full != e) return false;
+				if (e.halfB?.full != e) return false;
+
+				i = it.next();
+			}
+		}
 
 		return true;
 	}

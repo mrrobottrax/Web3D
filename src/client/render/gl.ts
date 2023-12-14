@@ -1,4 +1,4 @@
-import { updateUiMaterix } from "./render.js";
+import { debugTimers, updateUiMaterix } from "./render.js";
 
 export let glProperties = {
 	width: 0,
@@ -268,6 +268,8 @@ export function resizeCanvas() {
 
 export function glEndFrame() {
 	glProperties.resolutionChanged = false;
+
+	debugTimers();
 }
 
 // ~~~~~~~~~~~~~ load shader program from web urls ~~~~~~~~~~~~~~

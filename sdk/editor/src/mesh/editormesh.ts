@@ -4,7 +4,6 @@ import { Primitive } from "../../../../src/common/mesh/model.js";
 
 export interface EditorFace {
 	halfEdge: EditorHalfEdge | null;
-	normal: vec3 | null;
 	texture: string;
 }
 

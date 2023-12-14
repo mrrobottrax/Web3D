@@ -58,8 +58,6 @@ export class Viewport3D extends Viewport {
 		this.camera.updateViewMatrix();
 
 		gl.viewport(this.pos.x, this.pos.y, this.size.x, this.size.y);
-		
-		this.drawTool();
 
 		this.drawMeshOutlines(this.camera.perspectiveMatrix, this.camera.viewMatrix)
 		this.drawBorder();

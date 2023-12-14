@@ -1,13 +1,12 @@
 import { currentLevel, setLevelClient } from "../../../../src/client/entities/level.js";
 import { drawHalfEdgeMesh, drawLine } from "../../../../src/client/render/render.js";
-import { vec3 } from "../../../../src/common/math/vector.js";
 import { EditorMesh } from "../mesh/editormesh.js";
 import { initEditorGl } from "../render/gl.js";
 import { WindowManager } from "../windows/windowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
-import { glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
+import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { Tool, ToolEnum } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
@@ -50,6 +49,8 @@ export class Editor {
 
 	frame() {
 		resizeCanvas();
+
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		this.windowManager.updateWindows();
 		

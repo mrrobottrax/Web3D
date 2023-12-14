@@ -1,5 +1,7 @@
 import { gl, glProperties } from "../../../../src/client/render/gl.js";
+import { editor } from "../main.js";
 import { mousePosX, mousePosY } from "../system/input.js";
+import { ToolEnum } from "../tools/tool.js";
 import { EditorWindow } from "./window.js";
 
 export class WindowManager {
@@ -15,8 +17,8 @@ export class WindowManager {
 	}
 
 	updateWindows() {
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+		this.drawTool();
+		
 		this.windows.forEach(window => {
 			if (glProperties.resolutionChanged) {
 				window.recalculateSize();
@@ -24,6 +26,14 @@ export class WindowManager {
 
 			window.frame();
 		});
+	}
+
+	drawTool() {
+		switch (editor.activeToolEnum) {
+			case ToolEnum.Block:
+				editor.blockTool.drawCurrentBlock();
+				break;
+		}
 	}
 
 	setActiveWindowUnderMouse(): void {

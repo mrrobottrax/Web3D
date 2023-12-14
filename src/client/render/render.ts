@@ -68,6 +68,18 @@ export function drawFrame(client: Client): void {
 	drawUi();
 }
 
+export function debugTimers() {
+	for (let i = 0; i < lines.length; ++i) {
+		const line = lines[i];
+		
+		line.time -= Time.deltaTime;
+		if (line.time < 0) {
+			lines.splice(i, 1);
+			--i;
+		}
+	}
+}
+
 export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 	// draw lines
 	gl.useProgram(solidShader.program);
@@ -91,13 +103,6 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 		gl.enableVertexAttribArray(0);
 
 		gl.drawArrays(gl.LINES, 0, 2);
-
-		line.time -= Time.deltaTime;
-
-		if (line.time < 0) {
-			lines.splice(i, 1);
-			--i;
-		}
 	}
 
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat4.identity().getData());
