@@ -1,4 +1,5 @@
 import { glProperties } from "../../../../src/client/render/gl.js";
+import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { ToolEnum, setTool } from "../tools/tool.js";
 
@@ -65,6 +66,10 @@ export function initEditorInput() {
 		}
 	}
 
+	// buttons
+	// windows menu
+	(window as any).exportMap = () => FileManagement.exportMap();
+	// tools
 	(window as any).selectTool = () => setTool(ToolEnum.Select);
 	(window as any).blockTool = () => setTool(ToolEnum.Block);
 }
