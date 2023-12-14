@@ -254,11 +254,11 @@ export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: numb
 	}
 }
 
-function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase) {
+export function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase) {
 	gl.bindVertexArray(primitive.vao);
 
 	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, primitive.textures[0]);
+	gl.bindTexture(gl.TEXTURE_2D, primitive.texture);
 
 	gl.uniform4fv(shader.colorUnif, primitive.color);
 	gl.uniformMatrix4fv(shader.modelViewMatrixUnif, false, mat.getData());

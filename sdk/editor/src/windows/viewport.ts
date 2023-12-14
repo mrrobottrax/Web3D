@@ -1,10 +1,11 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { gl } from "../../../../src/client/render/gl.js";
-import { renderDebug } from "../../../../src/client/render/render.js";
+import { defaultShader, gl, solidShader, solidTex } from "../../../../src/client/render/gl.js";
+import { drawLine, drawPrimitive, renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
+import { EditorFace } from "../mesh/editormesh.js";
 import { borderShader } from "../render/gl.js";
 import { ToolEnum } from "../tools/tool.js";
 import { EditorWindow } from "./window.js";
@@ -14,6 +15,19 @@ export abstract class Viewport extends EditorWindow {
 	looking!: boolean;
 
 	drawMeshOutlines(perspectiveMatrix: mat4, viewMatrix: mat4) {
+		gl.useProgram(defaultShader.program);
+		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+
+		editor.meshes.forEach((mesh) => {
+			mesh.primitives.forEach((prim) => {
+				drawPrimitive(prim, this.camera.viewMatrix, defaultShader);
+			})
+
+			// todo: wireframe mode
+		});
+
+		gl.useProgram(null);
+
 		renderDebug(perspectiveMatrix, viewMatrix);
 	}
 

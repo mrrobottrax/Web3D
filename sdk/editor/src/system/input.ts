@@ -12,12 +12,15 @@ export function initEditorInput() {
 		event.preventDefault();
 		keys[event.code] = true;
 
-		if (!tryShortcut(event.code))
-			editor.windowManager.activeWindow?.key(event.code, true);
+		if (tryShortcut(event.code)) return;
+		if (editor.activeTool.key(event.code, true)) return;
+		editor.windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
 		event.preventDefault();
 		keys[event.code] = false;
+
+		if (editor.activeTool.key(event.code, false)) return;
 		editor.windowManager.activeWindow?.key(event.code, false);
 	});
 

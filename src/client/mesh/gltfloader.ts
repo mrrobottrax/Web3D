@@ -61,33 +61,28 @@ export class ClientGltfLoader extends GltfLoader {
 			}
 
 			// get textures
-			let t: WebGLTexture[] = [];
 			primitives[i] = new Primitive(
 				vao,
-				t,
+				solidTex,
 				data[i].elements.length,
 				data[i].color
 			);
-			if (data[i].textureUris.length > 0) {
-				for (let j = 0; j < data[i].textureUris.length; ++j) {
-					const url = data[i].textureUris[0];
-
-					const textureLoaded = textures[url] !== undefined;
-
-					if (textureLoaded) {
-						t[j] = textures[url];
-					} else {
-						loadTexture(url).then((result) => {
-							textures[url] = result.tex;
-							if (!result.tex) {
-								return;
-							}
-							primitives[i].textures[j] = result.tex;
-						});
-					}
+			if (data[i].textureUri) {
+				const url = data[i].textureUri;
+				
+				const textureLoaded = textures[url] !== undefined;
+				
+				if (textureLoaded) {
+					primitives[i].texture = textures[url];
+				} else {
+					loadTexture(url).then((result) => {
+						textures[url] = result.tex;
+						if (!result.tex) {
+							return;
+						}
+						primitives[i].texture = result.tex;
+					});
 				}
-			} else {
-				primitives[i].textures = [solidTex];
 			}
 
 			let length = data[i].positions.length + data[i].texCoords.length;

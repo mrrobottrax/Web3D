@@ -26,4 +26,8 @@ export class Tool {
 	mouseMove(dx: number, dy: number): boolean {
 		return false;
 	}
+
+	key(code: string, pressed: boolean): boolean {
+		return false;
+	}
 }

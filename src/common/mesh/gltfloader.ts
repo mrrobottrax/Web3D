@@ -454,7 +454,7 @@ export abstract class GltfLoader {
 		let color: number[] = [1, 1, 1, 1];
 
 		// material
-		const uris: string[] = [];
+		let uri: string;
 		if (materialIndex != undefined && json.materials) {
 			const material = json.materials[materialIndex];
 			const baseColorTex = material["pbrMetallicRoughness"]["baseColorTexture"];
@@ -463,15 +463,15 @@ export abstract class GltfLoader {
 				const baseColorIndex = material["pbrMetallicRoughness"]["baseColorTexture"].index;
 				const baseColorSource = json.textures[baseColorIndex].source;
 				const baseColorImage = json.images[baseColorSource];
-				uris.push(texPrefix + baseColorImage.uri);
+				uri = texPrefix + baseColorImage.uri;
 			} else {
-				uris.push("data/levels/textures/dev.png");
+				uri = "data/levels/textures/dev.png";
 			}
 			if (baseColorFactor) {
 				color = baseColorFactor;
 			}
 		} else {
-			uris.push("data/levels/textures/dev.png");
+			uri = "data/levels/textures/dev.png";
 		}
 
 		let p: PrimitiveData = {
@@ -483,7 +483,7 @@ export abstract class GltfLoader {
 			weights: new Uint8Array(new Float32Array(weights).buffer),
 			skinned: skinned,
 
-			textureUris: uris
+			textureUri: uri
 		};
 
 		return p;

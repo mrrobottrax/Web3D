@@ -1,6 +1,7 @@
 import { drawLine } from "../../../../src/client/render/render.js";
-import { vec3 } from "../../../../src/common/math/vector.js";
+import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
+import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
 
@@ -48,7 +49,6 @@ export class BlockTool extends Tool {
 	}
 
 	startDrag(position: vec3, mask: vec3) {
-		console.log(position);
 		this.dragStart = position;
 
 		this.dragging = true;
@@ -103,5 +103,152 @@ export class BlockTool extends Tool {
 		}
 
 		return false;
+	}
+
+	override key(code: string, pressed: boolean): boolean {
+		if (code != "Enter" || pressed != true) return false;
+
+		console.log("Complete block");
+
+		const min = this.currentBlock.min;
+		const max = this.currentBlock.max;
+
+		let vertsSet: Set<EditorVertex> = new Set();
+
+		let a: EditorVertex = {
+			position: new vec3(min.x, min.y, min.z),
+			edge: null,
+			uv: new vec2(0, 0)
+		}
+		vertsSet.add(a);
+		let b: EditorVertex = {
+			position: new vec3(max.x, min.y, min.z),
+			edge: null,
+			uv: new vec2(1, 0)
+		}
+		vertsSet.add(b);
+		let c: EditorVertex = {
+			position: new vec3(max.x, min.y, max.z),
+			edge: null,
+			uv: new vec2(1, 1)
+		}
+		vertsSet.add(c);
+		let d: EditorVertex = {
+			position: new vec3(min.x, min.y, max.z),
+			edge: null,
+			uv: new vec2(0, 1)
+		}
+		vertsSet.add(d);
+		let e: EditorVertex = {
+			position: new vec3(min.x, max.y, min.z),
+			edge: null,
+			uv: new vec2(0, 0)
+		}
+		vertsSet.add(e);
+		let f: EditorVertex = {
+			position: new vec3(max.x, max.y, min.z),
+			edge: null,
+			uv: new vec2(0, 0)
+		}
+		vertsSet.add(f);
+		let g: EditorVertex = {
+			position: new vec3(max.x, max.y, max.z),
+			edge: null,
+			uv: new vec2(0, 0)
+		}
+		vertsSet.add(g);
+		let h: EditorVertex = {
+			position: new vec3(max.x, max.y, max.z),
+			edge: null,
+			uv: new vec2(0, 0)
+		}
+		vertsSet.add(h);
+
+		let halfEdgesSet: Set<EditorHalfEdge> = new Set();
+
+		let createFace = (a: EditorVertex, b: EditorVertex, c: EditorVertex, d: EditorVertex, normal: vec3): EditorFace => {
+			let face: EditorFace = {
+				halfEdge: null,
+				normal: normal,
+				texture: "null"
+			}
+
+			let ab: EditorHalfEdge = {
+				prev: null,
+				next: null,
+				twin: null,
+				face: face,
+				tail: a,
+				full: null
+			}
+			halfEdgesSet.add(ab);
+			a.edge = ab;
+			let bc: EditorHalfEdge = {
+				prev: ab,
+				next: null,
+				twin: null,
+				face: face,
+				tail: b,
+				full: null
+			}
+			halfEdgesSet.add(bc);
+			ab.next = bc;
+			b.edge = bc;
+			let cd: EditorHalfEdge = {
+				prev: bc,
+				next: null,
+				twin: null,
+				face: face,
+				tail: c,
+				full: null
+			}
+			halfEdgesSet.add(cd);
+			bc.next = cd;
+			c.edge = cd;
+			let da: EditorHalfEdge = {
+				prev: cd,
+				next: ab,
+				twin: null,
+				face: face,
+				tail: d,
+				full: null
+			}
+			halfEdgesSet.add(da);
+			cd.next = da;
+			ab.prev = cd;
+			d.edge = da;
+
+			face.halfEdge = ab;
+
+			return face;
+		};
+
+		let facesSet: Set<EditorFace> = new Set();
+
+		const nz = createFace(e, f, b, a, new vec3(0, 0, -1)); // -z face
+		facesSet.add(nz);
+
+		let edgesSet: Set<EditorFullEdge> = new Set();
+
+		// create full edges
+		const fullEdgesRecursive = (start: EditorHalfEdge, halfEdge: EditorHalfEdge) => {
+			if (!halfEdge.full) halfEdge.full = {
+				halfA: halfEdge,
+				halfB: halfEdge.twin
+			};
+
+			edgesSet.add(halfEdge.full);
+
+			if (halfEdge.twin) halfEdge.twin.full = halfEdge.full;
+
+			if (halfEdge.next && halfEdge.next != start) fullEdgesRecursive(start, halfEdge.next);
+		}
+
+		if (nz.halfEdge) fullEdgesRecursive(nz.halfEdge, nz.halfEdge);
+
+		if (nz.halfEdge)
+			editor.meshes.push(new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet));
+
+		return true;
 	}
 }

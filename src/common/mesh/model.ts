@@ -58,18 +58,18 @@ export interface PrimitiveData {
 	color: number[];
 	skinned: boolean;
 
-	textureUris: string[];
+	textureUri: string;
 }
 
 export class Primitive {
 	vao: WebGLVertexArrayObject;
-	textures: WebGLTexture[];
+	texture: WebGLTexture;
 	elementCount: number;
 	color: number[];
 
-	constructor(vao: WebGLVertexArrayObject, textures: WebGLTexture[], elementCount: number, color: number[]) {
+	constructor(vao: WebGLVertexArrayObject, texture: WebGLTexture, elementCount: number, color: number[]) {
 		this.vao = vao;
-		this.textures = textures;
+		this.texture = texture;
 		this.elementCount = elementCount;
 		this.color = color;
 	}
