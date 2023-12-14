@@ -31,7 +31,7 @@ export class BlockTool extends Tool {
 		let g = new vec3(this.currentBlock.max.x, this.currentBlock.max.y, this.currentBlock.min.z);
 		let h = new vec3(this.currentBlock.max.x, this.currentBlock.max.y, this.currentBlock.max.z);
 
-		const color = [1, 0, 0, 1];
+		const color = [1, 1, 0, 1];
 		const t = 0;
 
 		drawLine(a, b, color, t);

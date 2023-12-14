@@ -13,7 +13,7 @@ export abstract class Viewport extends EditorWindow {
 	camera!: Camera;
 	looking!: boolean;
 
-	drawMeshOutlines(perspectiveMatrix: mat4, viewMatrix: mat4) {
+	drawMeshesSolid(perspectiveMatrix: mat4, viewMatrix: mat4) {
 		gl.useProgram(defaultShader.program);
 		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 
@@ -30,6 +30,28 @@ export abstract class Viewport extends EditorWindow {
 		renderDebug(perspectiveMatrix, viewMatrix);
 	}
 
+	drawMeshesWire(perspectiveMatrix: mat4, viewMatrix: mat4) {
+		gl.useProgram(solidShader.program);
+		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+
+		editor.meshes.forEach((mesh) => {
+			gl.bindVertexArray(mesh.wireFrameData.vao);
+
+			gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewMatrix.getData());
+
+			gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+
+			gl.bindTexture(gl.TEXTURE_2D, null);
+
+			gl.bindVertexArray(null);
+		});
+
+		gl.useProgram(null);
+
+		renderDebug(perspectiveMatrix, viewMatrix);
+	}
+
 	drawBorder() {
 		if (editor.windowManager.activeWindow != this) {
 			return
@@ -37,9 +59,11 @@ export abstract class Viewport extends EditorWindow {
 
 		gl.useProgram(borderShader.program);
 		gl.bindVertexArray(rectVao);
-
+		gl.disable(gl.DEPTH_TEST);
+		
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-
+		
+		gl.enable(gl.DEPTH_TEST);
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
 	}

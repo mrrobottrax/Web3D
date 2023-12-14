@@ -43,8 +43,8 @@ export class Editor {
 		this.windowManager.addWindow(new Viewport2D(0, 0, w, h, Viewport2DAngle.Side));
 		this.windowManager.addWindow(new Viewport2D(w, 0, w, h, Viewport2DAngle.Front));
 
-		await setLevelClient("./data/levels/styletest");
-		drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1], Infinity);
+		// await setLevelClient("./data/levels/styletest");
+		// drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1], Infinity);
 	}
 
 	frame() {

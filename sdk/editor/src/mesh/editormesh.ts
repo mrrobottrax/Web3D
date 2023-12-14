@@ -50,6 +50,12 @@ export class EditorMesh {
 	verts: Set<EditorVertex>;
 	primitives: Primitive[] = [];
 	color: number[] = [1, 1, 1, 1];
+	wireFrameData: {
+		vao: WebGLVertexArrayObject | null
+		vBuffer: WebGLBuffer | null
+		eBuffer: WebGLBuffer | null
+		elementCount: number
+	}
 
 	constructor(edges: Set<EditorFullEdge>, faces: Set<EditorFace>, halfEdges: Set<EditorHalfEdge>,
 		verts: Set<EditorVertex>) {
@@ -59,6 +65,129 @@ export class EditorMesh {
 		this.verts = verts;
 
 		this.primitives = this.getPrimitives();
+		this.wireFrameData = this.getWireframeData();
+	}
+
+	updateVisuals() {
+		gl.bindVertexArray(null);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+		this.primitives.forEach((value) => {
+			gl.deleteVertexArray(value.vao);
+			gl.deleteBuffer(value.vBuffer);
+			gl.deleteBuffer(value.eBuffer);
+		});
+
+		gl.deleteVertexArray(this.wireFrameData.vao);
+		gl.deleteBuffer(this.wireFrameData.vBuffer);
+		gl.deleteBuffer(this.wireFrameData.eBuffer);
+
+		this.primitives = this.getPrimitives();
+		this.wireFrameData = this.getWireframeData();
+	}
+
+	getWireframeData(): {
+		vao: WebGLVertexArrayObject | null
+		vBuffer: WebGLBuffer | null
+		eBuffer: WebGLBuffer | null
+		elementCount: number
+	} {
+		const vao = gl.createVertexArray();
+
+		const vBuffer: WebGLBuffer | null = gl.createBuffer();
+		const eBuffer: WebGLBuffer | null = gl.createBuffer();
+
+		if (!vBuffer || !eBuffer || !vao) {
+			console.error("Error creating buffer");
+
+			gl.deleteVertexArray(vao);
+			gl.deleteBuffer(vBuffer);
+			gl.deleteBuffer(eBuffer);
+
+			return {
+				vao: null,
+				vBuffer: null,
+				eBuffer: null,
+				elementCount: 0
+			};
+		}
+
+		// get all vertices in array
+		let verts: number[] = [];
+		let vertIndices: Map<EditorVertex, number> = new Map();
+		{
+			let index = 0;
+			this.verts.forEach((value) => {
+				verts.push(value.position.x);
+				verts.push(value.position.y);
+				verts.push(value.position.z);
+
+				vertIndices.set(value, index++);
+			});
+		}
+
+		// get lines
+		let indices: number[] = [];
+		this.edges.forEach((value) => {
+			if (!(value.halfA?.next || value.halfB?.next)) {
+				console.error("BAD EDGE!");
+				return;
+			}
+
+			let half: EditorHalfEdge;
+			let next: EditorHalfEdge;
+			if (value.halfA?.next) {
+				half = value.halfA;
+				next = value.halfA.next;
+			} else if (value.halfB?.next) {
+				half = value.halfB;
+				next = value.halfB.next;
+			} else {
+				console.error("SOMETHINGS WRONG!");
+				return;
+			}
+
+			if (!(half.tail && next.tail)) {
+				console.error("SOMETHINGS WRONG!");
+				return;
+			}
+
+			const start = half.tail;
+			const end = next.tail;
+
+			const a = vertIndices.get(start);
+			const b = vertIndices.get(end);
+
+			if (!(a != undefined && b != undefined)) {
+				console.error("SOMETHINGS WRONG!");
+				return;
+			}
+
+			indices.push(a);
+			indices.push(b);
+		})
+
+		gl.bindVertexArray(vao);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 12, 0);
+
+		gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
+
+		gl.bindVertexArray(null);
+
+		return {
+			vao: vao,
+			vBuffer: vBuffer,
+			eBuffer: eBuffer,
+			elementCount: indices.length
+		};
 	}
 
 	getPrimitives(): Primitive[] {
@@ -140,15 +269,21 @@ export class EditorMesh {
 
 	submeshToPrimitive(submesh: Submesh): Primitive | null {
 		const vao = gl.createVertexArray();
-		gl.bindVertexArray(vao);
 
 		const vBuffer: WebGLBuffer | null = gl.createBuffer();
 		const eBuffer: WebGLBuffer | null = gl.createBuffer();
 
 		if (!vBuffer || !eBuffer || !vao) {
-			console.error("Error creating buffer")
+			console.error("Error creating buffer");
+
+			gl.deleteVertexArray(vao);
+			gl.deleteBuffer(vBuffer);
+			gl.deleteBuffer(eBuffer);
+
 			return null;
 		}
+
+		gl.bindVertexArray(vao);
 
 		// add extra vertices when connected faces don't share uvs
 		// or are sharp
@@ -273,7 +408,9 @@ export class EditorMesh {
 			vao: vao,
 			texture: solidTex,
 			elementCount: elements.length,
-			color: [1, 1, 1, 1]
+			color: [1, 1, 1, 1],
+			vBuffer: vBuffer,
+			eBuffer: eBuffer
 		}
 		if (submesh.texture) {
 			const url = submesh.texture;

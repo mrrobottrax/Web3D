@@ -50,28 +50,36 @@ export class ClientGltfLoader extends GltfLoader {
 
 		for (let i = 0; i < data.length; ++i) {
 			const vao = gl.createVertexArray();
-			gl.bindVertexArray(vao);
 
 			const vBuffer: WebGLBuffer | null = gl.createBuffer();
 			const eBuffer: WebGLBuffer | null = gl.createBuffer();
 
 			if (!vBuffer || !eBuffer || !vao) {
-				console.error("Error creating buffer")
+				console.error("Error creating buffer");
+
+				gl.deleteVertexArray(vao);
+				gl.deleteBuffer(vBuffer);
+				gl.deleteBuffer(eBuffer);
+
 				return [];
 			}
+
+			gl.bindVertexArray(vao);
 
 			// get textures
 			primitives[i] = new Primitive(
 				vao,
+				vBuffer,
+				eBuffer,
 				solidTex,
 				data[i].elements.length,
 				data[i].color
 			);
 			if (data[i].textureUri) {
 				const url = data[i].textureUri;
-				
+
 				const textureLoaded = textures[url] !== undefined;
-				
+
 				if (textureLoaded) {
 					primitives[i].texture = textures[url];
 				} else {

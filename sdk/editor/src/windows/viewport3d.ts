@@ -4,7 +4,6 @@ import { gl, glProperties } from "../../../../src/client/render/gl.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Time } from "../../../../src/common/system/time.js";
-import { editor } from "../main.js";
 import { editorConfig } from "../system/editorconfig.js";
 import { getKeyDown } from "../system/input.js";
 import { Viewport } from "./viewport.js";
@@ -59,7 +58,7 @@ export class Viewport3D extends Viewport {
 
 		gl.viewport(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
-		this.drawMeshOutlines(this.camera.perspectiveMatrix, this.camera.viewMatrix)
+		this.drawMeshesSolid(this.camera.perspectiveMatrix, this.camera.viewMatrix)
 		this.drawBorder();
 	}
 
