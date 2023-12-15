@@ -9,7 +9,7 @@ import { UserCmd } from "../../common/input/usercmd.js";
 import { ClientPlayer } from "../player/clientplayer.js";
 import { createUserCMD, initInput } from "../player/input.js";
 import { glEndFrame, glProperties, initGl, resizeCanvas } from "../render/gl.js";
-import { debugTimers, drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
+import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
 import { drawText, initUi, initUiBuffers } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";

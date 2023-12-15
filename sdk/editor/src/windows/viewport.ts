@@ -1,12 +1,11 @@
 import { Camera } from "../../../../src/client/render/camera.js";
 import { defaultShader, gl, solidShader, solidTex } from "../../../../src/client/render/gl.js";
-import { drawLine, drawPrimitive, renderDebug } from "../../../../src/client/render/render.js";
+import { drawPrimitive, renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
-import { ToolEnum } from "../tools/tool.js";
 import { EditorWindow } from "./window.js";
 
 export abstract class Viewport extends EditorWindow {

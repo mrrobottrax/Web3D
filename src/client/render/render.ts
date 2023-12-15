@@ -53,7 +53,10 @@ export function drawFrame(client: Client): void {
 	if (currentLevel) {
 		gl.useProgram(defaultShader.program);
 		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
-		drawProp(currentLevel.prop, defaultShader, client.camera);
+		// drawProp(currentLevel.prop, defaultShader, client.camera);
+		currentLevel.staticMeshes.forEach((value) => {
+			drawPrimitive(value, client.camera.viewMatrix, defaultShader);
+		});
 		
 		gl.useProgram(skinnedShader.program);
 		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());

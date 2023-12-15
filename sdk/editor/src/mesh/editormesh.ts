@@ -1,4 +1,4 @@
-import { textures } from "../../../../src/client/mesh/textures.js";
+import { loadPrimitiveTexture, textures } from "../../../../src/client/mesh/textures.js";
 import { SharedAttribs, gl, loadTexture, solidTex } from "../../../../src/client/render/gl.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Primitive } from "../../../../src/common/mesh/model.js";
@@ -267,24 +267,10 @@ export class EditorMesh {
 		return subMeshes;
 	}
 
-	submeshToPrimitive(submesh: Submesh): Primitive | null {
-		const vao = gl.createVertexArray();
-
-		const vBuffer: WebGLBuffer | null = gl.createBuffer();
-		const eBuffer: WebGLBuffer | null = gl.createBuffer();
-
-		if (!vBuffer || !eBuffer || !vao) {
-			console.error("Error creating buffer");
-
-			gl.deleteVertexArray(vao);
-			gl.deleteBuffer(vBuffer);
-			gl.deleteBuffer(eBuffer);
-
-			return null;
-		}
-
-		gl.bindVertexArray(vao);
-
+	getVertData(submesh: Submesh): {
+		verts: Float32Array,
+		elements: Uint16Array
+	} {
 		// add extra vertices when connected faces don't share uvs
 		// or are sharp
 		// TODO: Currently just makes everything not share verts
@@ -303,7 +289,10 @@ export class EditorMesh {
 
 					if (!e1.tail?.position) {
 						console.error("VERT WITHOUT POSITION!");
-						return null;
+						return {
+							verts: new Float32Array(),
+							elements: new Uint16Array()
+						};
 					}
 
 					subVertMap.set(e1, {
@@ -390,11 +379,37 @@ export class EditorMesh {
 			if (n) elements[i] = n;
 		}
 
+		return {
+			verts: verts,
+			elements: elements
+		}
+	}
+
+	submeshToPrimitive(submesh: Submesh): Primitive | null {
+		const vao = gl.createVertexArray();
+
+		const vBuffer: WebGLBuffer | null = gl.createBuffer();
+		const eBuffer: WebGLBuffer | null = gl.createBuffer();
+
+		if (!vBuffer || !eBuffer || !vao) {
+			console.error("Error creating buffer");
+
+			gl.deleteVertexArray(vao);
+			gl.deleteBuffer(vBuffer);
+			gl.deleteBuffer(eBuffer);
+
+			return null;
+		}
+
+		gl.bindVertexArray(vao);
+
+		const data = this.getVertData(submesh);
+
 		gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, data?.verts, gl.STATIC_DRAW);
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, elements, gl.STATIC_DRAW);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data?.elements, gl.STATIC_DRAW);
 
 		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
 		gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
@@ -407,30 +422,12 @@ export class EditorMesh {
 		let p: Primitive = {
 			vao: vao,
 			texture: solidTex,
-			elementCount: elements.length,
+			elementCount: data.elements.length,
 			color: [1, 1, 1, 1],
 			vBuffer: vBuffer,
 			eBuffer: eBuffer
 		}
-		if (submesh.texture) {
-			const url = submesh.texture;
-
-			const textureLoaded = textures[url] !== undefined;
-
-			if (textureLoaded) {
-				p.texture = textures[url];
-			} else {
-				loadTexture(url).then((result) => {
-					textures[url] = result.tex;
-					if (!result.tex) {
-						return;
-					}
-					p.texture = result.tex;
-				});
-			}
-		} else {
-			p.texture = solidTex;
-		}
+		loadPrimitiveTexture(submesh.texture, p);
 
 		return p;
 	}

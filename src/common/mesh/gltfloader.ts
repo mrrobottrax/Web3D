@@ -2,6 +2,7 @@ import { AnimationChannel, ChannelTarget, Animation } from "./animation.js";
 import { HierarchyNode, Model, NodeData, Primitive, PrimitiveData } from "./model.js";
 import { mat4 } from "../math/matrix.js";
 import { quaternion, vec3 } from "../math/vector.js";
+import { BinaryReader } from "../file/readtypes.js";
 
 const magicNumber: number = 1179937895;
 const version: number = 2;
@@ -491,21 +492,9 @@ export abstract class GltfLoader {
 
 	static readChunk(position: number, file: Uint8Array) {
 		return {
-			chunkLength: this.readUInt32(position, file),
-			chunkType: this.readUInt32(position + 4, file),
+			chunkLength: BinaryReader.readUInt32(position, file),
+			chunkType: BinaryReader.readUInt32(position + 4, file),
 			dataPos: position + 8,
 		};
 	}
-
-	static readUInt32(position: number, file: Uint8Array): number {
-		let num = new Uint32Array(1);
-
-		for (let i = 3; i >= 0; --i) {
-			num[0] = num[0] << 8;
-			num[0] |= file[position + i];
-		}
-
-		return num[0];
-	}
-
 }

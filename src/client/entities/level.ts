@@ -4,10 +4,15 @@ import { setLevelCollision } from "../../common/system/physics.js";
 import { Entity } from "../../common/entitysystem/entity.js";
 import { StaticProp } from "../mesh/prop.js";
 import { ClientGltfLoader } from "../mesh/gltfloader.js";
+import { Primitive } from "../../common/mesh/model.js";
+import { BinaryReader } from "../../common/file/readtypes.js";
+import { SharedAttribs, gl, solidTex } from "../render/gl.js";
+import { loadPrimitiveTexture } from "../mesh/textures.js";
 
 export class Level extends Entity {
 	collision!: HalfEdgeMesh;
-	prop!: StaticProp;
+	staticMeshes!: Primitive[];
+	textureTable: any;
 }
 
 export let currentLevel: Level;
@@ -18,7 +23,8 @@ export async function setLevelClient(url: string): Promise<void> {
 		req.addEventListener("load", function () { resolve(this); });
 	});
 
-	req.open("GET", url + ".lvl");
+	req.open("GET", url + ".glvl");
+	req.responseType = "arraybuffer";
 	req.send();
 
 	const res = await promise;
@@ -28,16 +34,117 @@ export async function setLevelClient(url: string): Promise<void> {
 		return;
 	}
 
-	const file: LevelFile = JSON.parse(res.response);
-	const model = ClientGltfLoader.loadGltfFromWeb(url);
+	const file = new Uint8Array(res.response);
 
-	if (!model) {
-		console.error("Failed to load level model");
-		return;
+	const offsetsTable = getOffsetsTable(file);
+	currentLevel = new Level();
+
+	currentLevel.textureTable = getTextureTable(file, offsetsTable);
+
+	// currentLevel.collision = file.collision;
+	// setLevelCollision(currentLevel.collision);
+	currentLevel.staticMeshes = getLevelPrimitives(file, offsetsTable);
+}
+
+function getOffsetsTable(file: Uint8Array): any {
+	// read until null byte
+	let index = 0;
+	while (file[index] != 0) {
+		++index;
 	}
 
-	currentLevel = new Level();
-	currentLevel.collision = file.collision;
-	setLevelCollision(currentLevel.collision);
-	currentLevel.prop = new StaticProp(await model);
+	const subArray = file.subarray(0, index);
+
+	const decoder = new TextDecoder();
+	let table = JSON.parse(decoder.decode(subArray));
+
+	for (const [key, value] of Object.entries(table)) {
+		if (typeof value == "number")
+			table[key] += index + 1;
+	}
+
+	return table;
+}
+
+function getTextureTable(file: Uint8Array, offsets: any): any {
+	const subArray = file.subarray(offsets.textureTable, offsets.glMeshData);
+
+	const decoder = new TextDecoder();
+	const table = JSON.parse(decoder.decode(subArray));
+
+	return table;
+}
+
+function getLevelPrimitives(file: Uint8Array, offsets: any): Primitive[] {
+	let primitives: Primitive[] = [];
+
+	let index: number = offsets.glMeshData;
+
+	while (index != offsets.lastIndex) {
+		const texId = BinaryReader.readUInt16(index, file);
+		index += 2;
+		const vertLength = BinaryReader.readUInt32(index, file);
+		index += 4;
+		const elementLength = BinaryReader.readUInt32(index, file);
+		index += 4;
+
+		const p = createPrimitive(file, index, vertLength, elementLength, texId);
+		if (p) {
+			primitives.push(p);
+		}
+
+		index += vertLength + elementLength;
+	}
+
+	return primitives;
+}
+
+function createPrimitive(file: Uint8Array, index: number, vertLength: number, elementLength: number, texId: number): Primitive | null {
+	const vao = gl.createVertexArray();
+
+	const vBuffer: WebGLBuffer | null = gl.createBuffer();
+	const eBuffer: WebGLBuffer | null = gl.createBuffer();
+
+	if (!vBuffer || !eBuffer || !vao) {
+		console.error("Error creating buffer");
+
+		gl.deleteVertexArray(vao);
+		gl.deleteBuffer(vBuffer);
+		gl.deleteBuffer(eBuffer);
+
+		return null;
+	}
+
+	const verts = file.subarray(index, index + vertLength);
+	index += vertLength;
+	const elements = file.subarray(index, index + elementLength);
+	index += elementLength;
+
+	gl.bindVertexArray(vao);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, elements, gl.STATIC_DRAW);
+
+	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
+	gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
+
+	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
+	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
+
+	gl.bindVertexArray(null);
+
+	let p: Primitive = {
+		vao: vao,
+		texture: solidTex,
+		elementCount: elements.length / 2,
+		color: [1, 1, 1, 1],
+		vBuffer: vBuffer,
+		eBuffer: eBuffer
+	}
+	loadPrimitiveTexture(currentLevel.textureTable[texId], p);
+
+	return p;
 }

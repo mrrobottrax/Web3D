@@ -12,7 +12,7 @@ main();
 async function main(): Promise<void> {
 	await init();
 
-	await setLevelClient("./data/levels/styletest");
+	await setLevelClient("./data/levels/map");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
 }

@@ -2,7 +2,7 @@ import { GameContext, gameContext } from "../../common/system/context.js";
 import { GltfLoader } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
 import { SharedAttribs, gl, loadTexture, solidTex } from "../render/gl.js";
-import { textures } from "./textures.js";
+import { loadPrimitiveTexture, textures } from "./textures.js";
 
 export class ClientGltfLoader extends GltfLoader {
 	static async loadGltfFromWeb(url: string): Promise<Model> {
@@ -75,23 +75,7 @@ export class ClientGltfLoader extends GltfLoader {
 				data[i].elements.length,
 				data[i].color
 			);
-			if (data[i].textureUri) {
-				const url = data[i].textureUri;
-
-				const textureLoaded = textures[url] !== undefined;
-
-				if (textureLoaded) {
-					primitives[i].texture = textures[url];
-				} else {
-					loadTexture(url).then((result) => {
-						textures[url] = result.tex;
-						if (!result.tex) {
-							return;
-						}
-						primitives[i].texture = result.tex;
-					});
-				}
-			}
+			loadPrimitiveTexture(data[i].textureUri, primitives[i]);
 
 			let length = data[i].positions.length + data[i].texCoords.length;
 
