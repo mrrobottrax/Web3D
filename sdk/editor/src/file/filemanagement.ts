@@ -5,49 +5,53 @@ export class FileManagement {
 	static exportMap() {
 		console.log("Exporting map...");
 
+		const blobSettings = { type: 'application/text' };
+
 		let textureTable: Map<string, number> = new Map();
 		let textureIndex = 0;
 
-		let glMeshBlobs: BlobPart[] = [];
-		let glMeshBytes = 0;
-		editor.meshes.forEach((value) => {
-			const submeshes = value.splitSubmeshes();
-			submeshes.forEach((sub) => {
-				const data = value.getVertData(sub);
+		// visual meshes
+		let glMeshBlob: Blob;
+		{
+			let glMeshBlobs: BlobPart[] = [];
 
-				if (!textureTable.has(sub.texture))
-					textureTable.set(sub.texture, textureIndex++);
+			editor.meshes.forEach((value) => {
+				const submeshes = value.splitSubmeshes();
+				submeshes.forEach((sub) => {
+					const data = value.getVertData(sub);
 
-				const texId = textureTable.get(sub.texture);
+					if (!textureTable.has(sub.texture))
+						textureTable.set(sub.texture, textureIndex++);
 
-				if (texId == undefined) {
-					console.error("WHAT!?!?!");
-					return;
-				}
+					const texId = textureTable.get(sub.texture);
 
-				// push gl mesh data
-				{
-					glMeshBlobs.push(new Uint16Array([texId]));
-					glMeshBlobs.push(new Uint32Array([data.verts.length * 4]));
-					glMeshBlobs.push(new Uint32Array([data.elements.length * 2]));
-					glMeshBlobs.push(data.verts);
-					glMeshBlobs.push(data.elements);
+					if (texId == undefined) {
+						console.error("WHAT!?!?!");
+						return;
+					}
 
-					glMeshBytes += 2 + 4 + 4 + data.verts.length * 4 + data.elements.length * 2;
-				}
+					// push gl mesh data
+					{
+						glMeshBlobs.push(new Uint16Array([texId]));
+						glMeshBlobs.push(new Uint32Array([data.verts.length * 4]));
+						glMeshBlobs.push(new Uint32Array([data.elements.length * 2]));
+						glMeshBlobs.push(data.verts);
+						glMeshBlobs.push(data.elements);
+					}
 
-				// push collision data
-				{
-					glMeshBlobs.push(new Uint16Array([texId]));
-					glMeshBlobs.push(new Uint32Array([data.verts.length * 4]));
-					glMeshBlobs.push(new Uint32Array([data.elements.length * 2]));
-					glMeshBlobs.push(data.verts);
-					glMeshBlobs.push(data.elements);
-
-					glMeshBytes += 2 + 4 + 4 + data.verts.length * 4 + data.elements.length * 2;
-				}
+					// push collision data
+					{
+						glMeshBlobs.push(new Uint16Array([texId]));
+						glMeshBlobs.push(new Uint32Array([data.verts.length * 4]));
+						glMeshBlobs.push(new Uint32Array([data.elements.length * 2]));
+						glMeshBlobs.push(data.verts);
+						glMeshBlobs.push(data.elements);
+					}
+				})
 			})
-		})
+
+			glMeshBlob = new Blob(glMeshBlobs, blobSettings);
+		}
 
 		// texture table blob
 		let texTableObj: any = {};
@@ -67,26 +71,58 @@ export class FileManagement {
 		}
 
 		const encoder = new TextEncoder();
-		let texTableBytes = encoder.encode(JSON.stringify(texTableObj));
+		let texTableBlob = new Blob([encoder.encode(JSON.stringify(texTableObj))], blobSettings);
 
 		// collision data
-		const colMesh = HalfEdgeMesh.fromEditorMeshes(editor.meshes);
-		let collisionBytes = encoder.encode(JSON.stringify(colMesh));
+		let collisionBlob: Blob;
+		{
+			const colMesh = HalfEdgeMesh.fromEditorMeshes(editor.meshes);
+			let collisionBlobs: BlobPart[] = [];
+
+			// edges
+			collisionBlobs.push(new Uint32Array([colMesh.edges.length]));
+			colMesh.edges.forEach(e => {
+				collisionBlobs.push(new Uint32Array([e.halfEdge]));
+			})
+
+			// faces
+			collisionBlobs.push(new Uint32Array([colMesh.faces.length]));
+			colMesh.faces.forEach(f => {
+				collisionBlobs.push(new Float32Array([f.distance]));
+				collisionBlobs.push(new Uint32Array([f.halfEdge]));
+				collisionBlobs.push(new Float32Array([f.normal.x, f.normal.y, f.normal.z]));
+			})
+
+			// half edges
+			collisionBlobs.push(new Uint32Array([colMesh.halfEdges.length]));
+			colMesh.halfEdges.forEach(h => {
+				collisionBlobs.push(new Uint32Array([h.face]));
+				collisionBlobs.push(new Uint32Array([h.next]));
+				collisionBlobs.push(new Uint32Array([h.prev]));
+				collisionBlobs.push(new Uint32Array([h.twin]));
+				collisionBlobs.push(new Uint32Array([h.vert]));
+			})
+
+			// vertices
+			collisionBlobs.push(new Uint32Array([colMesh.vertices.length]));
+			colMesh.vertices.forEach(v => {
+				collisionBlobs.push(new Uint32Array([v.halfEdge]));
+				collisionBlobs.push(new Float32Array([v.position.x, v.position.y, v.position.z]));
+			})
+
+			collisionBlob = new Blob(collisionBlobs, blobSettings);
+		}
 
 		// offsets table
 		let offsetsTable: any = {
 			textureTable: 0,
-			glMeshData: texTableBytes.length,
-			collision: texTableBytes.length + glMeshBytes,
-			lastIndex: texTableBytes.length + glMeshBytes + collisionBytes.length,
+			glMeshData: texTableBlob.size,
+			collision: texTableBlob.size + glMeshBlob.size,
+			lastIndex: texTableBlob.size + glMeshBlob.size + collisionBlob.size,
 		};
 
-		let blobParts: BlobPart[] = [];
-		blobParts = [JSON.stringify(offsetsTable) as BlobPart].concat(new Uint8Array([0]))
-			.concat(texTableBytes).concat(glMeshBlobs).concat(collisionBytes);
-
 		// download data
-		const blob = new Blob(blobParts, { type: 'application/text' });
+		const blob = new Blob([JSON.stringify(offsetsTable) as BlobPart, new Uint8Array([0]), texTableBlob, glMeshBlob, collisionBlob], blobSettings);
 		const link = document.createElement("a");
 
 		link.href = URL.createObjectURL(blob);

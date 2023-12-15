@@ -260,6 +260,19 @@ export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: numb
 			time
 		);
 	}
+
+	for (let i = 0; i < mesh.faces.length; ++i) {
+		const f = mesh.faces[i];
+
+		const p = mesh.vertices[mesh.halfEdges[f.halfEdge].vert].position;
+
+		drawLine(
+			p,
+			p.plus(f.normal),
+			color,
+			time
+		);
+	}
 }
 
 export function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase) {
