@@ -20,8 +20,6 @@ export abstract class Viewport extends EditorWindow {
 			mesh.primitives.forEach((prim) => {
 				drawPrimitive(prim, this.camera.viewMatrix, defaultShader);
 			})
-
-			// todo: wireframe mode
 		});
 
 		gl.useProgram(null);

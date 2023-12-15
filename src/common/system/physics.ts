@@ -1,10 +1,6 @@
+import { currentLevel } from "../entities/level.js";
 import { vec3 } from "../math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "../mesh/halfedge.js";
-
-export let levelCollision: HalfEdgeMesh;
-export function setLevelCollision(collision: HalfEdgeMesh) {
-	levelCollision = collision;
-}
 
 export interface CastResult {
 	dist: number;
@@ -15,7 +11,7 @@ export interface CastResult {
 
 export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	let moveDist = move.magnitide();
-	if (moveDist == 0) {
+	if (moveDist == 0 || !currentLevel) {
 		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin() };
 	}
 
@@ -34,7 +30,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	// find all tris in totalMin/totalMax
 	// temp: get all tris everywhere
 	// todo: aabb tree
-	const level = levelCollision;
+	const level = currentLevel.collision;
 	let tris: Face[] = [];
 	for (let i = 0; i < level.faces.length; ++i) {
 		// ignore faces we are moving behind
@@ -301,14 +297,25 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 }
 
 export function castRay(start: vec3, move: vec3): CastResult {
+
 	const maxDist = move.magnitide();
 	let dist = maxDist;
+
+	if (maxDist == 0 || !currentLevel) {
+		return {
+			dist: 0,
+			normal: vec3.origin(),
+			fract: 0,
+			dir: vec3.origin()
+		};
+	}
+
 	const dir = move.times(1 / dist);
 
 	// find all tris with aabb that intersects ray
 	// temp: get all tris everywhere
 	// todo: aabb tree
-	const level = levelCollision;
+	const level = currentLevel?.collision;
 	let tris: Face[] = [];
 
 	for (let i = 0; i < level.faces.length; ++i) {

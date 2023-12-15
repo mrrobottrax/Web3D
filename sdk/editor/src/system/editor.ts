@@ -1,5 +1,3 @@
-import { currentLevel, setLevelClient } from "../../../../src/client/entities/level.js";
-import { drawHalfEdgeMesh, drawLine } from "../../../../src/client/render/render.js";
 import { EditorMesh } from "../mesh/editormesh.js";
 import { initEditorGl } from "../render/gl.js";
 import { WindowManager } from "../windows/windowmanager.js";

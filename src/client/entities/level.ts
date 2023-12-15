@@ -1,21 +1,8 @@
-import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
-import { LevelFile } from "../../common/system/levelfile.js";
-import { setLevelCollision } from "../../common/system/physics.js";
-import { Entity } from "../../common/entitysystem/entity.js";
-import { StaticProp } from "../mesh/prop.js";
-import { ClientGltfLoader } from "../mesh/gltfloader.js";
 import { Primitive } from "../../common/mesh/model.js";
 import { BinaryReader } from "../../common/file/readtypes.js";
 import { SharedAttribs, gl, solidTex } from "../render/gl.js";
 import { loadPrimitiveTexture } from "../mesh/textures.js";
-
-export class Level extends Entity {
-	collision!: HalfEdgeMesh;
-	staticMeshes!: Primitive[];
-	textureTable: any;
-}
-
-export let currentLevel: Level;
+import { Level, clearCurrentLevel, currentLevel } from "../../common/entities/level.js";
 
 export async function setLevelClient(url: string): Promise<void> {
 	const req = new XMLHttpRequest();
@@ -36,34 +23,19 @@ export async function setLevelClient(url: string): Promise<void> {
 
 	const file = new Uint8Array(res.response);
 
-	const offsetsTable = getOffsetsTable(file);
-	currentLevel = new Level();
+	const offsetsTable = Level.getOffsetsTable(file);
+	clearCurrentLevel();
+
+	if (!currentLevel) {
+		console.error("ERROR CHANGING LEVEL");
+		return;
+	}
 
 	currentLevel.textureTable = getTextureTable(file, offsetsTable);
 
 	// currentLevel.collision = file.collision;
-	// setLevelCollision(currentLevel.collision);
+	currentLevel.collision = Level.getCollisionData(file, offsetsTable);
 	currentLevel.staticMeshes = getLevelPrimitives(file, offsetsTable);
-}
-
-function getOffsetsTable(file: Uint8Array): any {
-	// read until null byte
-	let index = 0;
-	while (file[index] != 0) {
-		++index;
-	}
-
-	const subArray = file.subarray(0, index);
-
-	const decoder = new TextDecoder();
-	let table = JSON.parse(decoder.decode(subArray));
-
-	for (const [key, value] of Object.entries(table)) {
-		if (typeof value == "number")
-			table[key] += index + 1;
-	}
-
-	return table;
 }
 
 function getTextureTable(file: Uint8Array, offsets: any): any {
@@ -80,7 +52,7 @@ function getLevelPrimitives(file: Uint8Array, offsets: any): Primitive[] {
 
 	let index: number = offsets.glMeshData;
 
-	while (index != offsets.lastIndex) {
+	while (index != offsets.collision) {
 		const texId = BinaryReader.readUInt16(index, file);
 		index += 2;
 		const vertLength = BinaryReader.readUInt32(index, file);
@@ -144,7 +116,10 @@ function createPrimitive(file: Uint8Array, index: number, vertLength: number, el
 		vBuffer: vBuffer,
 		eBuffer: eBuffer
 	}
-	loadPrimitiveTexture(currentLevel.textureTable[texId], p);
+	if (currentLevel)
+		loadPrimitiveTexture(currentLevel.textureTable[texId], p);
 
 	return p;
 }
+
+export { currentLevel };

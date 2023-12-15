@@ -1,3 +1,4 @@
+import { HalfEdgeMesh } from "../../../../src/common/mesh/halfedge.js";
 import { editor } from "../main.js";
 
 export class FileManagement {
@@ -7,8 +8,8 @@ export class FileManagement {
 		let textureTable: Map<string, number> = new Map();
 		let textureIndex = 0;
 
-		let meshBlobs: BlobPart[] = [];
-		let meshBytes = 0;
+		let glMeshBlobs: BlobPart[] = [];
+		let glMeshBytes = 0;
 		editor.meshes.forEach((value) => {
 			const submeshes = value.splitSubmeshes();
 			submeshes.forEach((sub) => {
@@ -24,13 +25,27 @@ export class FileManagement {
 					return;
 				}
 
-				meshBlobs.push(new Uint16Array([texId]));
-				meshBlobs.push(new Uint32Array([data.verts.length * 4]));
-				meshBlobs.push(new Uint32Array([data.elements.length * 2]));
-				meshBlobs.push(data.verts);
-				meshBlobs.push(data.elements);
+				// push gl mesh data
+				{
+					glMeshBlobs.push(new Uint16Array([texId]));
+					glMeshBlobs.push(new Uint32Array([data.verts.length * 4]));
+					glMeshBlobs.push(new Uint32Array([data.elements.length * 2]));
+					glMeshBlobs.push(data.verts);
+					glMeshBlobs.push(data.elements);
 
-				meshBytes += 2 + 4 + 4 + data.verts.length * 4 + data.elements.length * 2;
+					glMeshBytes += 2 + 4 + 4 + data.verts.length * 4 + data.elements.length * 2;
+				}
+
+				// push collision data
+				{
+					glMeshBlobs.push(new Uint16Array([texId]));
+					glMeshBlobs.push(new Uint32Array([data.verts.length * 4]));
+					glMeshBlobs.push(new Uint32Array([data.elements.length * 2]));
+					glMeshBlobs.push(data.verts);
+					glMeshBlobs.push(data.elements);
+
+					glMeshBytes += 2 + 4 + 4 + data.verts.length * 4 + data.elements.length * 2;
+				}
 			})
 		})
 
@@ -54,16 +69,21 @@ export class FileManagement {
 		const encoder = new TextEncoder();
 		let texTableBytes = encoder.encode(JSON.stringify(texTableObj));
 
+		// collision data
+		const colMesh = HalfEdgeMesh.fromEditorMeshes(editor.meshes);
+		let collisionBytes = encoder.encode(JSON.stringify(colMesh));
+
 		// offsets table
 		let offsetsTable: any = {
 			textureTable: 0,
 			glMeshData: texTableBytes.length,
-			lastIndex: meshBytes + texTableBytes.length,
+			collision: texTableBytes.length + glMeshBytes,
+			lastIndex: texTableBytes.length + glMeshBytes + collisionBytes.length,
 		};
 
 		let blobParts: BlobPart[] = [];
-		blobParts = [JSON.stringify(offsetsTable) as BlobPart].concat(new Uint8Array([0])).concat(
-			[texTableBytes as BlobPart].concat(meshBlobs));
+		blobParts = [JSON.stringify(offsetsTable) as BlobPart].concat(new Uint8Array([0]))
+			.concat(texTableBytes).concat(glMeshBlobs).concat(collisionBytes);
 
 		// download data
 		const blob = new Blob(blobParts, { type: 'application/text' });

@@ -1,8 +1,17 @@
 import { readFileSync } from 'fs'
-import { LevelFile } from '../../common/system/levelfile.js';
-import { setLevelCollision } from '../../common/system/physics.js';
+import { currentLevel } from '../../client/entities/level.js';
+import { Level, clearCurrentLevel } from '../../common/entities/level.js';
 
 export function setLevelServer(filepath: string) {
-	const file: LevelFile = JSON.parse(readFileSync(filepath + ".lvl", 'utf-8'));
-	setLevelCollision(file.collision);
+	const file: Uint8Array = readFileSync(filepath + ".glvl");
+	clearCurrentLevel();
+
+	const offsets = Level.getOffsetsTable(file);
+
+	if (!currentLevel) {
+		console.error("ERROR LOADING LEVEL");
+		return;
+	}
+
+	currentLevel.collision = Level.getCollisionData(file, offsets);
 }

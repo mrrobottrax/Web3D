@@ -317,7 +317,7 @@ export class EditorMesh {
 			const it = submesh.faces.values();
 			let i = it.next();
 			while (!i.done) {
-				tris = tris.concat(this.triangulateFace(i.value, subVertMap));
+				tris = tris.concat(this.triangulateFaceSubVertex(i.value, subVertMap));
 				i = it.next();
 			}
 		}
@@ -355,8 +355,6 @@ export class EditorMesh {
 				verts[index] = v.position.x;
 				verts[index + 1] = v.position.y;
 				verts[index + 2] = v.position.z;
-
-				// TODO: Generate UV data
 
 				if (!(v.edge.face)) {
 					console.error("NO FACE!");
@@ -432,7 +430,7 @@ export class EditorMesh {
 		return p;
 	}
 
-	triangulateFace(face: EditorFace, subVerts: Map<EditorHalfEdge, SubVertex>): SubVertex[] {
+	triangulateFaceSubVertex(face: EditorFace, subVerts: Map<EditorHalfEdge, SubVertex>): SubVertex[] {
 		if (!(face.halfEdge?.tail && face.halfEdge.next)) {
 			console.error("BAD FACE!");
 			return [];
@@ -451,6 +449,44 @@ export class EditorMesh {
 			const a = subVerts.get(start);
 			const b = subVerts.get(next);
 			const c = subVerts.get(next.next);
+
+			if (!(a && b && c)) {
+				console.error("COULD NOT TRIANGULATE FACE!");
+				return;
+			}
+
+			tris.push(a);
+			tris.push(b);
+			tris.push(c);
+
+			if (next.next.next != start)
+				addTrisRecursive(start, next.next);
+		}
+
+		addTrisRecursive(face.halfEdge, face.halfEdge.next)
+
+		return tris;
+	}
+
+	triangulateFaceFullVertex(face: EditorFace): EditorVertex[] {
+		if (!(face.halfEdge?.tail && face.halfEdge.next)) {
+			console.error("BAD FACE!");
+			return [];
+		}
+
+		// TODO: THIS IS BAD
+		// only works with convex polygons
+
+		let tris: EditorVertex[] = [];
+		const addTrisRecursive = (start: EditorHalfEdge, next: EditorHalfEdge) => {
+			if (!(start.tail && next.tail && next.next?.tail)) {
+				console.error("BAD FACE!");
+				return;
+			}
+
+			const a = start.tail;
+			const b = next.tail;
+			const c = next.next.tail;
 
 			if (!(a && b && c)) {
 				console.error("COULD NOT TRIANGULATE FACE!");
@@ -500,20 +536,23 @@ export class EditorMesh {
 
 		const max = Math.max(x, y, z);
 
+		const scaleU = 0.5;
+		const scaleV = 0.5;
+
 		if (max == x) {
 			return {
-				u: new vec3(0, 0, -1),
-				v: new vec3(0, 1, 0)
+				u: new vec3(0, 0, -scaleU),
+				v: new vec3(0, scaleV, 0)
 			}
 		} else if (max == y) {
 			return {
-				u: new vec3(1, 0, 0),
-				v: new vec3(0, 0, -1)
+				u: new vec3(scaleU, 0, 0),
+				v: new vec3(0, 0, -scaleV)
 			}
 		} else {
 			return {
-				u: new vec3(1, 0, 0),
-				v: new vec3(0, 1, 0)
+				u: new vec3(scaleU, 0, 0),
+				v: new vec3(0, scaleV, 0)
 			}
 		}
 	}

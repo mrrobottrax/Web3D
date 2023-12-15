@@ -1,6 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { readFileSync } from "fs";
-import { LevelFile } from "../../common/system/levelfile.js";
 import { ServerPlayer } from "../entities/serverplayer.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
@@ -14,7 +13,6 @@ import { updateEntities } from "../../common/entitysystem/update.js";
 export class Server {
 	wss!: WebSocketServer;
 
-	public currentMap: LevelFile | null = null;
 	public players: Map<number, ServerPlayer> = new Map();
 
 	playerCount: number = 0;
@@ -47,7 +45,7 @@ export class Server {
 		});
 
 		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
-		setLevelServer("./data/levels/styletest");
+		setLevelServer("./data/levels/map");
 		setPlayerModel(await ServerGltfLoader.loadGltfFromDisk("./data/models/sci_player"));
 
 		console.log("SERVER OPENED");

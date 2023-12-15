@@ -2,7 +2,6 @@ import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, gl, glProperti
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
-import { currentLevel } from "../entities/level.js";
 import { Time } from "../../common/system/time.js";
 import { drawUi } from "./ui.js";
 import { Client } from "../system/client.js";
@@ -12,6 +11,7 @@ import { ClientPlayer } from "../player/clientplayer.js";
 import { ClientGltfLoader } from "../mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
 import { Camera } from "./camera.js";
+import { currentLevel } from "../../common/entities/level.js";
 
 export let uiMatrix: mat4;
 
@@ -242,16 +242,16 @@ interface Line {
 	time: number
 }
 let lines: Line[] = [];
-export function drawLine(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
+export function drawLine(start: vec3, end: vec3, color: number[], time: number = 0) {
 	lines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
 let screenLines: Line[] = [];
-export function drawLineScreen(start: vec3, end: vec3, color: number[], time: number = Time.fixedDeltaTime) {
+export function drawLineScreen(start: vec3, end: vec3, color: number[], time: number = 0) {
 	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
-export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: number = Time.fixedDeltaTime) {
+export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: number = 0) {
 	for (let i = 0; i < mesh.edges.length; ++i) {
 		drawLine(
 			mesh.vertices[mesh.halfEdges[mesh.edges[i].halfEdge].vert].position,

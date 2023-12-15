@@ -74,7 +74,7 @@ export class SharedPlayer extends Entity {
 			this.yaw = cmd.yaw;
 		}
 
-		// PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
+		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 
 		// todo: firing
 	}

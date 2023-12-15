@@ -1,3 +1,4 @@
+import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../../../sdk/editor/src/mesh/editormesh.js";
 import { mat4 } from "../math/matrix.js";
 import { vec3 } from "../math/vector.js";
 import { NodeData } from "./model.js";
@@ -35,6 +36,7 @@ export class HalfEdgeMesh {
 		this.vertices = [];
 		this.halfEdges = [];
 		this.faces = [];
+		this.edges = [];
 	}
 
 	static fromMeshes(meshes: NodeData[]): HalfEdgeMesh {
@@ -205,5 +207,157 @@ export class HalfEdgeMesh {
 		// }
 
 		return mesh;
+	}
+
+	static fromEditorMeshes(meshes: EditorMesh[]): HalfEdgeMesh {
+		let vertexIndices = new Map<EditorVertex, number>();
+
+		// triangulate each face
+		let halfEdges: HalfEdge[] = [];
+		let faces: Face[] = [];
+		let vertices: Vertex[] = [];
+		for (let i = 0; i < meshes.length; ++i) {
+			const m = meshes[i];
+
+			// add vertices
+			m.verts.forEach((v) => {
+				if (vertexIndices.get(v) == undefined) {
+					vertexIndices.set(v, vertices.length);
+					vertices.push({
+						position: v.position,
+						halfEdge: 0
+					});
+				};
+			});
+
+			m.faces.forEach((face) => {
+
+				const tris = m.triangulateFaceFullVertex(face);
+
+				// create new half edge for each inside tri edge
+				for (let i = 0; i < tris.length; i += 3) {
+					// calculate normal vector
+					const pA = tris[i + 1].position.minus(tris[i].position);
+					const pB = tris[i + 2].position.minus(tris[i].position);
+
+					const norm = vec3.cross(pA, pB).normalised();
+					const dist = vec3.dot(tris[i].position, norm);
+
+					const faceIndex = faces.length;
+
+					const face = {
+						normal: norm,
+						distance: dist,
+						halfEdge: 0
+					};
+
+					const indexA = halfEdges.length;
+					const indexB = halfEdges.length + 1;
+					const indexC = halfEdges.length + 2;
+
+					const vertAIndex = vertexIndices.get(tris[i]);
+					const vertBIndex = vertexIndices.get(tris[i + 1]);
+					const vertCIndex = vertexIndices.get(tris[i + 2]);
+
+					if (!(vertAIndex != undefined && vertBIndex != undefined && vertCIndex != undefined)) {
+						console.error("BAD MESH!");
+						return;
+					}
+
+					// create edges
+					const edgeA: HalfEdge = {
+						prev: indexC,
+						next: indexB,
+						twin: 0,
+						face: faceIndex,
+						vert: vertAIndex
+					};
+					const edgeB: HalfEdge = {
+						prev: indexA,
+						next: indexC,
+						twin: 0,
+						face: faceIndex,
+						vert: vertBIndex
+					};
+					const edgeC: HalfEdge = {
+						prev: indexB,
+						next: indexA,
+						twin: 0,
+						face: faceIndex,
+						vert: vertCIndex
+					};
+
+					vertices[vertAIndex].halfEdge = indexA;
+					vertices[vertBIndex].halfEdge = indexB;
+					vertices[vertCIndex].halfEdge = indexC;
+
+					face.halfEdge = halfEdges.length;
+
+					faces.push(face);
+					halfEdges.push(edgeA);
+					halfEdges.push(edgeB);
+					halfEdges.push(edgeC);
+				}
+			})
+		}
+
+		// check if any edge pairs are twins
+		let edges: Edge[] = [];
+		for (let i = 0; i < halfEdges.length; ++i) {
+			const he0 = halfEdges[i];
+			const he0Next = halfEdges[he0.next];
+
+			for (let j = i + 1; j < halfEdges.length; ++j) {
+				const he1 = halfEdges[j];
+				const he1Next = halfEdges[he1.next];
+
+				// check if twin
+				if (he0Next.vert == he1.vert && he0.vert == he1Next.vert) {
+					edges.push({
+						halfEdge: i
+					});
+					he0.twin = j;
+					he1.twin = i;
+					break;
+				}
+			}
+
+			if (he0.twin < 0) {
+				edges.push({
+					halfEdge: i
+				});
+			}
+		}
+
+		let mesh = new HalfEdgeMesh();
+
+		mesh.vertices = vertices;
+		mesh.halfEdges = halfEdges;
+		mesh.faces = faces;
+		mesh.edges = edges;
+
+		// if (!this.validateMesh(mesh)) {
+		// 	console.error("INVALID MESH!");
+		// }
+
+		return mesh;
+	}
+
+	static validateMesh(mesh: HalfEdgeMesh): boolean {
+		// for (let i = 0; i < mesh.faces.length; ++i) {
+		// 	const f = mesh.faces[i];
+
+		// 	console.log(f.halfEdge);
+		// }
+
+		for (let i = 0; i < mesh.halfEdges.length; ++i) {
+			const e = mesh.halfEdges[i];
+
+			if (mesh.halfEdges[mesh.halfEdges[e.next].prev] != e) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

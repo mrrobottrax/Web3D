@@ -289,10 +289,9 @@ export class BlockTool extends Tool {
 
 		const mesh = new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet);
 
-		// todo: remove later
-		if (!this.verifyMesh(mesh)) {
-			console.error("BLOCK MESH ERROR");
-		}
+		// if (!this.verifyMesh(mesh)) {
+		// 	console.error("BLOCK MESH ERROR");
+		// }
 
 		editor.meshes.push(mesh);
 

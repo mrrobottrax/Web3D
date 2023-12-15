@@ -3,6 +3,8 @@ import { setLevelClient } from "./entities/level.js";
 import { Time, startTicking, updateTime } from "../common/system/time.js";
 import { setPlayerModel } from "../common/player/sharedplayer.js";
 import { ClientGltfLoader } from "./mesh/gltfloader.js";
+import { drawHalfEdgeMesh } from "./render/render.js";
+import { currentLevel } from "../common/entities/level.js";
 
 let running: boolean = false;
 let client: Client;
@@ -31,11 +33,12 @@ function gameLoop(): void {
 
 	window.requestAnimationFrame(gameLoop);
 	updateTime();
-	
+
 	if (Time.canTick) {
 		client.tick();
 	}
-	
-	// drawHalfEdgeMesh(currentLevel.collision, [1, 0, 0, 1]);
+
+	// if (currentLevel)
+	// 	drawHalfEdgeMesh(currentLevel.collision, [1, 0, 0, 1]);
 	client.frame();
 }
