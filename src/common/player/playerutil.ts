@@ -22,7 +22,7 @@ const airAccel = 200;
 const airSpeed = 1.5;
 const trimpThreshold = 6;
 const gravity = 12;
-const maxStepHeight = 0.51;
+const maxStepHeight = 0.5;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
 const duckGlitch = 0.1;
 const duckSpeed = 8;
@@ -227,7 +227,7 @@ export class PlayerUtil {
 		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, maxStepHeight, 0));
 		// player.velocity.y -= 0.1; // this fixes movement bugs?
 		const stepMove = this.flyMove(player.position.plus(new vec3(0, castUp.dist, 0)), player.velocity, delta, player);
-		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 3, 0));
+		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 2.01, 0));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
 			player.position.copy(move.endPos);
