@@ -209,16 +209,14 @@ export class HalfEdgeMesh {
 		return mesh;
 	}
 
-	static fromEditorMeshes(meshes: EditorMesh[]): HalfEdgeMesh {
+	static fromEditorMeshes(meshes: Set<EditorMesh>): HalfEdgeMesh {
 		let vertexIndices = new Map<EditorVertex, number>();
 
 		// triangulate each face
 		let halfEdges: HalfEdge[] = [];
 		let faces: Face[] = [];
 		let vertices: Vertex[] = [];
-		for (let i = 0; i < meshes.length; ++i) {
-			const m = meshes[i];
-
+		meshes.forEach(m => {
 			// add vertices
 			m.verts.forEach((v) => {
 				if (vertexIndices.get(v) == undefined) {
@@ -299,7 +297,7 @@ export class HalfEdgeMesh {
 					halfEdges.push(edgeC);
 				}
 			})
-		}
+		});
 
 		// check if any edge pairs are twins
 		let edges: Edge[] = [];

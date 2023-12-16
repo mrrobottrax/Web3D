@@ -1,11 +1,11 @@
 import { HalfEdgeMesh } from "../../../../src/common/mesh/halfedge.js";
 import { editor } from "../main.js";
 
+const blobSettings = { type: 'application/text' };
+
 export class FileManagement {
 	static exportMap() {
 		console.log("Exporting map...");
-
-		const blobSettings = { type: 'application/text' };
 
 		let textureTable: Map<string, number> = new Map();
 		let textureIndex = 0;
@@ -131,5 +131,34 @@ export class FileManagement {
 
 		link.click();
 		URL.revokeObjectURL(link.href);
+	}
+
+	static saveMap() {
+		console.log("Saving map...");
+
+		// download data
+		const blob = new Blob([JSON.stringify(editor) as BlobPart], blobSettings);
+		const link = document.createElement("a");
+
+		link.href = URL.createObjectURL(blob);
+
+		link.download = "map" + ".level"
+
+		link.click();
+		URL.revokeObjectURL(link.href);
+	}
+
+	static async loadMap(file: File) {
+		console.log("Opening map...");
+
+		const json = JSON.parse(await file.text());
+		
+		editor.loadMeshesFromJson(json.meshes);
+	}
+
+	static closeMap() {
+		console.log("Closing map...");
+
+		editor.unloadMeshes();
 	}
 }

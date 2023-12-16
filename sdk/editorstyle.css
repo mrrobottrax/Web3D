@@ -65,3 +65,7 @@
 .toolbar-button:active {
 	background-color: rgb(69, 69, 69);
 }
+
+#file-select {
+	display: none;
+}

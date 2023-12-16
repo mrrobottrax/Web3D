@@ -1,4 +1,4 @@
-import { glProperties } from "../../../../src/client/render/gl.js";
+import { gl } from "../../../../src/client/render/gl.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { ToolEnum, setTool } from "../tools/tool.js";
@@ -9,6 +9,8 @@ export let mousePosY: number;
 let keys: any = {};
 
 export function initEditorInput() {
+	const canvas = gl.canvas;
+
 	document.addEventListener('keydown', event => {
 		event.preventDefault();
 		keys[event.code] = true;
@@ -66,9 +68,27 @@ export function initEditorInput() {
 		}
 	}
 
+	// open input
+	let fileInput: HTMLInputElement | null = null;
+	{
+		const q = document.getElementById("file-select");
+
+		if (!q) { console.error("No file select input!"); return; }
+
+		fileInput = q as HTMLInputElement;
+
+		fileInput.oninput = ev => {
+			if (fileInput && fileInput.files)
+				FileManagement.loadMap(fileInput.files[0]);
+		};
+	}
+
 	// buttons
 	// windows menu
 	(window as any).exportMap = () => FileManagement.exportMap();
+	(window as any).saveMap = () => FileManagement.saveMap();
+	(window as any).closeMap = () => FileManagement.closeMap();
+	(window as any).loadMap = () => fileInput?.click();
 	// tools
 	(window as any).selectTool = () => setTool(ToolEnum.Select);
 	(window as any).blockTool = () => setTool(ToolEnum.Block);

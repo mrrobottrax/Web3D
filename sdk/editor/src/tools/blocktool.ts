@@ -293,7 +293,7 @@ export class BlockTool extends Tool {
 		// 	console.error("BLOCK MESH ERROR");
 		// }
 
-		editor.meshes.push(mesh);
+		editor.meshes.add(mesh);
 
 		return true;
 	}

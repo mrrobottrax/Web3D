@@ -68,7 +68,209 @@ export class EditorMesh {
 		this.wireFrameData = this.getWireframeData();
 	}
 
-	updateVisuals() {
+	toJSON() {
+		// assign index for each
+		const edgeIndices = new Map<EditorFullEdge, number>();
+		const faceIndices = new Map<EditorFace, number>();
+		const halfEdgeIndices = new Map<EditorHalfEdge, number>();
+		const vertIndices = new Map<EditorVertex, number>();
+
+		{
+			let counter: number;
+
+			counter = 0;
+			this.edges.forEach(value => {
+				edgeIndices.set(value, counter++);
+			});
+
+			counter = 0;
+			this.faces.forEach(value => {
+				faceIndices.set(value, counter++);
+			});
+
+			counter = 0;
+			this.halfEdges.forEach(value => {
+				halfEdgeIndices.set(value, counter++);
+			});
+
+			counter = 0;
+			this.verts.forEach(value => {
+				vertIndices.set(value, counter++);
+			});
+		}
+
+		// create arrays
+		let edgeArray: any[] = [];
+		this.edges.forEach(edge => {
+			if (!(edge.halfA && edge.halfB))
+				return;
+
+			edgeArray.push({
+				halfA: halfEdgeIndices.get(edge.halfA),
+				halfB: halfEdgeIndices.get(edge.halfB),
+			});
+		});
+
+		let faceArray: any[] = [];
+		this.faces.forEach(face => {
+			if (!(face.halfEdge))
+				return;
+
+			faceArray.push({
+				halfEdge: halfEdgeIndices.get(face.halfEdge),
+				texture: face.texture,
+				u: [face.u.x, face.u.y, face.u.z],
+				v: [face.v.x, face.v.y, face.v.z],
+			});
+		});
+
+		let halfEdgeArray: any[] = [];
+		this.halfEdges.forEach(halfEdge => {
+			if (!(halfEdge.face && halfEdge.full && halfEdge.next
+				&& halfEdge.prev && halfEdge.tail && halfEdge.twin))
+				return;
+
+			halfEdgeArray.push({
+				face: faceIndices.get(halfEdge.face),
+				full: edgeIndices.get(halfEdge.full),
+				next: halfEdgeIndices.get(halfEdge.next),
+				prev: halfEdgeIndices.get(halfEdge.prev),
+				twin: halfEdgeIndices.get(halfEdge.twin),
+				tail: vertIndices.get(halfEdge.tail)
+			});
+		});
+
+		let vertArray: any[] = [];
+		this.verts.forEach(vert => {
+			if (!(vert.edges))
+				return;
+
+			const edgeIndexArray: number[] = [];
+
+			vert.edges.forEach(edge => {
+				const num = halfEdgeIndices.get(edge);
+				if (num != undefined) edgeIndexArray.push(num); else console.error("PROBLEM?");
+			})
+
+			vertArray.push({
+				edges: edgeIndexArray,
+				position: [vert.position.x, vert.position.y, vert.position.z]
+			});
+		});
+
+		return {
+			edges: edgeArray,
+			faces: faceArray,
+			halfEdges: halfEdgeArray,
+			verts: vertArray,
+			color: this.color
+		}
+	}
+
+	static fromJson(json: any): EditorMesh {
+		const edgesArray: any[] = json.edges;
+		const facesArray: any[] = json.faces;
+		const halfEdgesArray: any[] = json.halfEdges;
+		const vertsArray: any[] = json.verts;
+
+		let edges: EditorFullEdge[] = [];
+		let faces: EditorFace[] = [];
+		let halfEdges: EditorHalfEdge[] = [];
+		let verts: EditorVertex[] = [];
+
+		// allocate memory
+		edgesArray.forEach(() => {
+			edges.push({
+				halfA: null,
+				halfB: null
+			});
+		});
+
+		facesArray.forEach((face) => {
+			faces.push({
+				halfEdge: null,
+				texture: face.texture,
+				u: new vec3(face.u[0], face.u[1], face.u[2]),
+				v: new vec3(face.v[0], face.v[1], face.v[2]),
+			});
+		});
+
+		halfEdgesArray.forEach(() => {
+			halfEdges.push({
+				prev: null,
+				next: null,
+				twin: null,
+				face: null,
+				full: null,
+				tail: null
+			});
+		});
+
+		vertsArray.forEach((vert) => {
+			verts.push({
+				position: new vec3(vert.position[0], vert.position[1], vert.position[2]),
+				edges: new Set()
+			});
+		});
+
+		// set up references
+		edges.forEach((edge, index) => {
+			edge.halfA = halfEdges[edgesArray[index].halfA];
+			edge.halfB = halfEdges[edgesArray[index].halfB];
+		});
+
+		faces.forEach((face, index) => {
+			face.halfEdge = halfEdges[facesArray[index].halfEdge];
+		});
+
+		halfEdges.forEach((half, index) => {
+			const ref = halfEdgesArray[index];
+
+			half.face = faces[ref.face];
+			half.full = edges[ref.full];
+			half.next = halfEdges[ref.next];
+			half.prev = halfEdges[ref.prev];
+			half.twin = halfEdges[ref.twin];
+			half.tail = verts[ref.tail];
+		});
+
+		verts.forEach((vert, index) => {
+			const ref: number[] = vertsArray[index].edges;
+
+			ref.forEach(num => {
+				vert.edges.add(halfEdges[num]);
+			});
+		});
+
+		// add to sets
+		let edgeSet = new Set<EditorFullEdge>();
+		let halfEdgeSet = new Set<EditorHalfEdge>();
+		let faceSet = new Set<EditorFace>();
+		let vertSet = new Set<EditorVertex>();
+
+		edges.forEach(v => {
+			edgeSet.add(v);
+		});
+
+		faces.forEach(v => {
+			faceSet.add(v);
+		});
+
+		halfEdges.forEach(v => {
+			halfEdgeSet.add(v);
+		});
+
+		verts.forEach(v => {
+			vertSet.add(v);
+		});
+
+		const m = new EditorMesh(edgeSet, faceSet, halfEdgeSet, vertSet);
+		m.color = json.color;
+
+		return m;
+	}
+
+	cleanUpGl() {
 		gl.bindVertexArray(null);
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
@@ -82,6 +284,10 @@ export class EditorMesh {
 		gl.deleteVertexArray(this.wireFrameData.vao);
 		gl.deleteBuffer(this.wireFrameData.vBuffer);
 		gl.deleteBuffer(this.wireFrameData.eBuffer);
+	}
+
+	updateVisuals() {
+		this.cleanUpGl();
 
 		this.primitives = this.getPrimitives();
 		this.wireFrameData = this.getWireframeData();

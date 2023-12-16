@@ -13,8 +13,9 @@
 				<button>File</button>
 				<div class="windows-bar-contents">
 					<button class="subtle-button">New</button><br>
-					<button class="subtle-button">Open</button><hr>
-					<button class="subtle-button">Save</button><br>
+					<button class="subtle-button" onclick="loadMap()">Open</button><input type="file" id="file-select" accept=".level"><hr>
+					<button class="subtle-button" onclick="saveMap()">Save</button><br>
+					<button class="subtle-button" onclick="closeMap()">Close</button><hr>
 					<button class="subtle-button" onclick="exportMap()">Export</button>
 				</div>
 			</div>

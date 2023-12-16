@@ -10,23 +10,27 @@ import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
 
 export class Editor {
-	meshes: EditorMesh[] = [];
+	meshes: Set<EditorMesh> = new Set();
 	activeToolEnum: ToolEnum = ToolEnum.Select;
 	activeTool: Tool;
-	
+
 	gridSize: number = 1;
-	
+
 	windowManager: WindowManager;
 	selectTool: SelectTool;
 	blockTool: BlockTool;
 
 	constructor() {
 		this.windowManager = new WindowManager();
-		
+
 		this.selectTool = new SelectTool();
 		this.blockTool = new BlockTool();
 
 		this.activeTool = this.selectTool;;
+	}
+
+	toJSON() {
+		return { meshes: Array.from(this.meshes) };
 	}
 
 	async init() {
@@ -51,7 +55,24 @@ export class Editor {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		this.windowManager.updateWindows();
-		
+
 		glEndFrame();
+	}
+
+	unloadMeshes() {
+		this.meshes.forEach(mesh => {
+			mesh.cleanUpGl();
+		});
+
+		this.meshes.clear();
+	}
+
+	loadMeshesFromJson(meshes: any) {
+		this.unloadMeshes();
+
+		(meshes as any[]).forEach(mesh => {
+			this.meshes.add(EditorMesh.fromJson(mesh));
+		});
+
 	}
 }
