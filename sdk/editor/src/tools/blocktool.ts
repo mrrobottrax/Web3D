@@ -21,7 +21,10 @@ export class BlockTool extends Tool {
 
 	dragging: boolean = false;
 
+	drawnThisFrame: boolean = false;
 	drawCurrentBlock() {
+		if (this.drawnThisFrame) return;
+
 		let a = new vec3(this.currentBlock.min.x, this.currentBlock.min.y, this.currentBlock.min.z);
 		let b = new vec3(this.currentBlock.min.x, this.currentBlock.min.y, this.currentBlock.max.z);
 		let c = new vec3(this.currentBlock.min.x, this.currentBlock.max.y, this.currentBlock.min.z);
@@ -46,6 +49,12 @@ export class BlockTool extends Tool {
 		drawLine(e, f, color, t);
 		drawLine(h, f, color, t);
 		drawLine(h, g, color, t);
+
+		this.drawnThisFrame = true;
+	}
+
+	resetDraw() {
+		this.drawnThisFrame = false;
 	}
 
 	startDrag(position: vec3, mask: vec3) {

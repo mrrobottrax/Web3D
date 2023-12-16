@@ -9,8 +9,6 @@ export let mousePosY: number;
 let keys: any = {};
 
 export function initEditorInput() {
-	const canvas = gl.canvas;
-
 	document.addEventListener('keydown', event => {
 		event.preventDefault();
 		keys[event.code] = true;
@@ -94,9 +92,6 @@ export function initEditorInput() {
 	(window as any).saveMap = () => FileManagement.saveMap();
 	(window as any).closeMap = () => FileManagement.closeMap();
 	(window as any).loadMap = () => fileInput?.click();
-	// tools
-	(window as any).selectTool = () => setTool(ToolEnum.Select);
-	(window as any).blockTool = () => setTool(ToolEnum.Block);
 }
 
 export function getKeyDown(code: string): boolean {

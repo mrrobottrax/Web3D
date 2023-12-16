@@ -8,23 +8,29 @@
 
 <body>
 	<div id="editor">
-		<div id="windows-bar">
+		<div class="bar" style="height: 25;">
 			<div class="windows-bar-button">
-				<button>File</button>
+				<button class="subtle-button main-button">File</button>
 				<div class="windows-bar-contents">
 					<button class="subtle-button">New</button><br>
-					<button class="subtle-button" onclick="loadMap()">Open</button><input type="file" id="file-select" accept=".level"><hr>
+					<button class="subtle-button" onclick="loadMap()">Open</button><input type="file" id="file-select"
+						accept=".level">
+					<hr>
 					<button class="subtle-button" onclick="saveMap()">Save</button><br>
-					<button class="subtle-button" onclick="closeMap()">Close</button><hr>
+					<button class="subtle-button" onclick="closeMap()">Close</button>
+					<hr>
 					<button class="subtle-button" onclick="exportMap()">Export</button>
 				</div>
 			</div>
 		</div>
+		<div class="bar">
+			<p style="display: inline;">MODE: </p>
+			<button class="main-button" id="select-vertex">Vertex</button>
+			<button class="main-button" id="select-edge">Edge</button>
+		</div>
 		<div id="toolbar">
-			<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
-				onclick="selectTool()">
-			<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
-				onclick="blockTool()">
+			<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button" id="tool-select">
+			<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button" id="tool-block">
 		</div>
 		<canvas id="game"></canvas>
 	</div>

@@ -5,7 +5,7 @@ import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
-import { Tool, ToolEnum } from "../tools/tool.js";
+import { Tool, ToolEnum, getToolButtons as initToolButtons } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
 
@@ -36,6 +36,7 @@ export class Editor {
 	async init() {
 		await initEditorGl();
 		initEditorInput();
+		initToolButtons();
 
 		const w = 0.5;
 		const h = 0.5;
@@ -55,6 +56,8 @@ export class Editor {
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		this.windowManager.updateWindows();
+
+		this.blockTool.resetDraw();
 
 		glEndFrame();
 	}

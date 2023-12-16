@@ -1,5 +1,6 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { gl, glProperties } from "../../../../src/client/render/gl.js";
+import { gl, glProperties, solidShader } from "../../../../src/client/render/gl.js";
+import { renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
@@ -19,6 +20,7 @@ export class Viewport2D extends Viewport {
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number, angle: Viewport2DAngle) {
 		super(posX, posY, sizeX, sizeY);
 		this.looking = false;
+		this.threeD = false;
 
 		let orientation: quaternion;
 
@@ -38,10 +40,12 @@ export class Viewport2D extends Viewport {
 	}
 
 	override frame(): void {
+		this.drawSetup();
+
 		this.drawFrame();
 	}
 
-	drawFrame() {
+	drawSetup() {
 		if (glProperties.resolutionChanged) {
 			this.camera.calcOrthographicMatrix(this.size.x, this.size.y);
 		}
@@ -52,8 +56,21 @@ export class Viewport2D extends Viewport {
 		this.camera.position = startPos;
 
 		gl.viewport(this.pos.x, this.pos.y, this.size.x, this.size.y);
+	}
 
-		// grid background
+	drawFrame() {
+		this.drawGrid();
+
+		this.drawMeshesWire();
+
+		this.drawTool();
+		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
+
+		this.drawBorder();
+	}
+
+	// grid background
+	drawGrid() {
 		gl.useProgram(gridShader.program);
 		gl.bindVertexArray(rectVao);
 
@@ -71,9 +88,6 @@ export class Viewport2D extends Viewport {
 
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
-
-		this.drawMeshesWire(this.camera.perspectiveMatrix, this.camera.viewMatrix);
-		this.drawBorder();
 	}
 
 	override mouse(button: number, pressed: boolean): void {

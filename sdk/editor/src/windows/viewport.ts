@@ -1,20 +1,21 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { defaultShader, gl, solidShader, solidTex } from "../../../../src/client/render/gl.js";
-import { drawPrimitive, renderDebug } from "../../../../src/client/render/render.js";
+import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
+import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
-import { mat4 } from "../../../../src/common/math/matrix.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
+import { ToolEnum } from "../tools/tool.js";
 import { EditorWindow } from "./window.js";
 
 export abstract class Viewport extends EditorWindow {
 	camera!: Camera;
 	looking!: boolean;
+	threeD: boolean = false;
 
-	drawMeshesSolid(perspectiveMatrix: mat4, viewMatrix: mat4) {
+	drawMeshesSolid() {
 		gl.useProgram(defaultShader.program);
-		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, this.camera.perspectiveMatrix.getData());
 
 		editor.meshes.forEach((mesh) => {
 			mesh.primitives.forEach((prim) => {
@@ -23,19 +24,17 @@ export abstract class Viewport extends EditorWindow {
 		});
 
 		gl.useProgram(null);
-
-		renderDebug(perspectiveMatrix, viewMatrix);
 	}
 
-	drawMeshesWire(perspectiveMatrix: mat4, viewMatrix: mat4) {
+	drawMeshesWire() {
 		gl.useProgram(solidShader.program);
-		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, this.camera.perspectiveMatrix.getData());
 
 		editor.meshes.forEach((mesh) => {
 			gl.bindVertexArray(mesh.wireFrameData.vao);
 
 			gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
-			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewMatrix.getData());
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, this.camera.viewMatrix.getData());
 
 			gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
 
@@ -45,8 +44,6 @@ export abstract class Viewport extends EditorWindow {
 		});
 
 		gl.useProgram(null);
-
-		renderDebug(perspectiveMatrix, viewMatrix);
 	}
 
 	drawBorder() {
@@ -63,6 +60,18 @@ export abstract class Viewport extends EditorWindow {
 		gl.enable(gl.DEPTH_TEST);
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
+	}
+
+	drawTool() {
+		switch (editor.activeToolEnum) {
+			case ToolEnum.Block:
+				editor.blockTool.drawCurrentBlock();
+				break;
+
+			case ToolEnum.Select:
+				editor.selectTool.drawSelected(this);
+				break;
+		}
 	}
 
 	mouseToGrid(): vec2 {
