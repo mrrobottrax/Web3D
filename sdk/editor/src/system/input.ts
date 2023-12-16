@@ -77,10 +77,15 @@ export function initEditorInput() {
 
 		fileInput = q as HTMLInputElement;
 
-		fileInput.oninput = ev => {
+		fileInput.addEventListener("input", () => {
 			if (fileInput && fileInput.files)
 				FileManagement.loadMap(fileInput.files[0]);
-		};
+		});
+
+		// reset so that we can open the same file again
+		fileInput.addEventListener("click", () => {
+			if (fileInput) fileInput.value = '';
+		});
 	}
 
 	// buttons

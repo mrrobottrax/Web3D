@@ -73,6 +73,5 @@ export class Editor {
 		(meshes as any[]).forEach(mesh => {
 			this.meshes.add(EditorMesh.fromJson(mesh));
 		});
-
 	}
 }
