@@ -63,7 +63,11 @@ export class SelectTool extends Tool {
 			case SelectMode.Vertex:
 				gl.useProgram(solidShader.program);
 
-				gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
+				// make em slightly more visible than they should be
+				const p = viewport.camera.perspectiveMatrix.copy();
+				p.setValue(3, 2, p.getValue(3, 2) - 0.001);
+
+				gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 				gl.bindVertexArray(rectVao);
 
 				gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
