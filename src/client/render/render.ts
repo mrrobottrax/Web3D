@@ -81,6 +81,16 @@ export function debugTimers() {
 			--i;
 		}
 	}
+
+	for (let i = 0; i < screenLines.length; ++i) {
+		const line = screenLines[i];
+		
+		line.time -= Time.deltaTime;
+		if (line.time < 0) {
+			screenLines.splice(i, 1);
+			--i;
+		}
+	}
 }
 
 export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
@@ -108,6 +118,7 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 		gl.drawArrays(gl.LINES, 0, 2);
 	}
 
+	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, mat4.identity().getData());
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat4.identity().getData());
 
 	for (let i = 0; i < screenLines.length; ++i) {
@@ -124,13 +135,6 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 		gl.enableVertexAttribArray(0);
 
 		gl.drawArrays(gl.LINES, 0, 2);
-
-		line.time -= Time.deltaTime;
-
-		if (line.time < 0) {
-			screenLines.splice(i, 1);
-			--i;
-		}
 	}
 
 	gl.enable(gl.DEPTH_TEST);

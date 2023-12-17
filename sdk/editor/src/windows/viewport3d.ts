@@ -1,8 +1,10 @@
 import { quakeSens } from "../../../../src/client/player/input.js";
-import { Camera } from "../../../../src/client/render/camera.js";
+import { Camera, nearClip } from "../../../../src/client/render/camera.js";
 import { defaultShader, gl, glProperties, solidShader } from "../../../../src/client/render/gl.js";
-import { renderDebug } from "../../../../src/client/render/render.js";
+import { drawLine, renderDebug } from "../../../../src/client/render/render.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
+import gMath from "../../../../src/common/math/gmath.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Time } from "../../../../src/common/system/time.js";
 import { editorConfig } from "../system/editorconfig.js";
@@ -115,5 +117,25 @@ export class Viewport3D extends Viewport {
 	}
 	getMask(): vec3 {
 		throw new Error("Method not implemented.");
+	}
+
+	override mouseRay(v: vec2): Ray {
+		// size of view frustum at 1 unit dist
+		const ySize = Math.tan(gMath.deg2Rad(this.camera.fov / 2)) * 2;
+		const xSize = ySize * (this.size.x / this.size.y);
+
+		// number of pixels per unit at 1 unit dist
+		const ppuX = this.size.x / xSize;
+		const ppuY = this.size.y / ySize;
+
+		let worldScreen = v.minus(this.size.times(0.5));
+		worldScreen.x /= ppuX;
+		worldScreen.y /= ppuY;
+		
+		let vector = new vec3(worldScreen.x, worldScreen.y, -1);
+		vector = vector.rotate(this.camera.rotation);
+		vector.normalise();
+
+		return { origin: this.camera.position, direction: vector };
 	}
 }

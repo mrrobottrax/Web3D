@@ -2,6 +2,7 @@ import { Camera } from "../../../../src/client/render/camera.js";
 import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
@@ -80,6 +81,7 @@ export abstract class Viewport extends EditorWindow {
 
 	abstract screenToGrid(v: vec2): vec2;
 	abstract gridToWorld(v: vec2): vec3;
+	abstract mouseRay(v: vec2): Ray;
 	abstract getMask(): vec3;
 
 	getMouseWorldRounded(): vec3 {

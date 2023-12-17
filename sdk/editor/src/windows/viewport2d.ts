@@ -3,6 +3,7 @@ import { gl, glProperties, solidShader } from "../../../../src/client/render/gl.
 import { renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
@@ -154,6 +155,15 @@ export class Viewport2D extends Viewport {
 
 	override screenToGrid(v: vec2): vec2 {
 		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+	}
+
+	override mouseRay(v: vec2): Ray {
+		const worldScreen = v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+
+		let vector = new vec3(worldScreen.x, worldScreen.y, 0);
+		vector = vector.rotate(this.camera.rotation);
+
+		return { origin: vec3.origin(), direction: vec3.origin() };
 	}
 
 	override gridToWorld(v: vec2): vec3 {

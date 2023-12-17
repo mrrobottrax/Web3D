@@ -70,6 +70,10 @@ export class vec3 {
 		return a.dist(b);
 	}
 
+	public static sqrDist(a: vec3, b: vec3): number {
+		return a.sqrDist(b);
+	}
+
 	public rotateYaw(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 
@@ -297,6 +301,10 @@ export class vec2 {
 
 	public static dist(a: vec2, b: vec2): number {
 		return a.dist(b);
+	}
+
+	public static sqrDist(a: vec2, b: vec2): number {
+		return a.sqrDist(b);
 	}
 
 	public rotateYaw(angle: number): vec2 {
