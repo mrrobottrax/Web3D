@@ -96,7 +96,11 @@ export class mat4 {
 
 	copy(): mat4 {
 		let ret = new mat4(1);
-		ret.values = this.values;
+
+		for (let i = 0; i < this.values.length; ++i) {
+			ret.values[i] = this.values[i];
+		}
+		
 		return ret;
 	}
 }
