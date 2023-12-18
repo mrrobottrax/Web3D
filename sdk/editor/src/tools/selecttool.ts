@@ -69,6 +69,8 @@ export class SelectTool extends Tool {
 
 		const activeViewport = editor.windowManager.activeWindow as Viewport;
 
+		if (activeViewport.looking) return false;
+
 		const underCursor = this.getMeshUnderCursor(activeViewport);
 		if (underCursor.mesh) {
 			this.meshUnderCursor = underCursor.mesh;
