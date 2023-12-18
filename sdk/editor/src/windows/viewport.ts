@@ -70,7 +70,7 @@ export abstract class Viewport extends EditorWindow {
 				break;
 
 			case ToolEnum.Select:
-				editor.selectTool.drawSelected(this);
+				editor.selectTool.drawGizmos(this);
 				break;
 		}
 	}
@@ -81,7 +81,7 @@ export abstract class Viewport extends EditorWindow {
 
 	abstract screenToGrid(v: vec2): vec2;
 	abstract gridToWorld(v: vec2): vec3;
-	abstract mouseRay(v: vec2): Ray;
+	abstract mouseRay(): Ray;
 	abstract getMask(): vec3;
 
 	getMouseWorldRounded(): vec3 {

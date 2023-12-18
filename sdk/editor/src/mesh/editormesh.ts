@@ -43,11 +43,21 @@ interface SubVertex {
 	edge: EditorHalfEdge;
 }
 
+export interface CollisionTri {
+	edge1: EditorHalfEdge;
+	edge2: EditorHalfEdge;
+	edge3: EditorHalfEdge;
+
+	normal: vec3;
+	dist: number;
+}
+
 export class EditorMesh {
 	edges: Set<EditorFullEdge>;
 	faces: Set<EditorFace>;
 	halfEdges: Set<EditorHalfEdge>;
 	verts: Set<EditorVertex>;
+	collisionTris: CollisionTri[];
 	primitives: Primitive[] = [];
 	color: number[] = [1, 1, 1, 1];
 	wireFrameData: {
@@ -66,6 +76,7 @@ export class EditorMesh {
 
 		this.primitives = this.getPrimitives();
 		this.wireFrameData = this.getWireframeData();
+		this.collisionTris = this.getCollisionTris();
 	}
 
 	toJSON() {
@@ -396,6 +407,34 @@ export class EditorMesh {
 		};
 	}
 
+	getCollisionTris(): CollisionTri[] {
+		let tris: CollisionTri[] = []
+
+		this.faces.forEach(face => {
+			const edges = this.triangulateFaceFullVertex(face);
+
+			for (let i = 0; i < edges.length; i += 3) {
+				const dir1 = edges[i + 1].tail!.position.minus(edges[i].tail!.position);
+				const dir2 = edges[i + 2].tail!.position.minus(edges[i].tail!.position);
+
+				let normal = vec3.cross(dir1, dir2);
+				normal.normalise();
+
+				tris.push({
+					edge1: edges[i],
+					edge2: edges[i + 1],
+					edge3: edges[i + 2],
+					normal: normal,
+					dist: vec3.dot(normal, edges[i].tail!.position)
+				});
+			}
+
+			tris = tris.concat();
+		})
+
+		return tris;
+	}
+
 	getPrimitives(): Primitive[] {
 		const submeshes = this.splitSubmeshes();
 
@@ -674,7 +713,7 @@ export class EditorMesh {
 		return tris;
 	}
 
-	triangulateFaceFullVertex(face: EditorFace): EditorVertex[] {
+	triangulateFaceFullVertex(face: EditorFace): EditorHalfEdge[] {
 		if (!(face.halfEdge?.tail && face.halfEdge.next)) {
 			console.error("BAD FACE!");
 			return [];
@@ -683,16 +722,16 @@ export class EditorMesh {
 		// TODO: THIS IS BAD
 		// only works with convex polygons
 
-		let tris: EditorVertex[] = [];
+		let tris: EditorHalfEdge[] = [];
 		const addTrisRecursive = (start: EditorHalfEdge, next: EditorHalfEdge) => {
 			if (!(start.tail && next.tail && next.next?.tail)) {
 				console.error("BAD FACE!");
 				return;
 			}
 
-			const a = start.tail;
-			const b = next.tail;
-			const c = next.next.tail;
+			const a = start;
+			const b = next;
+			const c = next.next;
 
 			if (!(a && b && c)) {
 				console.error("COULD NOT TRIANGULATE FACE!");

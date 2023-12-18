@@ -235,11 +235,11 @@ export class HalfEdgeMesh {
 				// create new half edge for each inside tri edge
 				for (let i = 0; i < tris.length; i += 3) {
 					// calculate normal vector
-					const pA = tris[i + 1].position.minus(tris[i].position);
-					const pB = tris[i + 2].position.minus(tris[i].position);
+					const pA = tris[i + 1].tail!.position.minus(tris[i].tail!.position);
+					const pB = tris[i + 2].tail!.position.minus(tris[i].tail!.position);
 
 					const norm = vec3.cross(pA, pB).normalised();
-					const dist = vec3.dot(tris[i].position, norm);
+					const dist = vec3.dot(tris[i].tail!.position, norm);
 
 					const faceIndex = faces.length;
 
@@ -253,9 +253,9 @@ export class HalfEdgeMesh {
 					const indexB = halfEdges.length + 1;
 					const indexC = halfEdges.length + 2;
 
-					const vertAIndex = vertexIndices.get(tris[i]);
-					const vertBIndex = vertexIndices.get(tris[i + 1]);
-					const vertCIndex = vertexIndices.get(tris[i + 2]);
+					const vertAIndex = vertexIndices.get(tris[i].tail!);
+					const vertBIndex = vertexIndices.get(tris[i + 1].tail!);
+					const vertCIndex = vertexIndices.get(tris[i + 2].tail!);
 
 					if (!(vertAIndex != undefined && vertBIndex != undefined && vertCIndex != undefined)) {
 						console.error("BAD MESH!");

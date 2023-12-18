@@ -157,7 +157,12 @@ export class Viewport2D extends Viewport {
 		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
 	}
 
-	override mouseRay(v: vec2): Ray {
+	override mouseRay(): Ray {
+		if (!this.pos)
+			return { origin: vec3.origin(), direction: vec3.origin() };
+
+		const v = this.getRelativeMousePos();
+
 		const worldScreen = v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
 
 		let vector = new vec3(worldScreen.x, worldScreen.y, 0);

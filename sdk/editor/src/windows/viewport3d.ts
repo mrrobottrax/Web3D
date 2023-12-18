@@ -119,7 +119,9 @@ export class Viewport3D extends Viewport {
 		throw new Error("Method not implemented.");
 	}
 
-	override mouseRay(v: vec2): Ray {
+	override mouseRay(): Ray {
+		const v = this.getRelativeMousePos();
+
 		// size of view frustum at 1 unit dist
 		const ySize = Math.tan(gMath.deg2Rad(this.camera.fov / 2)) * 2;
 		const xSize = ySize * (this.size.x / this.size.y);
@@ -131,7 +133,7 @@ export class Viewport3D extends Viewport {
 		let worldScreen = v.minus(this.size.times(0.5));
 		worldScreen.x /= ppuX;
 		worldScreen.y /= ppuY;
-		
+
 		let vector = new vec3(worldScreen.x, worldScreen.y, -1);
 		vector = vector.rotate(this.camera.rotation);
 		vector.normalise();

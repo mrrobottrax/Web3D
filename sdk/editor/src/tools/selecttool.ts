@@ -2,9 +2,10 @@ import { gl, solidShader } from "../../../../src/client/render/gl.js";
 import { drawLine, drawLineScreen } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
-import { EditorMesh, EditorVertex } from "../mesh/editormesh.js";
+import { EditorFace, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
@@ -21,6 +22,9 @@ export class SelectTool extends Tool {
 	edgeButton: HTMLElement | null;
 
 	selectedMeshes: Set<EditorMesh> = new Set();
+	meshUnderCursor: EditorMesh | null = null;
+	faceUnderCursor: EditorFace | null = null;
+	vertexUnderCursor: EditorVertex | null = null;
 
 	selectedVertices: Set<EditorVertex> = new Set();
 
@@ -60,7 +64,23 @@ export class SelectTool extends Tool {
 		}
 	}
 
-	drawSelected(viewport: Viewport) {
+	override mouseMove(dx: number, dy: number): boolean {
+		if (!editor.windowManager.activeWindow) return false;
+
+		const activeViewport = editor.windowManager.activeWindow as Viewport;
+
+		const underCursor = this.getMeshUnderCursor(activeViewport);
+		if (underCursor.mesh) {
+			this.meshUnderCursor = underCursor.mesh;
+			this.faceUnderCursor = underCursor.face;
+		}
+
+		this.vertexUnderCursor = this.getVertexUnderCursor(activeViewport);
+
+		return false;
+	}
+
+	drawGizmos(viewport: Viewport) {
 		// draw selected mesh outlines
 		gl.useProgram(solidShader.program);
 		const p = viewport.camera.perspectiveMatrix.copy();
@@ -75,6 +95,15 @@ export class SelectTool extends Tool {
 
 			gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
 		})
+
+		if (this.meshUnderCursor && !this.selectedMeshes.has(this.meshUnderCursor)) {
+			gl.bindVertexArray(this.meshUnderCursor.wireFrameData.vao);
+
+			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+
+			gl.drawElements(gl.LINES, this.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+		}
 
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
@@ -95,12 +124,9 @@ export class SelectTool extends Tool {
 
 				const cameraQuat = viewport.camera.rotation;
 
-				editor.meshes.forEach(mesh => {
+				// vert gizmos
+				this.selectedMeshes.forEach(mesh => {
 					mesh.verts.forEach((vert) => {
-						// todo: speed up or slow down?
-						// if (this.selectedVertices.has(vert))
-						// 	return;
-
 						let mat = viewport.camera.viewMatrix.copy();
 
 						const pos = vert.position.multMat4(mat);
@@ -121,10 +147,33 @@ export class SelectTool extends Tool {
 					});
 				})
 
+				if (this.meshUnderCursor && !this.selectedMeshes.has(this.meshUnderCursor)) {
+					this.meshUnderCursor.verts.forEach((vert) => {
+						let mat = viewport.camera.viewMatrix.copy();
+
+						const pos = vert.position.multMat4(mat);
+
+						mat.translate(vert.position);
+						mat.rotate(cameraQuat);
+
+						// don't do perspective divide
+						if (viewport.threeD)
+							mat.scale(new vec3(-pos.z, -pos.z, 1));
+						else
+							mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+
+						mat.scale(new vec3(0.01, 0.01, 1));
+
+						gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+						gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+					});
+				}
+
 				gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
 
 				gl.disable(gl.DEPTH_TEST);
 
+				// selected vert gizmos
 				this.selectedVertices.forEach((vert) => {
 					let mat = viewport.camera.viewMatrix.copy();
 
@@ -147,13 +196,12 @@ export class SelectTool extends Tool {
 
 				gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
 
-				const vUnderCursor = this.getVertexUnderCursor(viewport).vertex;
-				if (vUnderCursor && !this.selectedVertices.has(vUnderCursor)) {
+				if (this.vertexUnderCursor && !this.selectedVertices.has(this.vertexUnderCursor)) {
 					let mat = viewport.camera.viewMatrix.copy();
 
-					const pos = vUnderCursor.position.multMat4(mat);
+					const pos = this.vertexUnderCursor.position.multMat4(mat);
 
-					mat.translate(vUnderCursor.position);
+					mat.translate(this.vertexUnderCursor.position);
 					mat.rotate(cameraQuat);
 
 					// don't do perspective divide
@@ -176,6 +224,144 @@ export class SelectTool extends Tool {
 		}
 	}
 
+	getMeshUnderCursor(viewport: Viewport): {
+		mesh: EditorMesh | null,
+		face: EditorFace | null,
+	} {
+		// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
+		const castRay = (ray: Ray) => {
+			let bestMesh: EditorMesh | null = null;
+			let bestFace: EditorFace | null = null;
+			let bestDist = Infinity;
+
+			const it = editor.meshes.values();
+			let i = it.next();
+			while (!i.done) {
+				const mesh = i.value;
+
+				for (let i = 0; i < mesh.collisionTris.length; ++i) {
+					const tri = mesh.collisionTris[i];
+
+					// ignore backfaces
+					// if (vec3.dot(tri.normal, ray.direction) > 0)
+					// 	continue;
+
+					let positions = [
+						tri.edge1.tail!.position,
+						tri.edge2.tail!.position,
+						tri.edge3.tail!.position,
+					]
+
+					// find where ray and plane intersect
+					const denom = vec3.dot(tri.normal, ray.direction);
+
+					if (Math.abs(denom) == 0)
+						continue;
+
+					let t = (-vec3.dot(tri.normal, ray.origin) + tri.dist) / denom;
+					if (t < 0)
+						continue;
+
+					// get plane axis
+					const x = positions[1].minus(positions[0]).normalised();
+					const y = vec3.cross(tri.normal, x).normalised();
+
+					const point = ray.origin.plus(ray.direction.times(t));
+					const pointTrans = new vec3(vec3.dot(x, point), vec3.dot(y, point), 0);
+
+					let insideTri = true;
+
+					// for each edge
+					for (let i = 0; i < 3; ++i) {
+						// check if point is inside
+						const nextPoint = positions[(i + 1) % 3];
+						const edgeDir = nextPoint.minus(positions[i]);
+
+						const vertTrans = new vec3(vec3.dot(x, positions[i]), vec3.dot(y, positions[i]), 0);
+						const edgeDirTrans = new vec3(vec3.dot(edgeDir, x), vec3.dot(edgeDir, y), 0);
+
+						const edgeLeftTrans = new vec3(-edgeDirTrans.y, edgeDirTrans.x, 0);
+
+						const isInside = vec3.dot(edgeLeftTrans, pointTrans) >= vec3.dot(edgeLeftTrans, vertTrans);
+						if (!isInside) {
+							insideTri = false;
+							break;
+						}
+					}
+
+					if (insideTri && t < bestDist) {
+						bestDist = t;
+						bestMesh = mesh;
+						bestFace = tri.edge1.face;
+					}
+				}
+
+				i = it.next();
+			};
+
+			return { mesh: bestMesh, face: bestFace, dist: bestDist };
+		};
+
+		// try a bunch of rays to make it easier to select stuff
+		const baseRay = viewport.mouseRay();
+		let ray: Ray = { origin: baseRay.origin, direction: vec3.copy(baseRay.direction) };
+
+		let results: {
+			mesh: EditorMesh | null,
+			face: EditorFace | null,
+			dist: number
+		}[] = [];
+
+		// center
+		results.push(castRay(baseRay));
+		results[0].dist -= 10; // bias towards center
+		// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
+
+		const increment = 0.1;
+		const size = 2;
+
+		let xOffset = -increment / 2;
+		for (let x = 0; x < size; ++x) {
+			let yOffset = -increment / 2;
+
+			for (let y = 0; y < size; ++y) {
+				ray.direction.x = baseRay.direction.x + xOffset;
+				ray.direction.y = baseRay.direction.y + yOffset;
+
+				// console.log(xOffset);
+				// console.log(yOffset);
+				// console.log("____");
+
+				ray.direction.normalise();
+
+				results.push(castRay(ray));
+				// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
+
+				yOffset += increment;
+			}
+
+			xOffset += increment;
+		}
+
+		let closest: {
+			mesh: EditorMesh | null,
+			face: EditorFace | null,
+			dist: number
+		} = {
+			mesh: null,
+			face: null,
+			dist: Infinity
+		}
+		for (let i = 0; i < results.length; ++i) {
+			const result = results[i];
+			if (result.dist < closest.dist) {
+				closest = result;
+			}
+		}
+
+		return { mesh: closest.mesh, face: closest.face };
+	}
+
 	override mouse(button: number, pressed: boolean): boolean {
 		const active = editor.windowManager.activeWindow as Viewport;
 
@@ -195,13 +381,14 @@ export class SelectTool extends Tool {
 	selectVertex(viewport: Viewport) {
 		if (viewport.threeD) {
 			const v = this.getVertexUnderCursor(viewport);
+			const m = this.meshUnderCursor;
 
-			if (v.vertex && v.mesh) {
+			if (v && m) {
 				if (getKeyDown("ShiftLeft")) {
-					this.selectedVertices.add(v.vertex);
-					this.selectedMeshes.add(v.mesh);
+					this.selectedVertices.add(v);
+					this.selectedMeshes.add(m);
 				} else if (getKeyDown("ControlLeft")) {
-					this.selectedVertices.delete(v.vertex);
+					this.selectedVertices.delete(v);
 
 					// make sure each mesh still has a selected vertex
 					this.selectedMeshes.forEach(mesh => {
@@ -223,8 +410,8 @@ export class SelectTool extends Tool {
 				} else {
 					this.selectedVertices.clear();
 					this.selectedMeshes.clear();
-					this.selectedVertices.add(v.vertex);
-					this.selectedMeshes.add(v.mesh);
+					this.selectedVertices.add(v);
+					this.selectedMeshes.add(m);
 				}
 			}
 		} else {
@@ -232,10 +419,10 @@ export class SelectTool extends Tool {
 		}
 	}
 
-	getVertexUnderCursor(viewport: Viewport): {
-		vertex: EditorVertex | null,
-		mesh: EditorMesh | null
-	} {
+	getVertexUnderCursor(viewport: Viewport): EditorVertex | null {
+		if (!this.faceUnderCursor)
+			return null;
+
 		const persp = viewport.camera.perspectiveMatrix.copy();
 		const view = viewport.camera.viewMatrix.copy();
 
@@ -249,44 +436,34 @@ export class SelectTool extends Tool {
 		cursor.x /= viewport.size.x * 0.5;
 		cursor.y /= viewport.size.y * 0.5;
 
-		let bestDist = Infinity;
+		let bestDist = 0.002;
 		let bestVertex: EditorVertex | null = null;
-		let bestMesh: EditorMesh | null = null;
 
-		// find the vertex that is closest to the cursor
-		const it = editor.meshes.values();
-		let i = it.next();
-		while (!i.done) {
-			const mesh = i.value;
+		const start = this.faceUnderCursor.halfEdge;
+		let edge: EditorHalfEdge = this.faceUnderCursor.halfEdge!;
+		do {
+			const screenPoint = edge.tail!.position.multMat4(toScreen);
 
-			const it2 = mesh.verts.values();
-			let i2 = it2.next();
-			while (!i2.done) {
-				const vert = i2.value;
+			screenPoint.x /= -screenPoint.z;
+			screenPoint.y /= -screenPoint.z;
 
-				const screenPoint = vert.position.multMat4(toScreen);
+			const screen2D = new vec2(screenPoint.x, screenPoint.y);
 
-				screenPoint.x /= -screenPoint.z;
-				screenPoint.y /= -screenPoint.z;
+			const d = vec2.sqrDist(cursor, screen2D);
 
-				const screen2D = new vec2(screenPoint.x, screenPoint.y);
-
-				const d = vec2.sqrDist(cursor, screen2D);
-
-				if (d < bestDist) {
-					// todo: raycast to make sure vert is visible
-
-					bestDist = d;
-					bestVertex = vert;
-					bestMesh = mesh;
-				}
-
-				i2 = it2.next();
+			if (d < bestDist) {
+				bestDist = d;
+				bestVertex = edge.tail;
 			}
 
-			i = it.next();
-		}
+			if (edge.next)
+				edge = edge.next;
+			else
+				break;
+		} while (edge != start);
 
-		return { vertex: bestVertex, mesh: bestMesh }
+		// console.log(bestDist);
+
+		return bestVertex;
 	}
 }
