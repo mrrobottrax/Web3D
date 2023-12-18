@@ -64,4 +64,8 @@ export class Tool {
 	key(code: string, pressed: boolean): boolean {
 		return false;
 	}
+
+	close() {
+		
+	}
 }

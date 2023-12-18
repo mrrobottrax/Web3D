@@ -159,6 +159,6 @@ export class FileManagement {
 	static closeMap() {
 		console.log("Closing map...");
 
-		editor.unloadMeshes();
+		editor.close();
 	}
 }

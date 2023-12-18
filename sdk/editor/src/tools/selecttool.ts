@@ -21,11 +21,11 @@ export class SelectTool extends Tool {
 	vertexButton: HTMLElement | null;
 	edgeButton: HTMLElement | null;
 
-	selectedMeshes: Set<EditorMesh> = new Set();
 	meshUnderCursor: EditorMesh | null = null;
 	faceUnderCursor: EditorFace | null = null;
 	vertexUnderCursor: EditorVertex | null = null;
-
+	
+	selectedMeshes: Set<EditorMesh> = new Set();
 	selectedVertices: Set<EditorVertex> = new Set();
 
 	constructor() {
@@ -42,6 +42,15 @@ export class SelectTool extends Tool {
 		this.edgeButton.onclick = () => this.setSelectMode(SelectMode.Edge);
 
 		this.updateModeGraphics();
+	}
+
+	override close(): void {
+		this.meshUnderCursor = null;
+		this.faceUnderCursor = null;
+		this.vertexUnderCursor = null;
+		
+		this.selectedMeshes.clear();
+		this.selectedVertices.clear();
 	}
 
 	setSelectMode(selectMode: SelectMode) {
@@ -316,19 +325,21 @@ export class SelectTool extends Tool {
 
 		// center
 		results.push(castRay(baseRay));
-		results[0].dist -= 10; // bias towards center
+		results[0].dist -= 2; // bias towards center
 		// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
 
 		const increment = 0.1;
 		const size = 2;
+
+		let xDir = new vec3(1, 0, 0).rotate(viewport.camera.rotation);
+		let yDir = new vec3(0, 1, 0).rotate(viewport.camera.rotation);
 
 		let xOffset = -increment / 2;
 		for (let x = 0; x < size; ++x) {
 			let yOffset = -increment / 2;
 
 			for (let y = 0; y < size; ++y) {
-				ray.direction.x = baseRay.direction.x + xOffset;
-				ray.direction.y = baseRay.direction.y + yOffset;
+				ray.direction = baseRay.direction.plus(xDir.times(xOffset)).plus(yDir.times(yOffset));
 
 				// console.log(xOffset);
 				// console.log(yOffset);

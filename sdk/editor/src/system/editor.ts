@@ -62,6 +62,11 @@ export class Editor {
 		glEndFrame();
 	}
 
+	close() {
+		this.selectTool.close();
+		this.unloadMeshes();
+	}
+
 	unloadMeshes() {
 		this.meshes.forEach(mesh => {
 			mesh.cleanUpGl();
@@ -71,7 +76,7 @@ export class Editor {
 	}
 
 	loadMeshesFromJson(meshes: any) {
-		this.unloadMeshes();
+		this.close();
 
 		(meshes as any[]).forEach(mesh => {
 			this.meshes.add(EditorMesh.fromJson(mesh));
