@@ -24,7 +24,7 @@ export class SelectTool extends Tool {
 	meshUnderCursor: EditorMesh | null = null;
 	faceUnderCursor: EditorFace | null = null;
 	vertexUnderCursor: EditorVertex | null = null;
-	
+
 	selectedMeshes: Set<EditorMesh> = new Set();
 	selectedVertices: Set<EditorVertex> = new Set();
 
@@ -48,7 +48,7 @@ export class SelectTool extends Tool {
 		this.meshUnderCursor = null;
 		this.faceUnderCursor = null;
 		this.vertexUnderCursor = null;
-		
+
 		this.selectedMeshes.clear();
 		this.selectedVertices.clear();
 	}
@@ -78,7 +78,7 @@ export class SelectTool extends Tool {
 
 		const activeViewport = editor.windowManager.activeWindow as Viewport;
 
-		if (activeViewport.looking) return false;
+		if (activeViewport.looking || !activeViewport.threeD) return false;
 
 		const underCursor = this.getMeshUnderCursor(activeViewport);
 		if (underCursor.mesh) {
@@ -107,13 +107,16 @@ export class SelectTool extends Tool {
 			gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
 		})
 
-		if (this.meshUnderCursor && !this.selectedMeshes.has(this.meshUnderCursor)) {
-			gl.bindVertexArray(this.meshUnderCursor.wireFrameData.vao);
+		// mesh under cursor
+		if (viewport.threeD) {
+			if (this.meshUnderCursor && !this.selectedMeshes.has(this.meshUnderCursor)) {
+				gl.bindVertexArray(this.meshUnderCursor.wireFrameData.vao);
 
-			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
-			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+				gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
+				gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
 
-			gl.drawElements(gl.LINES, this.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+				gl.drawElements(gl.LINES, this.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+			}
 		}
 
 		gl.bindVertexArray(null);
@@ -131,12 +134,14 @@ export class SelectTool extends Tool {
 				gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 				gl.bindVertexArray(rectVao);
 
-				gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
+				gl.uniform4fv(solidShader.colorUnif, viewport.threeD ? [0.5, 0.8, 1, 1] : [1, 1, 1, 1]);
 
 				const cameraQuat = viewport.camera.rotation;
 
+				const meshSet = viewport.threeD ? this.selectedMeshes : editor.meshes;
+
 				// vert gizmos
-				this.selectedMeshes.forEach(mesh => {
+				meshSet.forEach(mesh => {
 					mesh.verts.forEach((vert) => {
 						let mat = viewport.camera.viewMatrix.copy();
 
@@ -323,10 +328,10 @@ export class SelectTool extends Tool {
 			dist: number
 		}[] = [];
 
-		// center
+		// center ray
 		results.push(castRay(baseRay));
+
 		results[0].dist -= 2; // bias towards center
-		// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
 
 		const increment = 0.1;
 		const size = 2;
@@ -341,14 +346,9 @@ export class SelectTool extends Tool {
 			for (let y = 0; y < size; ++y) {
 				ray.direction = baseRay.direction.plus(xDir.times(xOffset)).plus(yDir.times(yOffset));
 
-				// console.log(xOffset);
-				// console.log(yOffset);
-				// console.log("____");
-
 				ray.direction.normalise();
 
 				results.push(castRay(ray));
-				// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
 
 				yOffset += increment;
 			}
