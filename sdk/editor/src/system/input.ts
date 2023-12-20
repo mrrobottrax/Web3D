@@ -1,4 +1,3 @@
-import { gl } from "../../../../src/client/render/gl.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { ToolEnum, setTool } from "../tools/tool.js";

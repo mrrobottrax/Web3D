@@ -70,7 +70,7 @@ export abstract class Viewport extends EditorWindow {
 				break;
 
 			case ToolEnum.Select:
-				editor.selectTool.drawGizmos(this);
+				editor.selectTool.draw(this);
 				break;
 		}
 	}

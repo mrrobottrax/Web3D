@@ -28,6 +28,12 @@ export class SelectTool extends Tool {
 	selectedMeshes: Set<EditorMesh> = new Set();
 	selectedVertices: Set<EditorVertex> = new Set();
 
+	cursorCopy: boolean = false;
+	cursorMove: boolean = false;
+
+	dragPos: vec3 = vec3.origin();
+	dragging: boolean = false;
+
 	constructor() {
 		super();
 		this.vertexButton = document.getElementById("select-vertex");
@@ -78,15 +84,93 @@ export class SelectTool extends Tool {
 
 		const activeViewport = editor.windowManager.activeWindow as Viewport;
 
-		if (activeViewport.looking || !activeViewport.threeD) return false;
+		if (activeViewport.looking) return false;
 
-		const underCursor = this.getMeshUnderCursor(activeViewport);
-		if (underCursor.mesh) {
-			this.meshUnderCursor = underCursor.mesh;
-			this.faceUnderCursor = underCursor.face;
+		if (this.dragging) {
+			const start = this.dragPos;
+			const end = activeViewport.getMouseWorldRounded();
+
+			if (!start.equals(end)) {
+				const delta = end.minus(start);
+
+				// move selected
+				{
+					const it = this.selectedVertices.values();
+					let i = it.next();
+					while (!i.done) {
+						const v = i.value;
+
+						v.position.add(delta);
+
+						i = it.next()
+					}
+				}
+
+				// update selected meshes
+				{
+					const it = this.selectedMeshes.values();
+					let i = it.next();
+					while (!i.done) {
+						const v = i.value;
+
+						v.updateVisuals();
+
+						i = it.next()
+					}
+				}
+			}
+
+			this.dragPos = end;
+			return false;
 		}
 
-		this.vertexUnderCursor = this.getVertexUnderCursor(activeViewport);
+		// switch mode
+		const draggable = this.getVertexUnderCursor(activeViewport, true);
+
+		if (!draggable) {
+			const underCursor = this.getMeshUnderCursor(activeViewport);
+			if (underCursor.mesh) {
+				this.meshUnderCursor = underCursor.mesh;
+				this.faceUnderCursor = underCursor.face;
+			}
+
+			// switch mode
+			this.vertexUnderCursor = this.getVertexUnderCursor(activeViewport);
+			this.cursorMove = false;
+		} else {
+			this.meshUnderCursor = null;
+			this.faceUnderCursor = null;
+
+			// switch mode
+			this.vertexUnderCursor = draggable;
+			this.cursorMove = true;
+		}
+
+		return false;
+	}
+
+	draw(viewport: Viewport) {
+		this.drawGizmos(viewport);
+
+		this.setCursor();
+	}
+
+	setCursor() {
+		if (this.cursorCopy) {
+			document.body.style.cursor = "copy";
+			return;
+		}
+
+		if (this.cursorMove) {
+			document.body.style.cursor = "move";
+			return;
+		}
+
+		document.body.style.cursor = "default";
+	}
+
+	key(code: string, pressed: boolean): boolean {
+		this.cursorCopy = getKeyDown("ShiftLeft") || getKeyDown("ControlLeft");
 
 		return false;
 	}
@@ -331,29 +415,31 @@ export class SelectTool extends Tool {
 		// center ray
 		results.push(castRay(baseRay));
 
-		results[0].dist -= 2; // bias towards center
+		if (!viewport.threeD) {
+			results[0].dist -= 2; // bias towards center
 
-		const increment = 0.1;
-		const size = 2;
+			const increment = 0.1;
+			const size = 2;
 
-		let xDir = new vec3(1, 0, 0).rotate(viewport.camera.rotation);
-		let yDir = new vec3(0, 1, 0).rotate(viewport.camera.rotation);
+			let xDir = new vec3(1, 0, 0).rotate(viewport.camera.rotation);
+			let yDir = new vec3(0, 1, 0).rotate(viewport.camera.rotation);
 
-		let xOffset = -increment / 2;
-		for (let x = 0; x < size; ++x) {
-			let yOffset = -increment / 2;
+			let xOffset = -increment / 2;
+			for (let x = 0; x < size; ++x) {
+				let yOffset = -increment / 2;
 
-			for (let y = 0; y < size; ++y) {
-				ray.direction = baseRay.direction.plus(xDir.times(xOffset)).plus(yDir.times(yOffset));
+				for (let y = 0; y < size; ++y) {
+					ray.direction = baseRay.direction.plus(xDir.times(xOffset)).plus(yDir.times(yOffset));
 
-				ray.direction.normalise();
+					ray.direction.normalise();
 
-				results.push(castRay(ray));
+					results.push(castRay(ray));
 
-				yOffset += increment;
+					yOffset += increment;
+				}
+
+				xOffset += increment;
 			}
-
-			xOffset += increment;
 		}
 
 		let closest: {
@@ -376,13 +462,20 @@ export class SelectTool extends Tool {
 	}
 
 	override mouse(button: number, pressed: boolean): boolean {
-		const active = editor.windowManager.activeWindow as Viewport;
+		const viewport = editor.windowManager.activeWindow as Viewport;
 
-		if (active && button == 0 && pressed) {
-			switch (this.mode) {
-				case SelectMode.Vertex:
-					this.selectVertex(active);
-					break;
+		if (button == 0) {
+			if (pressed) {
+				switch (this.mode) {
+					case SelectMode.Vertex:
+						if (this.cursorMove)
+							this.startDrag(viewport);
+						else
+							this.selectVertex();
+						break;
+				}
+			} else {
+				this.dragging = false;
 			}
 
 			return true;
@@ -391,51 +484,54 @@ export class SelectTool extends Tool {
 		return false;
 	}
 
-	selectVertex(viewport: Viewport) {
-		if (viewport.threeD) {
-			const v = this.getVertexUnderCursor(viewport);
-			const m = this.meshUnderCursor;
+	startDrag(viewport: Viewport) {
+		// probably don't want to drag
+		if (document.body.style.cursor != "move")
+			return;
 
-			if (v && m) {
-				if (getKeyDown("ShiftLeft")) {
-					this.selectedVertices.add(v);
-					this.selectedMeshes.add(m);
-				} else if (getKeyDown("ControlLeft")) {
-					this.selectedVertices.delete(v);
+		this.dragging = true;
+		this.dragPos = viewport.getMouseWorldRounded();
+	}
 
-					// make sure each mesh still has a selected vertex
-					this.selectedMeshes.forEach(mesh => {
-						const it = mesh.verts.values();
-						let i = it.next();
-						while (!i.done) {
-							const v = i.value;
+	selectVertex() {
+		// const v = this.getVertexUnderCursor(viewport);
+		const m = this.meshUnderCursor;
 
-							// we're good :)
-							if (this.selectedVertices.has(v))
-								return;
+		if (this.vertexUnderCursor) {
+			if (getKeyDown("ShiftLeft") && m) {
+				this.selectedVertices.add(this.vertexUnderCursor);
+				this.selectedMeshes.add(m);
+			} else if (getKeyDown("ControlLeft")) {
+				this.selectedVertices.delete(this.vertexUnderCursor);
+				this.vertexUnderCursor = null;
 
-							i = it.next();
-						}
+				// make sure each mesh still has a selected vertex
+				this.selectedMeshes.forEach(mesh => {
+					const it = mesh.verts.values();
+					let i = it.next();
+					while (!i.done) {
+						const v = i.value;
 
-						// i shouldn't be here
-						this.selectedMeshes.delete(mesh);
-					});
-				} else {
-					this.selectedVertices.clear();
-					this.selectedMeshes.clear();
-					this.selectedVertices.add(v);
-					this.selectedMeshes.add(m);
-				}
+						// we're good :)
+						if (this.selectedVertices.has(v))
+							return;
+
+						i = it.next();
+					}
+
+					// bad mesh >:(
+					this.selectedMeshes.delete(mesh);
+				});
+			} else if (m) {
+				this.selectedVertices.clear();
+				this.selectedMeshes.clear();
+				this.selectedVertices.add(this.vertexUnderCursor);
+				this.selectedMeshes.add(m);
 			}
-		} else {
-
 		}
 	}
 
-	getVertexUnderCursor(viewport: Viewport): EditorVertex | null {
-		if (!this.faceUnderCursor)
-			return null;
-
+	getVertexUnderCursor(viewport: Viewport, selectedOnly: boolean = false): EditorVertex | null {
 		const persp = viewport.camera.perspectiveMatrix.copy();
 		const view = viewport.camera.viewMatrix.copy();
 
@@ -452,13 +548,13 @@ export class SelectTool extends Tool {
 		let bestDist = 0.002;
 		let bestVertex: EditorVertex | null = null;
 
-		const start = this.faceUnderCursor.halfEdge;
-		let edge: EditorHalfEdge = this.faceUnderCursor.halfEdge!;
-		do {
-			const screenPoint = edge.tail!.position.multMat4(toScreen);
+		const inner = (vert: EditorVertex) => {
+			const screenPoint = vert.position.multMat4(toScreen);
 
-			screenPoint.x /= -screenPoint.z;
-			screenPoint.y /= -screenPoint.z;
+			if (viewport.threeD) {
+				screenPoint.x /= -screenPoint.z;
+				screenPoint.y /= -screenPoint.z;
+			}
 
 			const screen2D = new vec2(screenPoint.x, screenPoint.y);
 
@@ -466,14 +562,33 @@ export class SelectTool extends Tool {
 
 			if (d < bestDist) {
 				bestDist = d;
-				bestVertex = edge.tail;
+				bestVertex = vert;
 			}
+		}
 
-			if (edge.next)
-				edge = edge.next;
-			else
-				break;
-		} while (edge != start);
+		if (!selectedOnly) {
+			if (!this.faceUnderCursor)
+				return null;
+
+			const start = this.faceUnderCursor.halfEdge;
+			let edge: EditorHalfEdge = this.faceUnderCursor.halfEdge!;
+			do {
+				inner(edge.tail!);
+
+				if (edge.next)
+					edge = edge.next;
+				else
+					break;
+			} while (edge != start);
+		} else {
+			const it = this.selectedVertices.values();
+			let i = it.next();
+			while (!i.done) {
+				inner(i.value);
+
+				i = it.next();
+			}
+		}
 
 		// console.log(bestDist);
 
