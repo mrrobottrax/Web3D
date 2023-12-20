@@ -13,6 +13,8 @@ import { Tool } from "./tool.js";
 export enum SelectMode {
 	Vertex,
 	Edge,
+	Face,
+	Mesh
 }
 
 export class SelectTool extends Tool {
@@ -20,6 +22,8 @@ export class SelectTool extends Tool {
 
 	vertexButton: HTMLElement | null;
 	edgeButton: HTMLElement | null;
+	faceButton: HTMLElement | null;
+	meshButton: HTMLElement | null;
 
 	meshUnderCursor: EditorMesh | null = null;
 	faceUnderCursor: EditorFace | null = null;
@@ -38,14 +42,19 @@ export class SelectTool extends Tool {
 		super();
 		this.vertexButton = document.getElementById("select-vertex");
 		this.edgeButton = document.getElementById("select-edge");
+		this.faceButton = document.getElementById("select-face");
+		this.meshButton = document.getElementById("select-mesh");
 
-		if (!(this.vertexButton && this.edgeButton)) {
+		if (!(this.vertexButton&& this.edgeButton && this.faceButton
+			&& this.meshButton)) {
 			console.error("MISSING BUTTONS!");
 			return;
 		}
 
 		this.vertexButton.onclick = () => this.setSelectMode(SelectMode.Vertex);
 		this.edgeButton.onclick = () => this.setSelectMode(SelectMode.Edge);
+		this.faceButton.onclick = () => this.setSelectMode(SelectMode.Face);
+		this.meshButton.onclick = () => this.setSelectMode(SelectMode.Mesh);
 
 		this.updateModeGraphics();
 	}
@@ -68,6 +77,8 @@ export class SelectTool extends Tool {
 	updateModeGraphics() {
 		this.vertexButton?.classList.remove("selected-button");
 		this.edgeButton?.classList.remove("selected-button");
+		this.faceButton?.classList.remove("selected-button");
+		this.meshButton?.classList.remove("selected-button");
 
 		switch (this.mode) {
 			case SelectMode.Vertex:
@@ -75,6 +86,12 @@ export class SelectTool extends Tool {
 				break;
 			case SelectMode.Edge:
 				this.edgeButton?.classList.add("selected-button");
+				break;
+			case SelectMode.Face:
+				this.faceButton?.classList.add("selected-button");
+				break;
+			case SelectMode.Mesh:
+				this.meshButton?.classList.add("selected-button");
 				break;
 		}
 	}
@@ -468,10 +485,8 @@ export class SelectTool extends Tool {
 			if (pressed) {
 				switch (this.mode) {
 					case SelectMode.Vertex:
-						if (this.cursorMove)
-							this.startDrag(viewport);
-						else
-							this.selectVertex();
+						if (this.startDrag(viewport)) break;
+						this.selectVertex();
 						break;
 				}
 			} else {
@@ -484,13 +499,15 @@ export class SelectTool extends Tool {
 		return false;
 	}
 
-	startDrag(viewport: Viewport) {
+	startDrag(viewport: Viewport): boolean {
 		// probably don't want to drag
 		if (document.body.style.cursor != "move")
-			return;
+			return false;
 
 		this.dragging = true;
 		this.dragPos = viewport.getMouseWorldRounded();
+
+		return true;
 	}
 
 	selectVertex() {
