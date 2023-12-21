@@ -9,7 +9,7 @@ let keys: any = {};
 
 export function initEditorInput() {
 	document.addEventListener('keydown', event => {
-		event.preventDefault();
+		// event.preventDefault();
 		keys[event.code] = true;
 
 		if (tryShortcut(event.code)) return;
@@ -17,7 +17,7 @@ export function initEditorInput() {
 		editor.windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
-		event.preventDefault();
+		// event.preventDefault();
 		keys[event.code] = false;
 
 		if (editor.activeTool.key(event.code, false)) return;
@@ -25,7 +25,7 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("mousedown", event => {
-		event.preventDefault();
+		// event.preventDefault();
 		editor.windowManager.setActiveWindowUnderMouse();
 
 		if (editor.activeTool.mouse(event.button, true)) return;
@@ -33,14 +33,14 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("mouseup", event => {
-		event.preventDefault();
+		// event.preventDefault();
 
 		if (editor.activeTool.mouse(event.button, false)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, false);
 	});
 
 	document.addEventListener("mousemove", event => {
-		event.preventDefault();
+		// event.preventDefault();
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl
 
