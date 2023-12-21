@@ -635,26 +635,37 @@ export class SelectTool extends Tool {
 			switch (this.mode) {
 				case SelectMode.Vertex:
 					if (this.vertexUnderCursor) {
-						if (!remove)
-							this.selectedVertices.add(this.vertexUnderCursor);
+						if (!remove) {
+							if (m) {
+								this.selectedVertices.add(this.vertexUnderCursor);
+								this.selectedMeshes.add(m);
+							}
+						}
 						else
 							this.selectedVertices.delete(this.vertexUnderCursor);
 					}
 					break;
 				case SelectMode.Face:
 					if (this.faceUnderCursor) {
-						if (!remove)
-							this.selectedFaces.add(this.faceUnderCursor);
+						if (!remove) {
+							if (m) {
+								this.selectedFaces.add(this.faceUnderCursor);
+								this.selectedMeshes.add(m);
+							}
+						}
 						else
 							this.selectedFaces.delete(this.faceUnderCursor);
 					}
 					break;
+				case SelectMode.Mesh:
+					if (m && !remove)
+						this.selectedMeshes.add(m);
+					break;
 			}
 		}
 
-		if (getKeyDown("ShiftLeft") && m) {
+		if (getKeyDown("ShiftLeft")) {
 			addThing();
-			this.selectedMeshes.add(m);
 		} else if (getKeyDown("ControlLeft")) {
 			if (this.mode != SelectMode.Mesh) {
 				addThing(true);
@@ -698,11 +709,10 @@ export class SelectTool extends Tool {
 				if (m)
 					this.selectedMeshes.delete(m);
 			}
-		} else if (m) {
+		} else {
 			this.selectedVertices.clear();
 			this.selectedFaces.clear();
 			this.selectedMeshes.clear();
-			this.selectedMeshes.add(m);
 			addThing();
 		}
 	}

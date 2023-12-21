@@ -1,4 +1,10 @@
-<html>
+<!DOCTYPE html>
+
+<html lang="en">
+
+<title>
+	Mallet Editor
+</title>
 
 <head>
 	<link rel="stylesheet" href="sdk/toolstyle.css">
@@ -7,41 +13,52 @@
 </head>
 
 <body>
-	<div id="editor">
-		<div class="bar" style="height: 25;">
-			<div class="windows-bar-button">
-				<button class="subtle-button main-button">File</button>
-				<div class="windows-bar-contents">
-					<button class="subtle-button">New</button><br>
-					<button class="subtle-button" onclick="loadMap()">Open</button><input type="file" id="file-select"
-						accept=".level">
-					<hr>
-					<button class="subtle-button" onclick="saveMap()">Save</button><br>
-					<button class="subtle-button" onclick="closeMap()">Close</button>
-					<hr>
-					<button class="subtle-button" onclick="exportMap()">Export</button>
+	<div id="editor" style="
+		display: grid;
+		grid-template-rows: auto auto">
+		<!-- HEADER -->
+		<div style="
+			display: grid;
+			grid-template-rows: 30px 30px;">
+			<div class="bar">
+				<div class="windows-bar-button">
+					<button class="subtle-button tall-button">File</button>
+					<div class="windows-bar-contents">
+						<button class="subtle-button">New</button><br>
+						<button class="subtle-button" onclick="loadMap()">Open</button>
+						<hr>
+						<button class="subtle-button" onclick="saveMap()">Save</button><br>
+						<button class="subtle-button" onclick="closeMap()">Close</button>
+						<hr>
+						<button class="subtle-button" onclick="exportMap()">Export</button>
+					</div>
 				</div>
 			</div>
+			<div class="bar">
+				<p style="display: inline; margin: 5px;">MODE: </p>
+				<button class="tall-button" id="select-vertex">Vertex</button>
+				<button class="tall-button" id="select-edge">Edge</button>
+				<button class="tall-button" id="select-face">Face</button>
+				<button class="tall-button" id="select-mesh">Mesh</button>
+			</div>
 		</div>
-		<div class="bar">
-			<p style="display: inline;">MODE: </p>
-			<button class="main-button" id="select-vertex">Vertex</button>
-			<button class="main-button" id="select-edge">Edge</button>
-			<button class="main-button" id="select-face">Face</button>
-			<button class="main-button" id="select-mesh">Mesh</button>
-		</div>
-		<div id="toolbar">
-			<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
-				id="tool-select">
-			<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
-				id="tool-block">
-		</div>
-		<canvas id="game"></canvas>
-		<div id="properties">
-			<button>TEST</button>
-			<button>TEST</button>
-			<button>TEST</button>
-			<button>TEST</button>
+		<!-- MAIN CONTENT -->
+		<div style="
+		display: grid;
+		grid-template-columns: 40px auto 250px;">
+			<div class="vertical">
+				<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
+					id="tool-select" alt="select">
+				<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
+					id="tool-block" alt="block">
+			</div>
+			<canvas id="game"></canvas>
+			<div class="vertical">
+				<form>
+					<label for="u">U:</label>
+					<input type="text" name="u" id="u" style="color: black;">
+				</form>
+			</div>
 		</div>
 	</div>
 </body>
