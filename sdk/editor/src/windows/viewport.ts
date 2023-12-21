@@ -12,7 +12,7 @@ import { EditorWindow } from "./window.js";
 export abstract class Viewport extends EditorWindow {
 	camera!: Camera;
 	looking!: boolean;
-	threeD: boolean = false;
+	perspective: boolean = false;
 
 	drawMeshesSolid() {
 		gl.useProgram(defaultShader.program);

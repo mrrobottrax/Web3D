@@ -1,5 +1,5 @@
-import { loadPrimitiveTexture, textures } from "../../../../src/client/mesh/textures.js";
-import { SharedAttribs, gl, loadTexture, solidTex } from "../../../../src/client/render/gl.js";
+import { loadPrimitiveTexture } from "../../../../src/client/mesh/textures.js";
+import { SharedAttribs, gl, solidTex } from "../../../../src/client/render/gl.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Primitive } from "../../../../src/common/mesh/model.js";
 
@@ -8,6 +8,10 @@ export interface EditorFace {
 	texture: string;
 	u: vec3;
 	v: vec3;
+
+	elementOffset: number;
+	elementCount: number;
+	primitive: Primitive | null;
 }
 
 export interface EditorHalfEdge {
@@ -203,6 +207,9 @@ export class EditorMesh {
 				texture: face.texture,
 				u: new vec3(face.u[0], face.u[1], face.u[2]),
 				v: new vec3(face.v[0], face.v[1], face.v[2]),
+				elementCount: 0,
+				elementOffset: 0,
+				primitive: null
 			});
 		});
 
@@ -519,6 +526,7 @@ export class EditorMesh {
 		// add extra vertices when connected faces don't share uvs
 		// or are sharp
 		// TODO: Currently just makes everything not share verts
+		// should use same vert when smoothing
 		let subVertMap: Map<EditorHalfEdge, SubVertex> = new Map();
 		{
 			const it = submesh.verts.values();
@@ -562,7 +570,15 @@ export class EditorMesh {
 			const it = submesh.faces.values();
 			let i = it.next();
 			while (!i.done) {
-				tris = tris.concat(this.triangulateFaceSubVertex(i.value, subVertMap));
+				const face = i.value;
+
+				const triangulatedArray = this.triangulateFaceSubVertex(face, subVertMap);
+
+				face.elementOffset = tris.length;
+				face.elementCount = triangulatedArray.length;
+
+				tris = tris.concat(triangulatedArray);
+
 				i = it.next();
 			}
 		}
@@ -671,6 +687,11 @@ export class EditorMesh {
 			eBuffer: eBuffer
 		}
 		loadPrimitiveTexture(submesh.texture, p);
+
+		// add primitive to each face
+		submesh.faces.forEach(face => {
+			face.primitive = p;
+		})
 
 		return p;
 	}

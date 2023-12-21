@@ -47,12 +47,29 @@
 	gap: 5px;
 }
 
+#properties {
+	width: 300px;
+	height: calc(100% - 57px);
+	background-color: rgb(37, 37, 37);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	position: absolute;
+	top: 57px;
+	right: 0;
+}
+
+#properties button {
+	width: 98%;
+	margin-top: 5px;
+}
+
 #game {
 	image-rendering: pixelated;
 	position: absolute;
 	left: 40px;
 	top: 57px;
-	width: calc(100% - 40px);
+	width: calc(100% - 40px - 300px);
 	height: calc(100% - 57px);
 }
 

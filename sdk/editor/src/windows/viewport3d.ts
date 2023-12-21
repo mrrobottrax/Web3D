@@ -17,7 +17,7 @@ export class Viewport3D extends Viewport {
 
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number) {
 		super(posX, posY, sizeX, sizeY);
-		this.threeD = true;
+		this.perspective = true;
 
 		this.camera = new Camera(90, new vec3(0, 5, 5), quaternion.identity());
 

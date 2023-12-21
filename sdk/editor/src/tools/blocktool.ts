@@ -172,7 +172,10 @@ export class BlockTool extends Tool {
 				halfEdge: null,
 				texture: "./data/levels/textures/brick.png",
 				u: new vec3(1, 0, 0),
-				v: new vec3(0, 1, 0)
+				v: new vec3(0, 1, 0),
+				elementCount: 0,
+				elementOffset: 0,
+				primitive: null
 			}
 
 			let ab: EditorHalfEdge = {

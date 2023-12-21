@@ -21,7 +21,7 @@ export class Viewport2D extends Viewport {
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number, angle: Viewport2DAngle) {
 		super(posX, posY, sizeX, sizeY);
 		this.looking = false;
-		this.threeD = false;
+		this.perspective = false;
 
 		let orientation: quaternion;
 
