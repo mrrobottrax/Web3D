@@ -662,14 +662,31 @@ export class SelectTool extends Tool {
 
 				// make sure each mesh still has a selected thing
 				this.selectedMeshes.forEach(mesh => {
-					const it = mesh.verts.values();
+					let it: any;
+					switch (this.mode) {
+						case SelectMode.Vertex:
+							it = mesh.verts.values();
+							break;
+						case SelectMode.Face:
+							it = mesh.faces.values();
+							break;
+					}
+
 					let i = it.next();
 					while (!i.done) {
-						const v = i.value;
+						const v: any = i.value;
 
 						// we're good :)
-						if (this.selectedVertices.has(v))
-							return;
+						switch (this.mode) {
+							case SelectMode.Vertex:
+								if (this.selectedVertices.has(v))
+									return;
+								break;
+							case SelectMode.Face:
+								if (this.selectedFaces.has(v))
+									return;
+								break;
+						}
 
 						i = it.next();
 					}
