@@ -1,11 +1,11 @@
-import { gl, solidShader } from "../../../../src/client/render/gl.js";
-import { drawLine, drawLineScreen } from "../../../../src/client/render/render.js";
+import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
+import { drawLine, drawLineScreen, drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
-import { EditorFace, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
+import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
@@ -18,7 +18,7 @@ export enum SelectMode {
 }
 
 export class SelectTool extends Tool {
-	mode: SelectMode = SelectMode.Vertex;
+	mode: SelectMode = SelectMode.Mesh;
 
 	vertexButton: HTMLElement | null;
 	edgeButton: HTMLElement | null;
@@ -27,10 +27,10 @@ export class SelectTool extends Tool {
 
 	meshUnderCursor: EditorMesh | null = null;
 	faceUnderCursor: EditorFace | null = null;
-	vertexUnderCursor: EditorVertex | null = null;
+	thingUnderCursor: any = null;
 
 	selectedMeshes: Set<EditorMesh> = new Set();
-	selectedVertices: Set<EditorVertex> = new Set();
+	selectedThings = new Set<any>();
 
 	cursorCopy: boolean = false;
 	cursorMove: boolean = false;
@@ -45,7 +45,7 @@ export class SelectTool extends Tool {
 		this.faceButton = document.getElementById("select-face");
 		this.meshButton = document.getElementById("select-mesh");
 
-		if (!(this.vertexButton&& this.edgeButton && this.faceButton
+		if (!(this.vertexButton && this.edgeButton && this.faceButton
 			&& this.meshButton)) {
 			console.error("MISSING BUTTONS!");
 			return;
@@ -62,14 +62,19 @@ export class SelectTool extends Tool {
 	override close(): void {
 		this.meshUnderCursor = null;
 		this.faceUnderCursor = null;
-		this.vertexUnderCursor = null;
+		this.thingUnderCursor = null;
 
 		this.selectedMeshes.clear();
-		this.selectedVertices.clear();
+		this.selectedThings?.clear();
 	}
 
 	setSelectMode(selectMode: SelectMode) {
 		this.mode = selectMode;
+		this.selectedMeshes.clear();
+		this.selectedThings.clear();
+		this.faceUnderCursor = null;
+		this.meshUnderCursor = null;
+		this.thingUnderCursor = null;
 
 		this.updateModeGraphics();
 	}
@@ -110,16 +115,27 @@ export class SelectTool extends Tool {
 			if (!start.equals(end)) {
 				const delta = end.minus(start);
 
+				const move = (thing: EditorVertex | EditorFullEdge | EditorFace | EditorMesh,
+					delta: vec3) => {
+					switch (this.mode) {
+						case SelectMode.Vertex:
+							(thing as EditorVertex).position.add(delta);
+							break;
+					}
+				}
+
 				// move selected
 				{
-					const it = this.selectedVertices.values();
-					let i = it.next();
-					while (!i.done) {
-						const v = i.value;
+					if (this.selectedThings) {
+						const it = this.selectedThings.values();
+						let i = it.next();
+						while (!i.done) {
+							const v = i.value;
 
-						v.position.add(delta);
+							move(v, delta);
 
-						i = it.next()
+							i = it.next()
+						}
 					}
 				}
 
@@ -142,7 +158,7 @@ export class SelectTool extends Tool {
 		}
 
 		// switch mode
-		const draggable = this.getVertexUnderCursor(activeViewport, true);
+		const draggable = this.getThingUnderCursor(activeViewport, true);
 
 		if (!draggable) {
 			const underCursor = this.getMeshUnderCursor(activeViewport);
@@ -152,14 +168,14 @@ export class SelectTool extends Tool {
 			}
 
 			// switch mode
-			this.vertexUnderCursor = this.getVertexUnderCursor(activeViewport);
+			this.thingUnderCursor = this.getThingUnderCursor(activeViewport);
 			this.cursorMove = false;
 		} else {
 			this.meshUnderCursor = null;
 			this.faceUnderCursor = null;
 
 			// switch mode
-			this.vertexUnderCursor = draggable;
+			this.thingUnderCursor = draggable;
 			this.cursorMove = true;
 		}
 
@@ -189,35 +205,77 @@ export class SelectTool extends Tool {
 	key(code: string, pressed: boolean): boolean {
 		this.cursorCopy = getKeyDown("ShiftLeft") || getKeyDown("ControlLeft");
 
+		if (pressed) {
+			switch (code) {
+				case "Delete":
+					this.deleteSelected();
+					break;
+			}
+		}
+
 		return false;
 	}
 
+	deleteSelected() {
+		switch (this.mode) {
+			case SelectMode.Mesh:
+				const it = this.selectedMeshes.values();
+				let i = it.next();
+				while (!i.done) {
+					const mesh = i.value;
+
+					mesh.cleanUpGl();
+					editor.meshes.delete(mesh);
+
+					i = it.next();
+				}
+				break;
+		}
+
+		this.selectedMeshes.clear();
+		this.selectedThings.clear();
+		this.thingUnderCursor = null;
+		this.faceUnderCursor = null;
+		this.meshUnderCursor = null;
+	}
+
 	drawGizmos(viewport: Viewport) {
-		// draw selected mesh outlines
-		gl.useProgram(solidShader.program);
-		const p = viewport.camera.perspectiveMatrix.copy();
-		p.setValue(3, 2, p.getValue(3, 2) - 0.001); // fudge the numbers for visibility
-		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
-
-		this.selectedMeshes.forEach(mesh => {
-			gl.bindVertexArray(mesh.wireFrameData.vao);
-
+		if (this.mode != SelectMode.Mesh) {
+			// draw selected mesh outlines
+			gl.useProgram(solidShader.program);
+			const p = viewport.camera.perspectiveMatrix.copy();
+			p.setValue(3, 2, p.getValue(3, 2) - 0.001); // fudge the numbers for visibility
+			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
 			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
 
-			gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
-		})
+			this.selectedMeshes.forEach(mesh => {
+				gl.bindVertexArray(mesh.wireFrameData.vao);
 
-		// mesh under cursor
-		if (viewport.threeD) {
-			if (this.meshUnderCursor && !this.selectedMeshes.has(this.meshUnderCursor)) {
-				gl.bindVertexArray(this.meshUnderCursor.wireFrameData.vao);
+				gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+			});
 
-				gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
-				gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+			// mesh under cursor
+			if (viewport.threeD) {
+				if (this.meshUnderCursor && !this.selectedMeshes.has(this.meshUnderCursor)) {
+					gl.bindVertexArray(this.meshUnderCursor.wireFrameData.vao);
 
-				gl.drawElements(gl.LINES, this.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+					gl.drawElements(gl.LINES, this.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+				}
 			}
+		} else {
+			// draw selected mesh outlines
+			gl.useProgram(solidShader.program);
+			const p = viewport.camera.perspectiveMatrix.copy();
+			p.setValue(3, 2, p.getValue(3, 2) - 0.0005); // fudge the numbers for visibility
+			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
+			gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+
+			this.selectedMeshes.forEach(mesh => {
+				gl.bindVertexArray(mesh.wireFrameData.vao);
+				gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+			})
 		}
 
 		gl.bindVertexArray(null);
@@ -291,46 +349,55 @@ export class SelectTool extends Tool {
 				gl.disable(gl.DEPTH_TEST);
 
 				// selected vert gizmos
-				this.selectedVertices.forEach((vert) => {
-					let mat = viewport.camera.viewMatrix.copy();
+				switch (this.mode) {
+					case SelectMode.Vertex:
+						this.selectedThings.forEach(thing => {
+							let mat = viewport.camera.viewMatrix.copy();
 
-					const pos = vert.position.multMat4(mat);
+							const vert = thing as EditorVertex;
 
-					mat.translate(vert.position);
-					mat.rotate(cameraQuat);
+							const pos = vert.position.multMat4(mat);
 
-					// don't do perspective divide
-					if (viewport.threeD)
-						mat.scale(new vec3(-pos.z, -pos.z, 1));
-					else
-						mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+							mat.translate(vert.position);
+							mat.rotate(cameraQuat);
 
-					mat.scale(new vec3(0.015, 0.015, 1));
+							// don't do perspective divide
+							if (viewport.threeD)
+								mat.scale(new vec3(-pos.z, -pos.z, 1));
+							else
+								mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
 
-					gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-					gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-				});
+							mat.scale(new vec3(0.015, 0.015, 1));
 
-				gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
+							gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+							gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+						});
 
-				if (this.vertexUnderCursor && !this.selectedVertices.has(this.vertexUnderCursor)) {
-					let mat = viewport.camera.viewMatrix.copy();
+						// draw vertex under cursor
+						gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
 
-					const pos = this.vertexUnderCursor.position.multMat4(mat);
+						if (this.thingUnderCursor && !this.selectedThings.has(this.thingUnderCursor)) {
+							let mat = viewport.camera.viewMatrix.copy();
 
-					mat.translate(this.vertexUnderCursor.position);
-					mat.rotate(cameraQuat);
+							const vert = this.thingUnderCursor as EditorVertex;
 
-					// don't do perspective divide
-					if (viewport.threeD)
-						mat.scale(new vec3(-pos.z, -pos.z, 1));
-					else
-						mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+							const pos = vert.position.multMat4(mat);
 
-					mat.scale(new vec3(0.015, 0.015, 1));
+							mat.translate(vert.position);
+							mat.rotate(cameraQuat);
 
-					gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-					gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+							// don't do perspective divide
+							if (viewport.threeD)
+								mat.scale(new vec3(-pos.z, -pos.z, 1));
+							else
+								mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+
+							mat.scale(new vec3(0.015, 0.015, 1));
+
+							gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+							gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+						}
+						break;
 				}
 
 				gl.enable(gl.DEPTH_TEST);
@@ -483,12 +550,8 @@ export class SelectTool extends Tool {
 
 		if (button == 0) {
 			if (pressed) {
-				switch (this.mode) {
-					case SelectMode.Vertex:
-						if (this.startDrag(viewport)) break;
-						this.selectVertex();
-						break;
-				}
+				if (!this.startDrag(viewport))
+					this.select();
 			} else {
 				this.dragging = false;
 			}
@@ -510,42 +573,58 @@ export class SelectTool extends Tool {
 		return true;
 	}
 
-	selectVertex() {
+	select() {
 		// const v = this.getVertexUnderCursor(viewport);
 		const m = this.meshUnderCursor;
 
-		if (this.vertexUnderCursor) {
-			if (getKeyDown("ShiftLeft") && m) {
-				this.selectedVertices.add(this.vertexUnderCursor);
-				this.selectedMeshes.add(m);
-			} else if (getKeyDown("ControlLeft")) {
-				this.selectedVertices.delete(this.vertexUnderCursor);
-				this.vertexUnderCursor = null;
-
-				// make sure each mesh still has a selected vertex
-				this.selectedMeshes.forEach(mesh => {
-					const it = mesh.verts.values();
-					let i = it.next();
-					while (!i.done) {
-						const v = i.value;
-
-						// we're good :)
-						if (this.selectedVertices.has(v))
-							return;
-
-						i = it.next();
-					}
-
-					// bad mesh >:(
-					this.selectedMeshes.delete(mesh);
-				});
-			} else if (m) {
-				this.selectedVertices.clear();
-				this.selectedMeshes.clear();
-				this.selectedVertices.add(this.vertexUnderCursor);
-				this.selectedMeshes.add(m);
+		const addThing = () => {
+			if (this.mode == SelectMode.Vertex || this.mode == SelectMode.Edge || this.mode == SelectMode.Face) {
+				if (this.thingUnderCursor)
+					this.selectedThings.add(this.thingUnderCursor);
 			}
 		}
+
+		if (getKeyDown("ShiftLeft") && m) {
+			addThing();
+			this.selectedMeshes.add(m);
+		} else if (getKeyDown("ControlLeft")) {
+			this.selectedThings.delete(this.thingUnderCursor);
+			this.thingUnderCursor = null;
+
+			// make sure each mesh still has a selected vertex
+			this.selectedMeshes.forEach(mesh => {
+				const it = mesh.verts.values();
+				let i = it.next();
+				while (!i.done) {
+					const v = i.value;
+
+					// we're good :)
+					if (this.selectedThings.has(v))
+						return;
+
+					i = it.next();
+				}
+
+				// bad mesh >:(
+				this.selectedMeshes.delete(mesh);
+			});
+		} else if (m) {
+			this.selectedThings.clear();
+			this.selectedMeshes.clear();
+			this.selectedMeshes.add(m);
+			addThing();
+		}
+	}
+
+	getThingUnderCursor(viewport: Viewport, selectedOnly: boolean = false): EditorVertex | EditorFullEdge
+		| EditorFace | EditorMesh | null {
+		switch (this.mode) {
+			case SelectMode.Vertex:
+				return this.getVertexUnderCursor(viewport, selectedOnly);
+				break;
+		}
+
+		return null;
 	}
 
 	getVertexUnderCursor(viewport: Viewport, selectedOnly: boolean = false): EditorVertex | null {
@@ -598,10 +677,10 @@ export class SelectTool extends Tool {
 					break;
 			} while (edge != start);
 		} else {
-			const it = this.selectedVertices.values();
+			const it = this.selectedThings.values();
 			let i = it.next();
 			while (!i.done) {
-				inner(i.value);
+				inner(i.value as EditorVertex);
 
 				i = it.next();
 			}

@@ -12,6 +12,7 @@ import { ClientGltfLoader } from "../mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
 import { Camera } from "./camera.js";
 import { currentLevel } from "../../common/entities/level.js";
+import gMath from "../../common/math/gmath.js";
 
 export let uiMatrix: mat4;
 
@@ -57,7 +58,7 @@ export function drawFrame(client: Client): void {
 		currentLevel.staticMeshes.forEach((value) => {
 			drawPrimitive(value, client.camera.viewMatrix, defaultShader);
 		});
-		
+
 		gl.useProgram(skinnedShader.program);
 		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 		drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
@@ -74,7 +75,7 @@ export function drawFrame(client: Client): void {
 export function debugTimers() {
 	for (let i = 0; i < lines.length; ++i) {
 		const line = lines[i];
-		
+
 		line.time -= Time.deltaTime;
 		if (line.time < 0) {
 			lines.splice(i, 1);
@@ -84,7 +85,7 @@ export function debugTimers() {
 
 	for (let i = 0; i < screenLines.length; ++i) {
 		const line = screenLines[i];
-		
+
 		line.time -= Time.deltaTime;
 		if (line.time < 0) {
 			screenLines.splice(i, 1);
@@ -209,7 +210,7 @@ function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix:
 
 	for (let i = 0; i < model.nodes.length; ++i) {
 		const node = model.nodes[i];
-		
+
 		// bone
 		if (node.primitives.length == 0) {
 			const mat = nodeTransforms[i].worldMatrix;
@@ -279,13 +280,16 @@ export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: numb
 	}
 }
 
-export function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase) {
+export function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase, tint?: number[]) {
 	gl.bindVertexArray(primitive.vao);
 
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, primitive.texture);
 
-	gl.uniform4fv(shader.colorUnif, primitive.color);
+	if (tint) {
+		gl.uniform4fv(shader.colorUnif, tint);
+	} else
+		gl.uniform4fv(shader.colorUnif, primitive.color);
 	gl.uniformMatrix4fv(shader.modelViewMatrixUnif, false, mat.getData());
 	gl.uniform1i(shader.samplerUnif, 0);
 
