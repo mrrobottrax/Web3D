@@ -100,11 +100,13 @@ function createPrimitive(file: Uint8Array, index: number, vertLength: number, el
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, elements, gl.STATIC_DRAW);
 
-	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
-	gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
+	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 32, 0);
+	gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 32, 12);
+	gl.vertexAttribPointer(SharedAttribs.colorAttrib, 3, gl.FLOAT, false, 32, 20);
 
 	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
+	gl.enableVertexAttribArray(SharedAttribs.colorAttrib);
 
 	gl.bindVertexArray(null);
 

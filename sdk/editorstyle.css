@@ -27,11 +27,11 @@
 
 .vertical {
 	background-color: rgb(37, 37, 37);
-	align-items: center;
+	/* align-items: center; */
 	display: flex;
 	flex-direction: column;
 	gap: 5px;
-	padding: 5px;
+	padding: 10px;
 }
 
 #game {

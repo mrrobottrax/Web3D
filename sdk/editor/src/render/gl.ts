@@ -36,7 +36,7 @@ export async function initEditorShaders() {
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
-		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
+		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default_skinned.frag"),
 		initProgramFromWeb("sdk/editor/data/shaders/grid.vert", "sdk/editor/data/shaders/grid.frag"),
 		initProgramFromWeb("sdk/editor/data/shaders/border.vert", "sdk/editor/data/shaders/border.frag"),
 	]).then((results) => {

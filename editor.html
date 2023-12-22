@@ -46,25 +46,15 @@
 		<div style="
 		display: grid;
 		grid-template-columns: 40px auto 250px;">
-			<div class="vertical">
+			<div class="vertical" style="align-items: center;">
 				<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
 					id="tool-select" alt="select">
 				<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
 					id="tool-block" alt="block">
 			</div>
 			<canvas id="game"></canvas>
-			<div class="vertical">
-				<label for="color">Color:</label>
-				<input type="color" id="color" value="#FFFFFF">
-				<hr>
-				<label for="ux">U:</label>
-				<input type="number" id="ux" value="1">
-				<input type="number" id="uy" value="1">
-				<input type="number" id="uz" value="1">
-				<label for="vx">V:</label>
-				<input type="number" id="vx" value="1">
-				<input type="number" id="vy" value="1">
-				<input type="number" id="vz" value="1">
+			<div class="vertical" id="properties-panel">
+				<!-- ADDED BY SCRIPT -->
 			</div>
 		</div>
 	</div>

@@ -175,7 +175,8 @@ export class BlockTool extends Tool {
 				v: new vec3(0, 1, 0),
 				elementCount: 0,
 				elementOffset: 0,
-				primitive: null
+				primitive: null,
+				color: [1, 1, 1, 1]
 			}
 
 			let ab: EditorHalfEdge = {

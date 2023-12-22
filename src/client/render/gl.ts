@@ -13,7 +13,8 @@ export enum SharedAttribs {
 	positionAttrib,
 	texCoordAttrib,
 	boneIdsAttrib,
-	boneWeightsAttrib
+	boneWeightsAttrib,
+	colorAttrib,
 }
 
 // ~~~~~~~~~~~~~ shaders ~~~~~~~~~~~~~~
@@ -173,7 +174,7 @@ async function initGameShaders() {
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
-		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
+		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default_skinned.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
 		uiShader.program = results[1];
@@ -335,6 +336,7 @@ export function initShaderProgram(vsSource: string, fsSource: string): WebGLProg
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.texCoordAttrib, "aTexCoord");
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.boneIdsAttrib, "aBoneIds");
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.boneWeightsAttrib, "aBoneWeights");
+	gl.bindAttribLocation(shaderProgram, SharedAttribs.colorAttrib, "aColor");
 
 	gl.linkProgram(shaderProgram);
 

@@ -1,3 +1,4 @@
+import { canvas } from "../../../../src/client/render/gl.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { ToolEnum, setTool } from "../tools/tool.js";
@@ -9,7 +10,11 @@ let keys: any = {};
 
 export function initEditorInput() {
 	document.addEventListener('keydown', event => {
-		// event.preventDefault();
+		if (editor.windowManager.activeWindow)
+			event.preventDefault();
+		else
+			return;
+
 		keys[event.code] = true;
 
 		if (tryShortcut(event.code)) return;
@@ -17,7 +22,11 @@ export function initEditorInput() {
 		editor.windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
-		// event.preventDefault();
+		if (editor.windowManager.activeWindow)
+			event.preventDefault();
+		else
+			return;
+
 		keys[event.code] = false;
 
 		if (editor.activeTool.key(event.code, false)) return;
@@ -25,31 +34,40 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("mousedown", event => {
-		// event.preventDefault();
-		editor.windowManager.setActiveWindowUnderMouse();
+		if (editor.windowManager.activeWindow)
+			event.preventDefault();
+		else
+			return;
+
+		(document.activeElement as HTMLElement).blur();
 
 		if (editor.activeTool.mouse(event.button, true)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, true);
 	});
 
 	document.addEventListener("mouseup", event => {
-		// event.preventDefault();
+		if (editor.windowManager.activeWindow)
+			event.preventDefault();
+		else
+			return;
 
 		if (editor.activeTool.mouse(event.button, false)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, false);
 	});
 
 	document.addEventListener("mousemove", event => {
-		// event.preventDefault();
+		if (editor.windowManager.activeWindow)
+			event.preventDefault();
+
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl
 
+		editor.windowManager.setActiveWindowUnderMouse();
 		if (editor.activeTool.mouseMove(event.movementX, event.movementY)) return;
 		editor.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
 	});
 
 	document.addEventListener("wheel", event => {
-		editor.windowManager.setActiveWindowUnderMouse();
 		editor.windowManager.activeWindow?.wheel(event.deltaY);
 	});
 
@@ -80,7 +98,7 @@ export function initEditorInput() {
 				FileManagement.loadMap(fileInput.files[0]);
 			}
 		});
-		
+
 		fileInput.click();
 		fileInput.remove();
 	};

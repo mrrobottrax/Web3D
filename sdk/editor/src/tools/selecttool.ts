@@ -60,21 +60,14 @@ export class SelectTool extends Tool {
 	}
 
 	override close(): void {
-		this.meshUnderCursor = null;
-		this.faceUnderCursor = null;
-		this.vertexUnderCursor = null;
-
-		this.selectedMeshes.clear();
-		this.selectedVertices?.clear();
+		this.clearSelected();
+		this.clearSelectionState();
 	}
 
 	setSelectMode(selectMode: SelectMode) {
 		this.mode = selectMode;
-		this.selectedMeshes.clear();
-		this.selectedVertices.clear();
-		this.faceUnderCursor = null;
-		this.meshUnderCursor = null;
-		this.vertexUnderCursor = null;
+		this.clearSelected();
+		this.clearSelectionState();
 
 		this.updateModeGraphics();
 	}
@@ -146,7 +139,7 @@ export class SelectTool extends Tool {
 					while (!i.done) {
 						const v = i.value;
 
-						v.updateVisuals();
+						v.updateGl();
 
 						i = it.next()
 					}
@@ -157,11 +150,12 @@ export class SelectTool extends Tool {
 			return false;
 		}
 
-
 		const underCursor = this.getMeshUnderCursor(activeViewport);
 		if (underCursor.mesh) {
 			this.meshUnderCursor = underCursor.mesh;
 			this.faceUnderCursor = underCursor.face;
+		} else {
+			this.faceUnderCursor = null;
 		}
 
 		switch (this.mode) {
@@ -628,6 +622,88 @@ export class SelectTool extends Tool {
 		return true;
 	}
 
+	updateProperties() {
+		const properties = document.getElementById("properties-panel");
+		if (!properties) { console.error("NO PROPERTIES PANEL!!"); return; }
+
+		properties.innerHTML = "";
+
+		if (this.selectedFaces.size == 0)
+			return;
+
+		{
+			const face: EditorFace = this.selectedFaces.values().next().value;
+
+			const colorHex = "#" + (face.color[0] * 255).toString(16) + (face.color[1] * 255).toString(16) + (face.color[2] * 255).toString(16);
+			const brightness = Math.floor(((face.color[0] + face.color[1] + face.color[2]) / 3) * 255);
+
+			properties.innerHTML += `
+		<label for="color_select">Color:</label>
+		<input type="color" id="color_select" value="${colorHex}">
+		<input type="number" id="color_brightness" value="${brightness}">
+		<hr>
+		<label for="ux">U:</label>
+		<input type="number" id="ux" value="1">
+		<input type="number" id="uy" value="1">
+		<input type="number" id="uz" value="1">
+		<label for="vx">V:</label>
+		<input type="number" id="vx" value="1">
+		<input type="number" id="vy" value="1">
+		<input type="number" id="vz" value="1">
+		<img id="texture_preview" src="${face.texture}" style="align-self: center; width: 128px; height: 128px">
+		<input type="text" value="${face.texture}" disabled>
+		<input type="search" placeholder="Search...">
+		<select size="15">
+			<option>Texture1</option>
+			<option>Texture2</option>
+			<option>Texture3</option>
+			<option>Texture4</option>
+		</select>
+		`;
+		}
+
+		const cselect = document.getElementById("color_select") as HTMLInputElement;
+		cselect.oninput = () => {
+			const r = parseInt(cselect.value.substring(1, 3), 16) / 255;
+			const g = parseInt(cselect.value.substring(3, 5), 16) / 255;
+			const b = parseInt(cselect.value.substring(5, 7), 16) / 255;
+
+			this.selectedFaces.forEach(face => {
+				face.color[0] = r;
+				face.color[1] = g;
+				face.color[2] = b;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateGl();
+			});
+		}
+		cselect.onblur = () => {
+			this.updateProperties();
+		};
+
+		const brightness = document.getElementById("color_brightness") as HTMLInputElement;
+		brightness.oninput = () => {
+			const v = parseInt(brightness.value) / 255;
+
+			if (isNaN(v))
+				return;
+
+			this.selectedFaces.forEach(face => {
+				face.color[0] = v;
+				face.color[1] = v;
+				face.color[2] = v;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateGl();
+			});
+		}
+		brightness.onblur = () => {
+			this.updateProperties();
+		};
+	}
+
 	select() {
 		const m = this.meshUnderCursor;
 
@@ -653,8 +729,9 @@ export class SelectTool extends Tool {
 								this.selectedMeshes.add(m);
 							}
 						}
-						else
+						else {
 							this.selectedFaces.delete(this.faceUnderCursor);
+						}
 					}
 					break;
 				case SelectMode.Mesh:
@@ -662,6 +739,8 @@ export class SelectTool extends Tool {
 						this.selectedMeshes.add(m);
 					break;
 			}
+
+			this.updateProperties();
 		}
 
 		if (getKeyDown("ShiftLeft")) {
@@ -710,11 +789,23 @@ export class SelectTool extends Tool {
 					this.selectedMeshes.delete(m);
 			}
 		} else {
-			this.selectedVertices.clear();
-			this.selectedFaces.clear();
-			this.selectedMeshes.clear();
+			this.clearSelected();
 			addThing();
 		}
+	}
+
+	clearSelected() {
+		this.selectedVertices.clear();
+		this.selectedFaces.clear();
+		this.selectedMeshes.clear();
+
+		this.updateProperties();
+	}
+
+	clearSelectionState() {
+		this.faceUnderCursor = null;
+		this.meshUnderCursor = null;
+		this.vertexUnderCursor = null;
 	}
 
 	getVertexUnderCursor(viewport: Viewport, selectedOnly: boolean = false): EditorVertex | null {

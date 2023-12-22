@@ -9,6 +9,8 @@ export interface EditorFace {
 	u: vec3;
 	v: vec3;
 
+	color: number[];
+
 	elementOffset: number;
 	elementCount: number;
 	primitive: Primitive | null;
@@ -63,7 +65,6 @@ export class EditorMesh {
 	verts: Set<EditorVertex>;
 	collisionTris: CollisionTri[];
 	primitives: Primitive[] = [];
-	color: number[] = [1, 1, 1, 1];
 	wireFrameData: {
 		vao: WebGLVertexArrayObject | null
 		vBuffer: WebGLBuffer | null
@@ -136,6 +137,7 @@ export class EditorMesh {
 				texture: face.texture,
 				u: [face.u.x, face.u.y, face.u.z],
 				v: [face.v.x, face.v.y, face.v.z],
+				color: face.color,
 			});
 		});
 
@@ -178,7 +180,6 @@ export class EditorMesh {
 			faces: faceArray,
 			halfEdges: halfEdgeArray,
 			verts: vertArray,
-			color: this.color
 		}
 	}
 
@@ -209,7 +210,8 @@ export class EditorMesh {
 				v: new vec3(face.v[0], face.v[1], face.v[2]),
 				elementCount: 0,
 				elementOffset: 0,
-				primitive: null
+				primitive: null,
+				color: face.color ? face.color : [1, 1, 1]
 			});
 		});
 
@@ -283,7 +285,6 @@ export class EditorMesh {
 		});
 
 		const m = new EditorMesh(edgeSet, faceSet, halfEdgeSet, vertSet);
-		m.color = json.color;
 
 		return m;
 	}
@@ -304,7 +305,7 @@ export class EditorMesh {
 		gl.deleteBuffer(this.wireFrameData.eBuffer);
 	}
 
-	updateVisuals() {
+	updateGl() {
 		this.cleanUpGl();
 
 		this.primitives = this.getPrimitives();
@@ -598,7 +599,7 @@ export class EditorMesh {
 		}
 
 		// put data into array
-		const vertSize = (3 + 2);
+		const vertSize = (3 + 2 + 3);
 		let verts = new Float32Array(vertCount * vertSize);
 		{
 			let index = 0;
@@ -626,6 +627,10 @@ export class EditorMesh {
 				const uv = this.calcVertexUv(v.position, f.u, f.v);
 				verts[index + 3] = uv.x;
 				verts[index + 4] = uv.y;
+
+				verts[index + 5] = f.color[0];
+				verts[index + 6] = f.color[1];
+				verts[index + 7] = f.color[2];
 
 				index += vertSize;
 			}
@@ -670,11 +675,13 @@ export class EditorMesh {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data?.elements, gl.STATIC_DRAW);
 
-		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
-		gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
+		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 32, 0);
+		gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 32, 12);
+		gl.vertexAttribPointer(SharedAttribs.colorAttrib, 3, gl.FLOAT, false, 32, 20);
 
 		gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 		gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
+		gl.enableVertexAttribArray(SharedAttribs.colorAttrib);
 
 		gl.bindVertexArray(null);
 
