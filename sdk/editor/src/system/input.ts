@@ -1,6 +1,7 @@
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
-import { ToolEnum, setTool } from "../tools/tool.js";
+import { SelectMode } from "../tools/selecttool.js";
+import { ToolEnum } from "../tools/tool.js";
 
 export let mousePosX: number;
 export let mousePosY: number;
@@ -11,7 +12,7 @@ export function initEditorInput() {
 	document.addEventListener('keydown', event => {
 		keys[event.code] = true;
 
-		if (tryShortcut(event.code)) { event.preventDefault(); return; };
+		if (tryShortcut()) { event.preventDefault(); return; };
 
 		if (document.activeElement?.tagName != "BODY") return;
 
@@ -104,33 +105,62 @@ export function getKeyDown(code: string): boolean {
 }
 
 interface Shortcut {
-	keyCode: string;
+	keyCodes: string[];
 	function: Function;
 }
 let shortcuts: Shortcut[] = [
 	{
-		keyCode: "BracketLeft",
+		keyCodes: ["BracketLeft"],
 		function: () => editor.gridSize /= 2
 	},
 	{
-		keyCode: "BracketRight",
+		keyCodes: ["BracketRight"],
 		function: () => editor.gridSize *= 2
 	},
 	{
-		keyCode: "KeyQ",
-		function: () => setTool(ToolEnum.Select)
+		keyCodes: ["KeyQ"],
+		function: () => editor.setTool(ToolEnum.Select)
 	},
 	{
-		keyCode: "KeyB",
-		function: () => setTool(ToolEnum.Block)
-	}
+		keyCodes: ["KeyB"],
+		function: () => editor.setTool(ToolEnum.Block)
+	},
+	{
+		keyCodes: ["Digit1"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Vertex)
+	},
+	{
+		keyCodes: ["Digit2"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Edge)
+	},
+	{
+		keyCodes: ["Digit3"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Face)
+	},
+	{
+		keyCodes: ["Digit4"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Mesh)
+	},
 ];
-function tryShortcut(code: string): boolean {
-	shortcuts.forEach(shortcut => {
-		if (code == shortcut.keyCode) {
+function tryShortcut(): boolean {
+	for (let i = 0; i < shortcuts.length; ++i) {
+		const shortcut = shortcuts[i];
+
+		// check if all keys in shortcut are down
+		let failedShortcut = false;
+		for (let i = 0; i < shortcut.keyCodes.length; ++i) {
+			const key = shortcut.keyCodes[i];
+
+			if (!keys[key]) {
+				failedShortcut = true;
+				break;
+			}
+		}
+
+		if (!failedShortcut) {
 			shortcut.function();
 		}
-	});
+	}
 
 	return false;
 }

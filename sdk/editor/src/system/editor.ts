@@ -5,7 +5,7 @@ import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
 import { initEditorInput } from "./input.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
-import { Tool, ToolEnum, getToolButtons as initToolButtons } from "../tools/tool.js";
+import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
@@ -86,5 +86,21 @@ export class Editor {
 		(meshes as any[]).forEach(mesh => {
 			this.meshes.add(EditorMesh.fromJson(mesh));
 		});
+	}
+
+	setTool(tool: ToolEnum) {
+		this.activeToolEnum = tool;
+	
+		switch (tool) {
+			case ToolEnum.Select:
+				this.activeTool = this.selectTool;
+	
+				break;
+			case ToolEnum.Block:
+				this.activeTool = this.blockTool;
+				break;
+		}
+	
+		updateToolButtonVisuals();
 	}
 }

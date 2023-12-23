@@ -8,7 +8,7 @@ import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
 import { Viewport } from "../windows/viewport.js";
-import { Tool } from "./tool.js";
+import { Tool, ToolEnum } from "./tool.js";
 
 export enum SelectMode {
 	Vertex,
@@ -66,6 +66,8 @@ export class SelectTool extends Tool {
 	}
 
 	setSelectMode(selectMode: SelectMode) {
+		editor.setTool(ToolEnum.Select);
+
 		this.mode = selectMode;
 		this.clearSelected();
 		this.clearSelectionState();
@@ -151,12 +153,15 @@ export class SelectTool extends Tool {
 			return false;
 		}
 
-		const underCursor = this.getMeshUnderCursor(activeViewport);
-		if (underCursor.mesh) {
-			this.meshUnderCursor = underCursor.mesh;
-			this.faceUnderCursor = underCursor.face;
-		} else {
-			this.faceUnderCursor = null;
+		if (activeViewport.perspective
+			|| (!activeViewport.perspective && this.mode == SelectMode.Mesh || this.mode == SelectMode.Face)) {
+			const underCursor = this.getMeshUnderCursor(activeViewport);
+			if (underCursor.mesh) {
+				this.meshUnderCursor = underCursor.mesh;
+				this.faceUnderCursor = underCursor.face;
+			} else {
+				this.faceUnderCursor = null;
+			}
 		}
 
 		switch (this.mode) {
@@ -227,14 +232,19 @@ export class SelectTool extends Tool {
 						do {
 							const mesh = face.mesh!;
 
+							// remove half edges
 							mesh.halfEdges.delete(edge);
 
+							// remove half edges from vertices
 							edge.tail?.edges.delete(edge);
+							if (edge.tail?.edges.size == 0) mesh.verts.delete(edge.tail);
+
+							// remove half edges from full edges
 							if (edge.full?.halfA == edge) edge.full.halfA = null;
 							if (edge.full?.halfB == edge) edge.full.halfB = null;
-
 							if (!edge.full?.halfA && !edge.full?.halfB) mesh.edges.delete(edge.full!);
 
+							// remove half edges from twins
 							if (edge.twin) edge.twin.twin = null;
 
 							if (edge?.next)
@@ -627,8 +637,9 @@ export class SelectTool extends Tool {
 
 		if (button == 0) {
 			if (pressed) {
-				if (!this.startDrag(viewport))
+				if (!this.startDrag(viewport)) {
 					this.select();
+				}
 			} else {
 				this.dragging = false;
 			}
@@ -729,16 +740,15 @@ export class SelectTool extends Tool {
 	}
 
 	select() {
-		const m = this.meshUnderCursor;
-
 		const addThing = (remove: boolean = false) => {
 			switch (this.mode) {
 				case SelectMode.Vertex:
 					if (this.vertexUnderCursor) {
 						if (!remove) {
-							if (m) {
+							const edge: EditorHalfEdge = this.vertexUnderCursor.edges.values().next().value;
+							if (edge && edge.face?.mesh) {
 								this.selectedVertices.add(this.vertexUnderCursor);
-								this.selectedMeshes.add(m);
+								this.selectedMeshes.add(edge.face.mesh);
 							}
 						}
 						else
@@ -748,9 +758,10 @@ export class SelectTool extends Tool {
 				case SelectMode.Face:
 					if (this.faceUnderCursor) {
 						if (!remove) {
-							if (m) {
+							const mesh = this.faceUnderCursor.mesh;
+							if (mesh) {
 								this.selectedFaces.add(this.faceUnderCursor);
-								this.selectedMeshes.add(m);
+								this.selectedMeshes.add(mesh);
 							}
 						}
 						else {
@@ -759,6 +770,7 @@ export class SelectTool extends Tool {
 					}
 					break;
 				case SelectMode.Mesh:
+					const m = this.meshUnderCursor;
 					if (m && !remove)
 						this.selectedMeshes.add(m);
 					break;
@@ -809,6 +821,7 @@ export class SelectTool extends Tool {
 					this.selectedMeshes.delete(mesh);
 				});
 			} else {
+				const m = this.meshUnderCursor;
 				if (m)
 					this.selectedMeshes.delete(m);
 			}
@@ -868,19 +881,29 @@ export class SelectTool extends Tool {
 		}
 
 		if (!selectedOnly) {
-			if (!this.faceUnderCursor)
-				return null;
+			if (viewport.perspective) {
+				// only do face under cursor
+				if (!this.faceUnderCursor)
+					return null;
 
-			const start = this.faceUnderCursor.halfEdge;
-			let edge: EditorHalfEdge = this.faceUnderCursor.halfEdge!;
-			do {
-				inner(edge.tail!);
+				const start = this.faceUnderCursor.halfEdge;
+				let edge: EditorHalfEdge = this.faceUnderCursor.halfEdge!;
+				do {
+					inner(edge.tail!);
 
-				if (edge.next)
-					edge = edge.next;
-				else
-					break;
-			} while (edge != start);
+					if (edge.next)
+						edge = edge.next;
+					else
+						break;
+				} while (edge != start);
+			} else {
+				// do all vertices for 2d
+				editor.meshes.forEach(mesh => {
+					mesh.verts.forEach(vert => {
+						inner(vert);
+					});
+				});
+			}
 		} else {
 			const it = this.selectedVertices.values();
 			let i = it.next();

@@ -16,29 +16,13 @@ export function getToolButtons() {
 		return;
 	}
 
-	selectButton.onclick = () => setTool(ToolEnum.Select);
-	blockButton.onclick = () => setTool(ToolEnum.Block);
+	selectButton.onclick = () => editor.setTool(ToolEnum.Select);
+	blockButton.onclick = () => editor.setTool(ToolEnum.Block);
 
-	updateVisuals();
+	updateToolButtonVisuals();
 }
 
-export function setTool(tool: ToolEnum) {
-	editor.activeToolEnum = tool;
-
-	switch (tool) {
-		case ToolEnum.Select:
-			editor.activeTool = editor.selectTool;
-
-			break;
-		case ToolEnum.Block:
-			editor.activeTool = editor.blockTool;
-			break;
-	}
-
-	updateVisuals();
-}
-
-function updateVisuals() {
+export function updateToolButtonVisuals() {
 	selectButton?.classList.remove("selected-button");
 	blockButton?.classList.remove("selected-button");
 
