@@ -126,10 +126,12 @@ export class Viewport2D extends Viewport {
 
 	startLook() {
 		this.looking = true;
+		editor.windowManager.lockActive = true;
 	}
 
 	stopLook() {
 		this.looking = false;
+		editor.windowManager.lockActive = false;
 	}
 
 	mouseMove(dx: number, dy: number): void {

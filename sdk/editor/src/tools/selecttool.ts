@@ -1,6 +1,7 @@
 import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
+import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { FileManagement } from "../file/filemanagement.js";
@@ -36,8 +37,13 @@ export class SelectTool extends Tool {
 	cursorCopy: boolean = false;
 	cursorMove: boolean = false;
 
+	startDragPos = vec3.origin();
 	dragPos: vec3 = vec3.origin();
 	dragging: boolean = false;
+
+	selectBoxStart = vec2.origin();
+	selectBoxEnd = vec2.origin();
+	creatingSelectBox = false;
 
 	constructor() {
 		super();
@@ -150,6 +156,12 @@ export class SelectTool extends Tool {
 			}
 
 			this.dragPos = end;
+			return false;
+		}
+
+		if (this.creatingSelectBox) {
+			this.selectBoxEnd = activeViewport.getGlMousePos();
+
 			return false;
 		}
 
@@ -266,11 +278,13 @@ export class SelectTool extends Tool {
 	}
 
 	drawGizmos(viewport: Viewport) {
+		const outlineFudge = 0.0002;
+
 		if (this.mode != SelectMode.Mesh) {
 			// draw selected mesh outlines
 			gl.useProgram(solidShader.program);
 			const p = viewport.camera.perspectiveMatrix.copy();
-			p.setValue(3, 2, p.getValue(3, 2) - 0.001); // fudge the numbers for visibility
+			p.setValue(3, 2, p.getValue(3, 2) - outlineFudge); // fudge the numbers for visibility
 			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
 			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
@@ -305,7 +319,7 @@ export class SelectTool extends Tool {
 			// draw selected mesh outlines
 			gl.useProgram(solidShader.program);
 			const p = viewport.camera.perspectiveMatrix.copy();
-			p.setValue(3, 2, p.getValue(3, 2) - 0.0005); // fudge the numbers for visibility
+			p.setValue(3, 2, p.getValue(3, 2) - outlineFudge); // fudge the numbers for visibility
 			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 			gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
 			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
@@ -327,6 +341,31 @@ export class SelectTool extends Tool {
 			case SelectMode.Face:
 				this.drawFaceHandles(viewport);
 				break;
+		}
+
+		// draw select box
+		if (this.creatingSelectBox && viewport == editor.windowManager.activeWindow && !viewport.perspective) {
+			gl.useProgram(solidShader.program);
+			gl.bindVertexArray(rectVao);
+
+			const selectMin = vec2.min(this.selectBoxStart, this.selectBoxEnd);
+			const selectMax = vec2.max(this.selectBoxStart, this.selectBoxEnd);
+
+			const selectCenter = selectMin.plus(selectMax).times(0.5);
+			const selectScale = new vec2(selectMax.x - selectCenter.x, selectMax.y - selectCenter.y);
+
+			const mat = mat4.identity();
+			mat.translate(new vec3(selectCenter.x, selectCenter.y, 0));
+			mat.scale(new vec3(selectScale.x, selectScale.y, 1));
+
+			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, mat4.identity().getData());
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+			gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
+
+			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+			gl.bindVertexArray(null);
+			gl.useProgram(null);
 		}
 	}
 
@@ -638,16 +677,95 @@ export class SelectTool extends Tool {
 		if (button == 0) {
 			if (pressed) {
 				if (!this.startDrag(viewport)) {
-					this.select();
+					if (!viewport.perspective) {
+						// create a select box
+						this.selectBoxStart = viewport.getGlMousePos();
+						this.selectBoxEnd = vec2.copy(this.selectBoxStart);
+						this.creatingSelectBox = true;
+						editor.windowManager.lockActive = true;
+					}
 				}
 			} else {
 				this.dragging = false;
+				this.creatingSelectBox = false;
+
+				editor.windowManager.lockActive = false;
+
+				// hasn't dragged
+				const hasntDragged = this.dragPos.equals(this.startDragPos);
+				const hasntSelectBoxed = this.selectBoxStart.equals(this.selectBoxEnd);
+
+				if (hasntDragged && hasntSelectBoxed) {
+					this.select();
+				} else if (!hasntSelectBoxed)
+					this.getUnderSelectBox();
+
+				this.startDragPos.x = 0;
+				this.startDragPos.y = 0;
+				this.startDragPos.z = 0;
+				this.dragPos.x = 0;
+				this.dragPos.y = 0;
+				this.dragPos.z = 0;
+
+				this.selectBoxStart.x = 0;
+				this.selectBoxStart.y = 0;
+				this.selectBoxEnd.x = 0;
+				this.selectBoxEnd.y = 0;
 			}
 
 			return true;
 		}
 
 		return false;
+	}
+
+	getUnderSelectBox() {
+		switch (this.mode) {
+			case SelectMode.Vertex:
+				const viewport = editor.windowManager.activeWindow as Viewport;
+
+				const persp = viewport.camera.perspectiveMatrix.copy();
+				const view = viewport.camera.viewMatrix.copy();
+
+				// don't remap z
+				persp.setValue(2, 2, 1);
+				persp.setValue(3, 2, 0);
+
+				const toScreen = persp.multiply(view);
+
+				const min = vec2.min(this.selectBoxStart, this.selectBoxEnd);
+				const max = vec2.max(this.selectBoxStart, this.selectBoxEnd);
+
+				const inner = (vert: EditorVertex) => {
+					const screenPoint = vert.position.multMat4(toScreen);
+
+					const screen2D = new vec2(screenPoint.x, screenPoint.y);
+
+					if (screen2D.x > min.x && screen2D.x < max.x && screen2D.y > min.y && screen2D.y < max.y) {
+						// vert is in box
+						this.selectedVertices.add(vert);
+						// const edge: EditorHalfEdge = vert.edges.values().next().value;
+						// if (edge && edge.face?.mesh)
+						// 	this.selectedMeshes.add(edge.face.mesh);
+						return true;
+					}
+
+					return false;
+				}
+
+				editor.meshes.forEach(mesh => {
+					let addedMeshVert = false;
+
+					mesh.verts.forEach(vert => {
+						const b = inner(vert);
+
+						if (b) addedMeshVert = true;
+					});
+
+					if (addedMeshVert)
+						this.selectedMeshes.add(mesh);
+				});
+		}
 	}
 
 	startDrag(viewport: Viewport): boolean {
@@ -657,6 +775,9 @@ export class SelectTool extends Tool {
 
 		this.dragging = true;
 		this.dragPos = viewport.getMouseWorldRounded();
+		this.startDragPos = vec3.copy(this.dragPos);
+
+		editor.windowManager.lockActive = true;
 
 		return true;
 	}
@@ -746,6 +867,7 @@ export class SelectTool extends Tool {
 					if (this.vertexUnderCursor) {
 						if (!remove) {
 							const edge: EditorHalfEdge = this.vertexUnderCursor.edges.values().next().value;
+
 							if (edge && edge.face?.mesh) {
 								this.selectedVertices.add(this.vertexUnderCursor);
 								this.selectedMeshes.add(edge.face.mesh);
@@ -855,9 +977,7 @@ export class SelectTool extends Tool {
 
 		const toScreen = persp.multiply(view);
 
-		const cursor = viewport.getRelativeMousePos().minus(viewport.size.times(0.5));
-		cursor.x /= viewport.size.x * 0.5;
-		cursor.y /= viewport.size.y * 0.5;
+		const cursor = viewport.getGlMousePos();
 
 		let bestDist = 0.01;
 		let bestVertex: EditorVertex | null = null;
@@ -872,7 +992,7 @@ export class SelectTool extends Tool {
 
 			const screen2D = new vec2(screenPoint.x, screenPoint.y);
 
-			const d = vec2.sqrDist(cursor, screen2D);
+			const d = vec2.sqrDist(cursor, screen2D) + -screenPoint.z * 0.000001; // bias to closer
 
 			if (d < bestDist) {
 				bestDist = d;

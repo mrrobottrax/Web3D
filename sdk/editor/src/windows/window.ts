@@ -33,6 +33,14 @@ export abstract class EditorWindow {
 		return new vec2(mousePosX - glProperties.offsetX - this.pos.x, mousePosY - glProperties.offsetY - this.pos.y);
 	}
 
+	getGlMousePos(): vec2 {
+		const cursor = this.getRelativeMousePos().minus(this.size.times(0.5));
+		cursor.x /= this.size.x * 0.5;
+		cursor.y /= this.size.y * 0.5;
+
+		return cursor;
+	}
+
 	key(code: string, pressed: boolean): void {
 		// console.log(code);
 	}
