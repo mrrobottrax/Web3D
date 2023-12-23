@@ -131,6 +131,7 @@ void main() {
 // ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
 export let canvas: HTMLCanvasElement;
+export let canvasContainer: HTMLElement;
 
 export let lineBuffer: WebGLBuffer | null;
 export async function initGl(): Promise<void> {
@@ -203,13 +204,15 @@ async function initGameShaders() {
 
 export function initCanvas() {
 	const c: HTMLCanvasElement | null = document.querySelector("#game");
+	const cont: HTMLElement | null = document.querySelector("#game-container");
 
-	if (!c) {
+	if (!(c && cont)) {
 		console.error("Could not find canvas");
 		return;
 	}
 
 	canvas = c;
+	canvasContainer = cont;
 }
 
 export function initializeGl() {
@@ -239,13 +242,9 @@ export function initializeGl() {
 }
 
 export function resizeCanvas() {
-	var computedStyle = getComputedStyle(canvas);
-
 	const ratio = window.devicePixelRatio;
-	const canvasW = canvas.clientWidth;
-	const canvasH = canvas.clientHeight;
-	const cssWidth = canvasW - parseFloat(computedStyle.paddingLeft) - parseFloat(computedStyle.paddingRight);
-	const cssHeight = canvasH - parseFloat(computedStyle.paddingTop) - parseFloat(computedStyle.paddingBottom);
+	const cssWidth = canvasContainer.clientWidth;
+	const cssHeight = canvasContainer.clientHeight;
 	const width = ratio * cssWidth;
 	const height = ratio * cssHeight;
 
@@ -257,8 +256,9 @@ export function resizeCanvas() {
 	glProperties.height = height;
 	glProperties.offsetX = canvas.offsetLeft * ratio;
 	glProperties.offsetY = window.innerHeight - (canvas.offsetTop * ratio + glProperties.height);
-	canvas.width = width;
-	canvas.height = height;
+
+	canvas.width = canvasContainer.clientWidth * ratio; // apparently using stored vars doesn't work???
+	canvas.height = canvasContainer.clientHeight * ratio;
 
 	glProperties.resolutionChanged = true;
 

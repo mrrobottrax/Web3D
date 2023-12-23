@@ -33,6 +33,7 @@
 	flex-direction: column;
 	gap: 5px;
 	padding: 10px;
+	border-right: 1px dotted #3d3d3d;
 }
 
 #game {

@@ -140,7 +140,7 @@ export class SelectTool extends Tool {
 					while (!i.done) {
 						const v = i.value;
 
-						v.updateGl();
+						v.updateShape();
 
 						i = it.next()
 					}
@@ -209,24 +209,50 @@ export class SelectTool extends Tool {
 	deleteSelected() {
 		switch (this.mode) {
 			case SelectMode.Mesh:
-				const it = this.selectedMeshes.values();
-				let i = it.next();
-				while (!i.done) {
-					const mesh = i.value;
+				{
+					this.selectedMeshes.forEach(mesh => {
+						mesh.cleanUpGl();
+						editor.meshes.delete(mesh);
+					});
+				}
+				break;
+			case SelectMode.Face:
+				{
+					this.selectedFaces.forEach(face => {
+						face.mesh?.faces.delete(face);
 
-					mesh.cleanUpGl();
-					editor.meshes.delete(mesh);
+						// remove all connected half edges
+						const startEdge = face.halfEdge!;
+						let edge = startEdge;
+						do {
+							const mesh = face.mesh!;
 
-					i = it.next();
+							mesh.halfEdges.delete(edge);
+
+							edge.tail?.edges.delete(edge);
+							if (edge.full?.halfA == edge) edge.full.halfA = null;
+							if (edge.full?.halfB == edge) edge.full.halfB = null;
+
+							if (!edge.full?.halfA && !edge.full?.halfB) mesh.edges.delete(edge.full!);
+
+							if (edge.twin) edge.twin.twin = null;
+
+							if (edge?.next)
+								edge = edge.next;
+							else
+								break;
+						} while (edge != startEdge);
+					});
+
+					this.selectedMeshes.forEach(mesh => {
+						mesh.updateShape();
+					});
 				}
 				break;
 		}
 
-		this.selectedMeshes.clear();
-		this.selectedVertices.clear();
-		this.vertexUnderCursor = null;
-		this.faceUnderCursor = null;
-		this.meshUnderCursor = null;
+		this.clearSelected();
+		this.clearSelectionState();
 	}
 
 	drawGizmos(viewport: Viewport) {
@@ -323,7 +349,7 @@ export class SelectTool extends Tool {
 				gl.bindVertexArray(face.primitive.vao);
 				gl.bindTexture(gl.TEXTURE_2D, face.primitive.texture);
 
-				gl.uniform4fv(defaultShader.colorUnif, [1, 1, 0.2, 1]);
+				gl.uniform4fv(defaultShader.colorUnif, [1, 1, 0.8, 1]);
 
 				gl.drawElements(gl.TRIANGLES, face.elementCount, gl.UNSIGNED_SHORT, face.elementOffset * 2);
 
@@ -476,9 +502,10 @@ export class SelectTool extends Tool {
 				for (let i = 0; i < mesh.collisionTris.length; ++i) {
 					const tri = mesh.collisionTris[i];
 
-					// ignore backfaces
-					// if (vec3.dot(tri.normal, ray.direction) > 0)
-					// 	continue;
+					if (this.mode == SelectMode.Face)
+						// ignore backfaces
+						if (vec3.dot(tri.normal, ray.direction) > 0)
+							continue;
 
 					let positions = [
 						tri.edge1.tail!.position,
@@ -549,7 +576,7 @@ export class SelectTool extends Tool {
 		// center ray
 		results.push(castRay(baseRay));
 
-		if (!viewport.perspective) {
+		if (viewport.perspective) {
 			results[0].dist -= 2; // bias towards center
 
 			const increment = 0.1;
@@ -656,12 +683,6 @@ export class SelectTool extends Tool {
 		<input type="number" id="vx" value="1">
 		<input type="number" id="vy" value="1">
 		<input type="number" id="vz" value="1">
-		<img id="texture_preview" src="${face.texture}" style="align-self: center; width: 128px; height: 128px">
-		<input type="text" value="${face.texture}" disabled>
-		<input type="search" placeholder="Search...">
-		<select size="15" id="texture_select">
-			${textureOptions}
-		</select>
 		`;
 		}
 
@@ -678,7 +699,7 @@ export class SelectTool extends Tool {
 			});
 
 			this.selectedMeshes.forEach(mesh => {
-				mesh.updateGl();
+				mesh.updateShape();
 			});
 		}
 		cselect.onblur = () => {
@@ -699,24 +720,10 @@ export class SelectTool extends Tool {
 			});
 
 			this.selectedMeshes.forEach(mesh => {
-				mesh.updateGl();
+				mesh.updateShape();
 			});
 		}
 		brightness.onblur = () => {
-			this.updateProperties();
-		};
-
-		const textureSelect = document.getElementById("texture_select") as HTMLInputElement;
-		textureSelect.oninput = () => {
-			this.selectedFaces.forEach(face => {
-				face.texture = textureSelect.value;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateGl();
-			});
-		}
-		textureSelect.onblur = () => {
 			this.updateProperties();
 		};
 	}
@@ -839,7 +846,7 @@ export class SelectTool extends Tool {
 		cursor.x /= viewport.size.x * 0.5;
 		cursor.y /= viewport.size.y * 0.5;
 
-		let bestDist = 0.002;
+		let bestDist = 0.01;
 		let bestVertex: EditorVertex | null = null;
 
 		const inner = (vert: EditorVertex) => {

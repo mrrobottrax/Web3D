@@ -55,9 +55,9 @@ export abstract class Viewport extends EditorWindow {
 		gl.useProgram(borderShader.program);
 		gl.bindVertexArray(rectVao);
 		gl.disable(gl.DEPTH_TEST);
-		
+
 		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-		
+
 		gl.enable(gl.DEPTH_TEST);
 		gl.bindVertexArray(null);
 		gl.useProgram(null);

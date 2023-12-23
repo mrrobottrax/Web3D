@@ -1,7 +1,7 @@
 import { quakeSens } from "../../../../src/client/player/input.js";
-import { Camera, nearClip } from "../../../../src/client/render/camera.js";
-import { defaultShader, gl, glProperties, solidShader } from "../../../../src/client/render/gl.js";
-import { drawLine, renderDebug } from "../../../../src/client/render/render.js";
+import { Camera } from "../../../../src/client/render/camera.js";
+import { gl, glProperties } from "../../../../src/client/render/gl.js";
+import { renderDebug } from "../../../../src/client/render/render.js";
 import { lockCursor, unlockCursor } from "../../../../src/client/system/pointerlock.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { Ray } from "../../../../src/common/math/ray.js";

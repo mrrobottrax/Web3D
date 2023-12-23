@@ -11,6 +11,7 @@ export interface EditorFace {
 
 	color: number[];
 
+	mesh: EditorMesh | null;
 	elementOffset: number;
 	elementCount: number;
 	primitive: Primitive | null;
@@ -35,7 +36,7 @@ export interface EditorFullEdge {
 
 export interface EditorVertex {
 	position: vec3;
-	edges: Set<EditorHalfEdge>;
+	edges: Set<EditorHalfEdge>; // todo: this can probably be done with
 }
 
 interface Submesh {
@@ -118,12 +119,12 @@ export class EditorMesh {
 		// create arrays
 		let edgeArray: any[] = [];
 		this.edges.forEach(edge => {
-			if (!(edge.halfA && edge.halfB))
-				return;
+			const a = edge.halfA ? halfEdgeIndices.get(edge.halfA) : -1;
+			const b = edge.halfB ? halfEdgeIndices.get(edge.halfB) : -1;
 
 			edgeArray.push({
-				halfA: halfEdgeIndices.get(edge.halfA),
-				halfB: halfEdgeIndices.get(edge.halfB),
+				halfA: a,
+				halfB: b,
 			});
 		});
 
@@ -144,7 +145,7 @@ export class EditorMesh {
 		let halfEdgeArray: any[] = [];
 		this.halfEdges.forEach(halfEdge => {
 			if (!(halfEdge.face && halfEdge.full && halfEdge.next
-				&& halfEdge.prev && halfEdge.tail && halfEdge.twin))
+				&& halfEdge.prev && halfEdge.tail))
 				return;
 
 			halfEdgeArray.push({
@@ -152,7 +153,7 @@ export class EditorMesh {
 				full: edgeIndices.get(halfEdge.full),
 				next: halfEdgeIndices.get(halfEdge.next),
 				prev: halfEdgeIndices.get(halfEdge.prev),
-				twin: halfEdgeIndices.get(halfEdge.twin),
+				twin: halfEdge.twin ? halfEdgeIndices.get(halfEdge.twin) : -1,
 				tail: vertIndices.get(halfEdge.tail)
 			});
 		});
@@ -211,7 +212,8 @@ export class EditorMesh {
 				elementCount: 0,
 				elementOffset: 0,
 				primitive: null,
-				color: face.color ? face.color : [1, 1, 1]
+				color: face.color ? face.color : [1, 1, 1],
+				mesh: null
 			});
 		});
 
@@ -235,8 +237,11 @@ export class EditorMesh {
 
 		// set up references
 		edges.forEach((edge, index) => {
-			edge.halfA = halfEdges[edgesArray[index].halfA];
-			edge.halfB = halfEdges[edgesArray[index].halfB];
+			let a = halfEdges[edgesArray[index].halfA];
+			let b = halfEdges[edgesArray[index].halfB];
+
+			edge.halfA = a ? a : null;
+			edge.halfB = b ? b : null;
 		});
 
 		faces.forEach((face, index) => {
@@ -246,11 +251,13 @@ export class EditorMesh {
 		halfEdges.forEach((half, index) => {
 			const ref = halfEdgesArray[index];
 
+			const twin = halfEdges[ref.twin];
+
 			half.face = faces[ref.face];
 			half.full = edges[ref.full];
 			half.next = halfEdges[ref.next];
 			half.prev = halfEdges[ref.prev];
-			half.twin = halfEdges[ref.twin];
+			half.twin = twin ? twin : null;
 			half.tail = verts[ref.tail];
 		});
 
@@ -286,6 +293,10 @@ export class EditorMesh {
 
 		const m = new EditorMesh(edgeSet, faceSet, halfEdgeSet, vertSet);
 
+		faceSet.forEach(face => {
+			face.mesh = m;
+		});
+
 		return m;
 	}
 
@@ -300,16 +311,19 @@ export class EditorMesh {
 			gl.deleteBuffer(value.eBuffer);
 		});
 
+		this.primitives = [];
+
 		gl.deleteVertexArray(this.wireFrameData.vao);
 		gl.deleteBuffer(this.wireFrameData.vBuffer);
 		gl.deleteBuffer(this.wireFrameData.eBuffer);
 	}
 
-	updateGl() {
+	updateShape() {
 		this.cleanUpGl();
 
 		this.primitives = this.getPrimitives();
 		this.wireFrameData = this.getWireframeData();
+		this.collisionTris = this.getCollisionTris();
 	}
 
 	getWireframeData(): {

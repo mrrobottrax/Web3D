@@ -15,7 +15,7 @@
 <body>
 	<div id="editor" style="
 		display: grid;
-		grid-template-rows: auto auto">
+		grid-template-rows: 60px auto">
 		<!-- HEADER -->
 		<div style="
 			display: grid;
@@ -45,16 +45,39 @@
 		<!-- MAIN CONTENT -->
 		<div style="
 		display: grid;
-		grid-template-columns: 40px auto 250px;">
+		grid-template-columns: 40px auto 250px 350px;">
 			<div class="vertical" style="align-items: center;">
 				<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
 					id="tool-select" alt="select">
 				<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
 					id="tool-block" alt="block">
 			</div>
-			<canvas id="game"></canvas>
+			<div style="display: flex;" id="game-container">
+				<canvas id="game"></canvas>
+			</div>
 			<div class="vertical" id="properties-panel">
 				<!-- ADDED BY SCRIPT -->
+			</div>
+			<div class="vertical" id="textures-panel">
+				<div class="vertical">
+					<img id="texture-preview" src="data/levels/textures/dev.png" style="align-self: center; width: 128px; height: 128px">
+					<input id="texture-preview-name" type="text" value="data/levels/textures/dev.png" disabled>
+					<input type="search" placeholder="Search...">
+				</div>
+				<div id="texture-list" style="
+				overflow-y: scroll;
+				height: 650px;
+				display: flex;
+				flex-direction: row;
+				flex-wrap: wrap;
+				justify-content: space-evenly;
+				border: 1px dotted rgb(62, 62, 62);">
+					<!-- <div style="overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;"
+						class="button subtle-button">
+						<img src="data/levels/textures/road_stripe.png" style="align-self: center; width: 128px; height: 128px">
+						<p style="font-size: 0.5em;">data/levels/textures/road_stripe.png</p>
+					</div> -->
+				</div>
 			</div>
 		</div>
 	</div>

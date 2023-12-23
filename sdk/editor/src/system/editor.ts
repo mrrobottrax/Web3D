@@ -9,6 +9,7 @@ import { Tool, ToolEnum, getToolButtons as initToolButtons } from "../tools/tool
 import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
+import { TexturePanel } from "./texturepanel.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -40,6 +41,7 @@ export class Editor {
 		await initEditorGl();
 		initEditorInput();
 		initToolButtons();
+		TexturePanel.initTexturePanel();
 
 		const w = 0.5;
 		const h = 0.5;

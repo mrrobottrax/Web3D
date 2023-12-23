@@ -2,6 +2,7 @@ import { drawLine } from "../../../../src/client/render/render.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
+import { TexturePanel } from "../system/texturepanel.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
 
@@ -170,13 +171,14 @@ export class BlockTool extends Tool {
 		let createFace = (a: EditorVertex, b: EditorVertex, c: EditorVertex, d: EditorVertex): EditorFace => {
 			let face: EditorFace = {
 				halfEdge: null,
-				texture: "./data/levels/textures/brick.png",
+				texture: TexturePanel.activeTexture,
 				u: new vec3(1, 0, 0),
 				v: new vec3(0, 1, 0),
 				elementCount: 0,
 				elementOffset: 0,
 				primitive: null,
-				color: [1, 1, 1, 1]
+				color: [1, 1, 1, 1],
+				mesh: null
 			}
 
 			let ab: EditorHalfEdge = {
@@ -305,6 +307,13 @@ export class BlockTool extends Tool {
 		// if (!this.verifyMesh(mesh)) {
 		// 	console.error("BLOCK MESH ERROR");
 		// }
+
+		px.mesh = mesh;
+		py.mesh = mesh;
+		pz.mesh = mesh;
+		nx.mesh = mesh;
+		ny.mesh = mesh;
+		nz.mesh = mesh;
 
 		editor.meshes.add(mesh);
 

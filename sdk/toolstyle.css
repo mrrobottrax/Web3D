@@ -23,7 +23,8 @@ img {
 	image-rendering: pixelated;
 }
 
-button {
+button,
+.button {
 	background-color: rgb(48, 48, 48);
 	border-radius: 0px;
 	border-color: #3d3d3d;
@@ -32,11 +33,13 @@ button {
 	color: #9b9b9b;
 }
 
-button:hover {
+button:hover,
+.button:hover {
 	background-color: rgb(91, 91, 91);
 }
 
-button:active {
+button:active,
+.button:active {
 	background-color: rgb(69, 69, 69);
 }
 
