@@ -861,6 +861,8 @@ export class SelectTool extends Tool {
 	}
 
 	select() {
+		if (!editor.windowManager.activeWindow) return;
+
 		const addThing = (remove: boolean = false) => {
 			switch (this.mode) {
 				case SelectMode.Vertex:
