@@ -809,8 +809,8 @@ export class EditorMesh {
 
 		const max = Math.max(x, y, z);
 
-		const scaleU = 0.5;
-		const scaleV = 0.5;
+		const scaleU = 1;
+		const scaleV = 1;
 
 		if (max == x) {
 			return {
