@@ -8,6 +8,7 @@ import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.j
 import { Tool, ToolEnum, getToolButtons as initToolButtons } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
+import { FileManagement } from "../file/filemanagement.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -26,7 +27,9 @@ export class Editor {
 		this.selectTool = new SelectTool();
 		this.blockTool = new BlockTool();
 
-		this.activeTool = this.selectTool;;
+		this.activeTool = this.selectTool;
+
+		FileManagement.getAssetList();
 	}
 
 	toJSON() {

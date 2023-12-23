@@ -13,6 +13,7 @@
 	display: inline-block;
 	position: relative;
 	z-index: 100;
+	margin: 5px;
 }
 
 .windows-bar-button:hover .windows-bar-contents {

@@ -1,4 +1,3 @@
-import { canvas } from "../../../../src/client/render/gl.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { ToolEnum, setTool } from "../tools/tool.js";
@@ -10,34 +9,32 @@ let keys: any = {};
 
 export function initEditorInput() {
 	document.addEventListener('keydown', event => {
-		if (editor.windowManager.activeWindow)
-			event.preventDefault();
-		else
-			return;
-
 		keys[event.code] = true;
 
-		if (tryShortcut(event.code)) return;
+		if (tryShortcut(event.code)) { event.preventDefault(); return; };
+
+		if (document.activeElement?.tagName != "BODY") return;
+
+		event.preventDefault();
+
 		if (editor.activeTool.key(event.code, true)) return;
 		editor.windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
-		if (editor.windowManager.activeWindow)
-			event.preventDefault();
-		else
-			return;
-
 		keys[event.code] = false;
+
+		if (document.activeElement?.tagName != "BODY") return;
+
+		event.preventDefault();
 
 		if (editor.activeTool.key(event.code, false)) return;
 		editor.windowManager.activeWindow?.key(event.code, false);
 	});
 
 	document.addEventListener("mousedown", event => {
-		if (editor.windowManager.activeWindow)
-			event.preventDefault();
-		else
-			return;
+		if (!editor.windowManager.activeWindow) return;
+
+		event.preventDefault();
 
 		(document.activeElement as HTMLElement).blur();
 
@@ -46,18 +43,16 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("mouseup", event => {
-		if (editor.windowManager.activeWindow)
-			event.preventDefault();
-		else
-			return;
+		if (document.activeElement?.tagName != "BODY") return;
+
+		event.preventDefault();
 
 		if (editor.activeTool.mouse(event.button, false)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, false);
 	});
 
 	document.addEventListener("mousemove", event => {
-		if (editor.windowManager.activeWindow)
-			event.preventDefault();
+		// event.preventDefault();
 
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl

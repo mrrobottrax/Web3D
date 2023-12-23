@@ -3,6 +3,7 @@ import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
+import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
@@ -637,6 +638,11 @@ export class SelectTool extends Tool {
 			const colorHex = "#" + (face.color[0] * 255).toString(16) + (face.color[1] * 255).toString(16) + (face.color[2] * 255).toString(16);
 			const brightness = Math.floor(((face.color[0] + face.color[1] + face.color[2]) / 3) * 255);
 
+			let textureOptions = "";
+			FileManagement.texturesList.forEach(texture => {
+				textureOptions += `<option>${texture}</option>`;
+			});
+
 			properties.innerHTML += `
 		<label for="color_select">Color:</label>
 		<input type="color" id="color_select" value="${colorHex}">
@@ -653,11 +659,8 @@ export class SelectTool extends Tool {
 		<img id="texture_preview" src="${face.texture}" style="align-self: center; width: 128px; height: 128px">
 		<input type="text" value="${face.texture}" disabled>
 		<input type="search" placeholder="Search...">
-		<select size="15">
-			<option>Texture1</option>
-			<option>Texture2</option>
-			<option>Texture3</option>
-			<option>Texture4</option>
+		<select size="15" id="texture_select">
+			${textureOptions}
 		</select>
 		`;
 		}
@@ -700,6 +703,20 @@ export class SelectTool extends Tool {
 			});
 		}
 		brightness.onblur = () => {
+			this.updateProperties();
+		};
+
+		const textureSelect = document.getElementById("texture_select") as HTMLInputElement;
+		textureSelect.oninput = () => {
+			this.selectedFaces.forEach(face => {
+				face.texture = textureSelect.value;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateGl();
+			});
+		}
+		textureSelect.onblur = () => {
 			this.updateProperties();
 		};
 	}

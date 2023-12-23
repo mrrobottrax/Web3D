@@ -4,6 +4,10 @@ import { editor } from "../main.js";
 const blobSettings = { type: 'application/text' };
 
 export class FileManagement {
+	static filename: string = "untitled";
+
+	static texturesList: string[] = [];
+
 	static exportMap() {
 		console.log("Exporting map...");
 
@@ -127,7 +131,7 @@ export class FileManagement {
 
 		link.href = URL.createObjectURL(blob);
 
-		link.download = "map" + ".glvl"
+		link.download = this.filename + ".glvl"
 
 		link.click();
 		URL.revokeObjectURL(link.href);
@@ -142,7 +146,7 @@ export class FileManagement {
 
 		link.href = URL.createObjectURL(blob);
 
-		link.download = "map" + ".level"
+		link.download = this.filename + ".level"
 
 		link.click();
 		URL.revokeObjectURL(link.href);
@@ -150,6 +154,9 @@ export class FileManagement {
 
 	static async loadMap(file: File) {
 		console.log("Opening map...");
+
+		const name = file.name.substring(0, file.name.lastIndexOf("."));
+		this.filename = name;
 
 		const json = JSON.parse(await file.text());
 		
@@ -160,5 +167,24 @@ export class FileManagement {
 		console.log("Closing map...");
 
 		editor.close();
+	}
+
+	static getAssetList() {
+		const assetListPath = "sdk/editor/data/_assetlist.txt";
+
+		const req = new XMLHttpRequest();
+		req.open("GET", assetListPath);
+
+		req.onloadend = () => {
+			if (req.status != 200) {
+				console.error("ERROR GETTING ASSET LIST!");
+				return;
+			}
+
+			const json = JSON.parse(req.response);
+			this.texturesList = json.textures;
+		}
+
+		req.send();
 	}
 }

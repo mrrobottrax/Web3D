@@ -1,0 +1,9 @@
+{
+	"textures": [
+    	"data/levels/textures/brick.png",
+    	"data/levels/textures/dev.png",
+    	"data/levels/textures/road_stripe.png",
+		"data/levels/textures/road.png",
+		"data/levels/textures/walk.png"
+	]
+}
