@@ -121,7 +121,11 @@ export class SelectTool extends Tool {
 					delta: vec3) => {
 					switch (this.mode) {
 						case SelectMode.Vertex:
-							(thing as EditorVertex).position.add(delta);
+							const v = thing as EditorVertex;
+							v.position.add(delta);
+							v.position.x = Math.round(v.position.x / editor.gridSize) * editor.gridSize;
+							v.position.y = Math.round(v.position.y / editor.gridSize) * editor.gridSize;
+							v.position.z = Math.round(v.position.z / editor.gridSize) * editor.gridSize;
 							break;
 					}
 				}

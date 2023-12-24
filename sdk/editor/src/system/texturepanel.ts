@@ -14,6 +14,9 @@ export class TexturePanel {
 		this.texturePreviewName = document.getElementById("texture-preview-name") as HTMLInputElement;
 		this.textureList = document.getElementById("texture-list")!;
 
+		const textureApply = document.getElementById("texture-apply");
+		if (textureApply) textureApply.onclick = () => this.applyActiveTexture();
+
 		this.texturePreview.src = this.activeTexture;
 
 		FileManagement.texturesList.forEach(texture => {
@@ -37,9 +40,13 @@ export class TexturePanel {
 		this.texturePreview.src = this.activeTexture;
 		this.texturePreviewName.value = this.activeTexture;
 
+		this.applyActiveTexture();
+	}
+
+	static applyActiveTexture() {
 		if (editor.selectTool.mode = SelectMode.Face) {
 			editor.selectTool.selectedFaces.forEach(face => {
-				face.texture = texture;
+				face.texture = this.activeTexture;
 			});
 
 			editor.selectTool.selectedMeshes.forEach(mesh => {

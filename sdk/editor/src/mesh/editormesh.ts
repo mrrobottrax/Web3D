@@ -143,6 +143,9 @@ export class EditorMesh {
 				u: [face.u.x, face.u.y, face.u.z],
 				v: [face.v.x, face.v.y, face.v.z],
 				color: face.color,
+				scale: [face.scale.x, face.scale.y],
+				offset: [face.offset.x, face.offset.y],
+				rotation: face.rotation
 			});
 		});
 
@@ -218,9 +221,9 @@ export class EditorMesh {
 				primitive: null,
 				color: face.color ? face.color : [1, 1, 1],
 				mesh: null,
-				offset: new vec2(0, 0),
-				rotation: 0,
-				scale: vec2.one()
+				offset: face.offset ? new vec2(face.offset[0], face.offset[1]) : vec2.origin(),
+				rotation: face.rotation ? face.rotation : 0,
+				scale: face.scale ? new vec2(face.scale[0], face.scale[1]) : vec2.one(),
 			});
 		});
 

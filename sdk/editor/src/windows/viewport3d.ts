@@ -45,11 +45,12 @@ export class Viewport3D extends Viewport {
 
 		moveVector = moveVector.rotatePitch(this.pitch);
 		moveVector = moveVector.rotateYaw(this.yaw);
+		
+		moveVector.normalise();
 
-		if (getKeyDown("Space")) moveVector.y += 1;
-		if (getKeyDown("ShiftLeft")) moveVector.y -= 1;
+		if (getKeyDown("Space")) moveVector.y += 0.5;
+		if (getKeyDown("ShiftLeft")) moveVector.y -= 0.5;
 
-		// moveVector.normalise();
 
 		this.camera.position.add(moveVector.times(Time.deltaTime * editorConfig.moveSpeed));
 	}

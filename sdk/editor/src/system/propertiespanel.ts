@@ -239,8 +239,6 @@ export class PropertiesPanel {
 		scaleX.oninput = () => {
 			const x = parseFloat(scaleX.value);
 
-			console.log(x);
-
 			if (isNaN(x))
 				return;
 
