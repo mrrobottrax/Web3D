@@ -60,3 +60,7 @@ hr {
 .tall-button {
 	height: 100%;
 }
+
+input.small {
+	width: 40px;
+}

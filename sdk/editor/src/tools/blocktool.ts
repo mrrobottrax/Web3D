@@ -178,7 +178,10 @@ export class BlockTool extends Tool {
 				elementOffset: 0,
 				primitive: null,
 				color: [1, 1, 1, 1],
-				mesh: null
+				mesh: null,
+				offset: new vec2(0, 0),
+				rotation: 0,
+				scale: vec2.one()
 			}
 
 			let ab: EditorHalfEdge = {
@@ -300,7 +303,7 @@ export class BlockTool extends Tool {
 		connectEdges(nz, 2, px, 2);
 		connectEdges(nz, 4, nx, 4);
 
-		// dont need to others since they are implicitly connected
+		// dont need to connect others since they are implicitly connected
 
 		const mesh = new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet);
 

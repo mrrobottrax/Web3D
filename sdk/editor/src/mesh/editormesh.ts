@@ -1,5 +1,6 @@
 import { loadPrimitiveTexture } from "../../../../src/client/mesh/textures.js";
 import { SharedAttribs, gl, solidTex } from "../../../../src/client/render/gl.js";
+import gMath from "../../../../src/common/math/gmath.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Primitive } from "../../../../src/common/mesh/model.js";
 
@@ -8,6 +9,9 @@ export interface EditorFace {
 	texture: string;
 	u: vec3;
 	v: vec3;
+	offset: vec2;
+	rotation: number;
+	scale: vec2;
 
 	color: number[];
 
@@ -213,7 +217,10 @@ export class EditorMesh {
 				elementOffset: 0,
 				primitive: null,
 				color: face.color ? face.color : [1, 1, 1],
-				mesh: null
+				mesh: null,
+				offset: new vec2(0, 0),
+				rotation: 0,
+				scale: vec2.one()
 			});
 		});
 
@@ -638,7 +645,7 @@ export class EditorMesh {
 				}
 
 				const f: EditorFace = v.edge.face;
-				const uv = this.calcVertexUv(v.position, f.u, f.v);
+				const uv = this.calcVertexUv(v.position, f);
 				verts[index + 3] = uv.x;
 				verts[index + 4] = uv.y;
 
@@ -793,8 +800,13 @@ export class EditorMesh {
 		return tris;
 	}
 
-	calcVertexUv(position: vec3, u: vec3, v: vec3): vec2 {
-		return new vec2(vec3.dot(position, u), vec3.dot(position, v));
+	calcVertexUv(position: vec3, face: EditorFace): vec2 {
+		let p = new vec2(vec3.dot(position, face.u), vec3.dot(position, face.v));
+		p.x *= face.scale.x;
+		p.y *= face.scale.y;
+		p = p.rotateYaw(gMath.deg2Rad(face.rotation));
+		p.add(face.offset);
+		return p;
 	}
 
 	static getBoxUvForFace(face: EditorFace): {

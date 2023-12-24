@@ -803,22 +803,25 @@ export class SelectTool extends Tool {
 			});
 
 			properties.innerHTML += `
-		<label for="color_select">Color:</label>
-		<input type="color" id="color_select" value="${colorHex}">
-		<input type="number" id="color_brightness" value="${brightness}">
-		<hr>
-		<label for="ux">U:</label>
-		<input type="number" id="ux" value="1">
-		<input type="number" id="uy" value="1">
-		<input type="number" id="uz" value="1">
-		<label for="vx">V:</label>
-		<input type="number" id="vx" value="1">
-		<input type="number" id="vy" value="1">
-		<input type="number" id="vz" value="1">
+			<input type="color" id="color-select" value="${colorHex}">
+			<input type="number" id="color-brightness" value="${brightness}" class="small">
+			<hr>
+			<p>Texture</p>
+			<button id="re-align">Re-align</button>
+			<div style="display: grid; grid-template-rows: auto auto; grid-template-columns: auto auto auto; font-size: 0.75em;">
+				<p>Scale</p>
+				<p>Offset</p>
+				<p>Rotation</p>
+				<input type="number" id="scale-x" value="${face.scale.x}" class="small">
+				<input type="number" id="offset-x" value="${face.offset.x}" class="small">
+				<input type="number" id="rotation" value="${face.rotation}" class="small">
+				<input type="number" id="scale-y" value="${face.scale.y}" class="small">
+				<input type="number" id="offset-y" value="${face.offset.y}" class="small">
+			</div>
 		`;
 		}
 
-		const cselect = document.getElementById("color_select") as HTMLInputElement;
+		const cselect = document.getElementById("color-select") as HTMLInputElement;
 		cselect.oninput = () => {
 			const r = parseInt(cselect.value.substring(1, 3), 16) / 255;
 			const g = parseInt(cselect.value.substring(3, 5), 16) / 255;
@@ -833,12 +836,12 @@ export class SelectTool extends Tool {
 			this.selectedMeshes.forEach(mesh => {
 				mesh.updateShape();
 			});
-		}
+		};
 		cselect.onblur = () => {
 			this.updateProperties();
 		};
 
-		const brightness = document.getElementById("color_brightness") as HTMLInputElement;
+		const brightness = document.getElementById("color-brightness") as HTMLInputElement;
 		brightness.oninput = () => {
 			const v = parseInt(brightness.value) / 255;
 
@@ -854,9 +857,106 @@ export class SelectTool extends Tool {
 			this.selectedMeshes.forEach(mesh => {
 				mesh.updateShape();
 			});
-		}
+		};
 		brightness.onblur = () => {
 			this.updateProperties();
+		};
+
+		const realign = document.getElementById("re-align") as HTMLElement;
+		realign.onclick = () => {
+			this.selectedFaces.forEach(face => {
+				const uv = EditorMesh.getBoxUvForFace(face);
+				face.u = uv.u;
+				face.v = uv.v;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateShape();
+			});
+
+			this.updateProperties();
+		}
+
+		const scaleX = document.getElementById("scale-x") as HTMLInputElement;
+		scaleX.oninput = () => {
+			const x = parseFloat(scaleX.value);
+
+			console.log(x);
+
+			if (isNaN(x))
+				return;
+
+			this.selectedFaces.forEach(face => {
+				face.scale.x = x;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateShape();
+			});
+		};
+
+		const scaleY = document.getElementById("scale-y") as HTMLInputElement;
+		scaleY.oninput = () => {
+			const x = parseFloat(scaleY.value);
+
+			if (isNaN(x))
+				return;
+
+			this.selectedFaces.forEach(face => {
+				face.scale.y = x;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateShape();
+			});
+		};
+
+		const offsetX = document.getElementById("offset-x") as HTMLInputElement;
+		offsetX.oninput = () => {
+			const x = parseFloat(offsetX.value);
+
+			if (isNaN(x))
+				return;
+
+			this.selectedFaces.forEach(face => {
+				face.offset.x = x;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateShape();
+			});
+		};
+
+		const offsetY = document.getElementById("offset-y") as HTMLInputElement;
+		offsetY.oninput = () => {
+			const x = parseFloat(offsetY.value);
+
+			if (isNaN(x))
+				return;
+
+			this.selectedFaces.forEach(face => {
+				face.offset.y = x;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateShape();
+			});
+		};
+
+		const rotation = document.getElementById("rotation") as HTMLInputElement;
+		rotation.oninput = () => {
+			const x = parseFloat(rotation.value);
+
+			if (isNaN(x))
+				return;
+
+			this.selectedFaces.forEach(face => {
+				face.rotation = x;
+			});
+
+			this.selectedMeshes.forEach(mesh => {
+				mesh.updateShape();
+			});
 		};
 	}
 

@@ -12,9 +12,9 @@ export function initEditorInput() {
 	document.addEventListener('keydown', event => {
 		keys[event.code] = true;
 
-		if (tryShortcut()) { event.preventDefault(); return; };
-
 		if (document.activeElement?.tagName != "BODY") return;
+		
+		if (tryLowShortcuts()) { event.preventDefault(); return; };
 
 		event.preventDefault();
 
@@ -108,7 +108,7 @@ interface Shortcut {
 	keyCodes: string[];
 	function: Function;
 }
-let shortcuts: Shortcut[] = [
+let lowPriorityShortcuts: Shortcut[] = [
 	{
 		keyCodes: ["BracketLeft"],
 		function: () => editor.gridSize /= 2
@@ -142,9 +142,9 @@ let shortcuts: Shortcut[] = [
 		function: () => editor.selectTool.setSelectMode(SelectMode.Mesh)
 	},
 ];
-function tryShortcut(): boolean {
-	for (let i = 0; i < shortcuts.length; ++i) {
-		const shortcut = shortcuts[i];
+function tryLowShortcuts(): boolean {
+	for (let i = 0; i < lowPriorityShortcuts.length; ++i) {
+		const shortcut = lowPriorityShortcuts[i];
 
 		// check if all keys in shortcut are down
 		let failedShortcut = false;
