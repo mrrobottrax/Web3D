@@ -4,10 +4,10 @@ import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
-import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
+import { PropertiesPanel } from "../system/propertiespanel.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool, ToolEnum } from "./tool.js";
 
@@ -782,184 +782,6 @@ export class SelectTool extends Tool {
 		return true;
 	}
 
-	updateProperties() {
-		const properties = document.getElementById("properties-panel");
-		if (!properties) { console.error("NO PROPERTIES PANEL!!"); return; }
-
-		properties.innerHTML = "";
-
-		if (this.selectedFaces.size == 0)
-			return;
-
-		{
-			const face: EditorFace = this.selectedFaces.values().next().value;
-
-			const colorHex = "#" + (face.color[0] * 255).toString(16) + (face.color[1] * 255).toString(16) + (face.color[2] * 255).toString(16);
-			const brightness = Math.floor(((face.color[0] + face.color[1] + face.color[2]) / 3) * 255);
-
-			let textureOptions = "";
-			FileManagement.texturesList.forEach(texture => {
-				textureOptions += `<option>${texture}</option>`;
-			});
-
-			properties.innerHTML += `
-			<input type="color" id="color-select" value="${colorHex}">
-			<input type="number" id="color-brightness" value="${brightness}" class="small">
-			<hr>
-			<p>Texture</p>
-			<button id="re-align">Re-align</button>
-			<div style="display: grid; grid-template-rows: auto auto; grid-template-columns: auto auto auto; font-size: 0.75em;">
-				<p>Scale</p>
-				<p>Offset</p>
-				<p>Rotation</p>
-				<input type="number" id="scale-x" value="${face.scale.x}" class="small">
-				<input type="number" id="offset-x" value="${face.offset.x}" class="small">
-				<input type="number" id="rotation" value="${face.rotation}" class="small">
-				<input type="number" id="scale-y" value="${face.scale.y}" class="small">
-				<input type="number" id="offset-y" value="${face.offset.y}" class="small">
-			</div>
-		`;
-		}
-
-		const cselect = document.getElementById("color-select") as HTMLInputElement;
-		cselect.oninput = () => {
-			const r = parseInt(cselect.value.substring(1, 3), 16) / 255;
-			const g = parseInt(cselect.value.substring(3, 5), 16) / 255;
-			const b = parseInt(cselect.value.substring(5, 7), 16) / 255;
-
-			this.selectedFaces.forEach(face => {
-				face.color[0] = r;
-				face.color[1] = g;
-				face.color[2] = b;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-		cselect.onblur = () => {
-			this.updateProperties();
-		};
-
-		const brightness = document.getElementById("color-brightness") as HTMLInputElement;
-		brightness.oninput = () => {
-			const v = parseInt(brightness.value) / 255;
-
-			if (isNaN(v))
-				return;
-
-			this.selectedFaces.forEach(face => {
-				face.color[0] = v;
-				face.color[1] = v;
-				face.color[2] = v;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-		brightness.onblur = () => {
-			this.updateProperties();
-		};
-
-		const realign = document.getElementById("re-align") as HTMLElement;
-		realign.onclick = () => {
-			this.selectedFaces.forEach(face => {
-				const uv = EditorMesh.getBoxUvForFace(face);
-				face.u = uv.u;
-				face.v = uv.v;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-
-			this.updateProperties();
-		}
-
-		const scaleX = document.getElementById("scale-x") as HTMLInputElement;
-		scaleX.oninput = () => {
-			const x = parseFloat(scaleX.value);
-
-			console.log(x);
-
-			if (isNaN(x))
-				return;
-
-			this.selectedFaces.forEach(face => {
-				face.scale.x = x;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-
-		const scaleY = document.getElementById("scale-y") as HTMLInputElement;
-		scaleY.oninput = () => {
-			const x = parseFloat(scaleY.value);
-
-			if (isNaN(x))
-				return;
-
-			this.selectedFaces.forEach(face => {
-				face.scale.y = x;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-
-		const offsetX = document.getElementById("offset-x") as HTMLInputElement;
-		offsetX.oninput = () => {
-			const x = parseFloat(offsetX.value);
-
-			if (isNaN(x))
-				return;
-
-			this.selectedFaces.forEach(face => {
-				face.offset.x = x;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-
-		const offsetY = document.getElementById("offset-y") as HTMLInputElement;
-		offsetY.oninput = () => {
-			const x = parseFloat(offsetY.value);
-
-			if (isNaN(x))
-				return;
-
-			this.selectedFaces.forEach(face => {
-				face.offset.y = x;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-
-		const rotation = document.getElementById("rotation") as HTMLInputElement;
-		rotation.oninput = () => {
-			const x = parseFloat(rotation.value);
-
-			if (isNaN(x))
-				return;
-
-			this.selectedFaces.forEach(face => {
-				face.rotation = x;
-			});
-
-			this.selectedMeshes.forEach(mesh => {
-				mesh.updateShape();
-			});
-		};
-	}
-
 	select() {
 		if (!editor.windowManager.activeWindow) return;
 
@@ -1000,7 +822,7 @@ export class SelectTool extends Tool {
 					break;
 			}
 
-			this.updateProperties();
+			PropertiesPanel.updateProperties();
 		}
 
 		if (getKeyDown("ShiftLeft")) {
@@ -1060,7 +882,7 @@ export class SelectTool extends Tool {
 		this.selectedFaces.clear();
 		this.selectedMeshes.clear();
 
-		this.updateProperties();
+		PropertiesPanel.updateProperties();
 	}
 
 	clearSelectionState() {
@@ -1139,5 +961,29 @@ export class SelectTool extends Tool {
 		// console.log(bestDist);
 
 		return bestVertex;
+	}
+
+	selectAll() {
+		if (this.mode == SelectMode.Mesh) {
+			editor.meshes.forEach(mesh => {
+				this.selectedMeshes.add(mesh);
+			})
+			return;
+		}
+
+		this.selectedMeshes.forEach(mesh => {
+			switch (this.mode) {
+				case SelectMode.Vertex:
+					mesh.verts.forEach(vert => {
+						this.selectedVertices.add(vert);
+					})
+					break;
+				case SelectMode.Face:
+					mesh.faces.forEach(face => {
+						this.selectedFaces.add(face);
+					})
+					break;
+			}
+		});
 	}
 }

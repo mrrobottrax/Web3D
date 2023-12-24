@@ -12,11 +12,13 @@ export function initEditorInput() {
 	document.addEventListener('keydown', event => {
 		keys[event.code] = true;
 
+		if (tryHighShortcuts()) { event.preventDefault(); return; };
+
 		if (document.activeElement?.tagName != "BODY") return;
-		
-		if (tryLowShortcuts()) { event.preventDefault(); return; };
 
 		event.preventDefault();
+
+		if (tryLowShortcuts()) return;
 
 		if (editor.activeTool.key(event.code, true)) return;
 		editor.windowManager.activeWindow?.key(event.code, true);
@@ -142,6 +144,14 @@ let lowPriorityShortcuts: Shortcut[] = [
 		function: () => editor.selectTool.setSelectMode(SelectMode.Mesh)
 	},
 ];
+
+let highPriorityShortcuts: Shortcut[] = [
+	{
+		keyCodes: ["ControlLeft", "KeyA"],
+		function: () => { if (editor.activeToolEnum == ToolEnum.Select) editor.selectTool.selectAll() }
+	},
+]
+
 function tryLowShortcuts(): boolean {
 	for (let i = 0; i < lowPriorityShortcuts.length; ++i) {
 		const shortcut = lowPriorityShortcuts[i];
@@ -159,6 +169,31 @@ function tryLowShortcuts(): boolean {
 
 		if (!failedShortcut) {
 			shortcut.function();
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function tryHighShortcuts(): boolean {
+	for (let i = 0; i < highPriorityShortcuts.length; ++i) {
+		const shortcut = highPriorityShortcuts[i];
+
+		// check if all keys in shortcut are down
+		let failedShortcut = false;
+		for (let i = 0; i < shortcut.keyCodes.length; ++i) {
+			const key = shortcut.keyCodes[i];
+
+			if (!keys[key]) {
+				failedShortcut = true;
+				break;
+			}
+		}
+
+		if (!failedShortcut) {
+			shortcut.function();
+			return true;
 		}
 	}
 
