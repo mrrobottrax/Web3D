@@ -968,10 +968,11 @@ export class SelectTool extends Tool {
 			editor.meshes.forEach(mesh => {
 				this.selectedMeshes.add(mesh);
 			})
+			PropertiesPanel.updateProperties();
 			return;
 		}
 
-		this.selectedMeshes.forEach(mesh => {
+		const selectMesh = (mesh: EditorMesh) => {
 			switch (this.mode) {
 				case SelectMode.Vertex:
 					mesh.verts.forEach(vert => {
@@ -984,6 +985,16 @@ export class SelectTool extends Tool {
 					})
 					break;
 			}
+		}
+
+		this.selectedMeshes.forEach(mesh => {
+			selectMesh(mesh);
 		});
+		if (this.meshUnderCursor) {
+			selectMesh(this.meshUnderCursor);
+			this.selectedMeshes.add(this.meshUnderCursor);
+		}
+
+		PropertiesPanel.updateProperties();
 	}
 }
