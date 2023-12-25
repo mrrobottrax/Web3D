@@ -629,7 +629,7 @@ export class SelectTool extends Tool {
 		// center ray
 		results.push(castRay(baseRay));
 
-		if (viewport.perspective) {
+		if (viewport.perspective && this.mode == SelectMode.Vertex) {
 			results[0].dist -= 2; // bias towards center
 
 			const increment = 0.1;
