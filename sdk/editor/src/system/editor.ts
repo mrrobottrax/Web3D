@@ -10,6 +10,7 @@ import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
+import { CutTool } from "../tools/cuttool.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -21,20 +22,39 @@ export class Editor {
 	windowManager: WindowManager;
 	selectTool: SelectTool;
 	blockTool: BlockTool;
+	cutTool: CutTool;
 
 	constructor() {
 		this.windowManager = new WindowManager();
 
 		this.selectTool = new SelectTool();
 		this.blockTool = new BlockTool();
+		this.cutTool = new CutTool();
 
 		this.activeTool = this.selectTool;
 
 		FileManagement.getAssetList();
+
+		this.updateGridText();
 	}
 
 	toJSON() {
 		return { meshes: Array.from(this.meshes) };
+	}
+
+	decreaseGrid() {
+		this.gridSize /= 2
+		this.updateGridText();
+	}
+
+	increaseGrid() {
+		this.gridSize *= 2
+		this.updateGridText();
+	}
+
+	updateGridText() {
+		const grid = document.getElementById("grid-size");
+		if (grid) grid.innerText = `Grid: ${this.gridSize}`;
 	}
 
 	async init() {
@@ -90,17 +110,22 @@ export class Editor {
 
 	setTool(tool: ToolEnum) {
 		this.activeToolEnum = tool;
-	
+
 		switch (tool) {
 			case ToolEnum.Select:
 				this.activeTool = this.selectTool;
-	
+
 				break;
 			case ToolEnum.Block:
 				this.activeTool = this.blockTool;
 				break;
+			case ToolEnum.Cut:
+				this.activeTool = this.cutTool;
+				break;
 		}
-	
+
+		this.activeTool.onSwitch();
+
 		updateToolButtonVisuals();
 	}
 }

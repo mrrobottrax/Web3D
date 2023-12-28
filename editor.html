@@ -15,7 +15,7 @@
 <body>
 	<div id="editor" style="
 		display: grid;
-		grid-template-rows: 60px auto">
+		grid-template-rows: 60px auto 25px">
 		<!-- HEADER -->
 		<div style="
 			display: grid;
@@ -46,11 +46,14 @@
 		<div style="
 		display: grid;
 		grid-template-columns: 40px auto 250px 350px;">
+			<!-- TOOLS -->
 			<div class="vertical" style="align-items: center;">
 				<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
 					id="tool-select" alt="select">
 				<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
 					id="tool-block" alt="block">
+				<input type="image" src="sdk/editor/data/sprites/cut.png" class="pixelated toolbar-button" id="tool-cut"
+					alt="block">
 			</div>
 			<div style="display: flex;" id="game-container">
 				<canvas id="game"></canvas>
@@ -83,6 +86,10 @@
 					</div> -->
 				</div>
 			</div>
+		</div>
+		<!-- FOOTER -->
+		<div class="bar" style="padding: 5px;">
+			<p class="small" id="grid-size">Grid: 2</p>
 		</div>
 	</div>
 </body>

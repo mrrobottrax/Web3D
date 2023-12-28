@@ -72,6 +72,10 @@ export abstract class Viewport extends EditorWindow {
 			case ToolEnum.Select:
 				editor.selectTool.draw(this);
 				break;
+
+			case ToolEnum.Cut:
+				editor.cutTool.draw(this);
+				break;
 		}
 	}
 

@@ -171,7 +171,7 @@ export class SelectTool extends Tool {
 
 		if (activeViewport.perspective
 			|| (!activeViewport.perspective && this.mode == SelectMode.Mesh || this.mode == SelectMode.Face)) {
-			const underCursor = this.getMeshUnderCursor(activeViewport);
+			const underCursor = this.getMeshUnderCursor(activeViewport, activeViewport.perspective && this.mode == SelectMode.Vertex);
 			if (underCursor.mesh) {
 				this.meshUnderCursor = underCursor.mesh;
 				this.faceUnderCursor = underCursor.face;
@@ -281,14 +281,13 @@ export class SelectTool extends Tool {
 		this.clearSelectionState();
 	}
 
+	outlineFudge = 0.0002;
 	drawGizmos(viewport: Viewport) {
-		const outlineFudge = 0.0002;
-
 		if (this.mode != SelectMode.Mesh) {
 			// draw selected mesh outlines
 			gl.useProgram(solidShader.program);
 			const p = viewport.camera.perspectiveMatrix.copy();
-			p.setValue(3, 2, p.getValue(3, 2) - outlineFudge); // fudge the numbers for visibility
+			p.setValue(3, 2, p.getValue(3, 2) - this.outlineFudge); // fudge the numbers for visibility
 			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
 			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
@@ -323,7 +322,7 @@ export class SelectTool extends Tool {
 			// draw selected mesh outlines
 			gl.useProgram(solidShader.program);
 			const p = viewport.camera.perspectiveMatrix.copy();
-			p.setValue(3, 2, p.getValue(3, 2) - outlineFudge); // fudge the numbers for visibility
+			p.setValue(3, 2, p.getValue(3, 2) - this.outlineFudge); // fudge the numbers for visibility
 			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
 			gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
 			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
@@ -480,55 +479,53 @@ export class SelectTool extends Tool {
 		gl.disable(gl.DEPTH_TEST);
 
 		// selected vert gizmos
-		switch (this.mode) {
-			case SelectMode.Vertex:
-				this.selectedVertices.forEach(thing => {
-					let mat = viewport.camera.viewMatrix.copy();
+		if (this.mode == SelectMode.Vertex) {
+			this.selectedVertices.forEach(thing => {
+				let mat = viewport.camera.viewMatrix.copy();
 
-					const vert = thing as EditorVertex;
+				const vert = thing as EditorVertex;
 
-					const pos = vert.position.multMat4(mat);
+				const pos = vert.position.multMat4(mat);
 
-					mat.translate(vert.position);
-					mat.rotate(cameraQuat);
+				mat.translate(vert.position);
+				mat.rotate(cameraQuat);
 
-					// don't do perspective divide
-					if (viewport.perspective)
-						mat.scale(new vec3(-pos.z, -pos.z, 1));
-					else
-						mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+				// don't do perspective divide
+				if (viewport.perspective)
+					mat.scale(new vec3(-pos.z, -pos.z, 1));
+				else
+					mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
 
-					mat.scale(new vec3(0.015, 0.015, 1));
+				mat.scale(new vec3(0.015, 0.015, 1));
 
-					gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-					gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-				});
+				gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+				gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+			});
 
-				// draw vertex under cursor
-				gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
+			// draw vertex under cursor
+			gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
 
-				if (this.vertexUnderCursor && !this.selectedVertices.has(this.vertexUnderCursor)) {
-					let mat = viewport.camera.viewMatrix.copy();
+			if (this.vertexUnderCursor && !this.selectedVertices.has(this.vertexUnderCursor)) {
+				let mat = viewport.camera.viewMatrix.copy();
 
-					const vert = this.vertexUnderCursor as EditorVertex;
+				const vert = this.vertexUnderCursor as EditorVertex;
 
-					const pos = vert.position.multMat4(mat);
+				const pos = vert.position.multMat4(mat);
 
-					mat.translate(vert.position);
-					mat.rotate(cameraQuat);
+				mat.translate(vert.position);
+				mat.rotate(cameraQuat);
 
-					// don't do perspective divide
-					if (viewport.perspective)
-						mat.scale(new vec3(-pos.z, -pos.z, 1));
-					else
-						mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+				// don't do perspective divide
+				if (viewport.perspective)
+					mat.scale(new vec3(-pos.z, -pos.z, 1));
+				else
+					mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
 
-					mat.scale(new vec3(0.015, 0.015, 1));
+				mat.scale(new vec3(0.015, 0.015, 1));
 
-					gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-					gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-				}
-				break;
+				gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+				gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+			}
 		}
 
 		gl.enable(gl.DEPTH_TEST);
@@ -537,7 +534,7 @@ export class SelectTool extends Tool {
 		gl.useProgram(null);
 	}
 
-	getMeshUnderCursor(viewport: Viewport): {
+	getMeshUnderCursor(viewport: Viewport, generous: boolean = false): {
 		mesh: EditorMesh | null,
 		face: EditorFace | null,
 	} {
@@ -629,7 +626,7 @@ export class SelectTool extends Tool {
 		// center ray
 		results.push(castRay(baseRay));
 
-		if (viewport.perspective && this.mode == SelectMode.Vertex) {
+		if (generous) {
 			results[0].dist -= 2; // bias towards center
 
 			const increment = 0.1;

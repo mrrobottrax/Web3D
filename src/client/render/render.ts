@@ -97,24 +97,23 @@ export function debugTimers() {
 export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 	// draw lines
 	gl.useProgram(solidShader.program);
+	gl.bindVertexArray(null);
 
 	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewMatrix.getData());
 
 	gl.disable(gl.DEPTH_TEST);
+	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
+	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(0);
 
 	for (let i = 0; i < lines.length; ++i) {
 		const line = lines[i];
 
 		gl.uniform4fv(solidShader.colorUnif, line.color);
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
 		gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
 			line.start.x, line.start.y, line.start.z, line.end.x, line.end.y, line.end.z]));
-
-		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-
-		gl.enableVertexAttribArray(0);
 
 		gl.drawArrays(gl.LINES, 0, 2);
 	}
@@ -127,13 +126,8 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 
 		gl.uniform4fv(solidShader.colorUnif, line.color);
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
 		gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
 			line.start.x, line.start.y, line.start.z, line.end.x, line.end.y, line.end.z]));
-
-		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-
-		gl.enableVertexAttribArray(0);
 
 		gl.drawArrays(gl.LINES, 0, 2);
 	}

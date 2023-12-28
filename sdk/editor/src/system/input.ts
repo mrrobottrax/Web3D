@@ -113,19 +113,11 @@ interface Shortcut {
 let lowPriorityShortcuts: Shortcut[] = [
 	{
 		keyCodes: ["BracketLeft"],
-		function: () => editor.gridSize /= 2
+		function: () => editor.decreaseGrid()
 	},
 	{
 		keyCodes: ["BracketRight"],
-		function: () => editor.gridSize *= 2
-	},
-	{
-		keyCodes: ["KeyQ"],
-		function: () => editor.setTool(ToolEnum.Select)
-	},
-	{
-		keyCodes: ["KeyB"],
-		function: () => editor.setTool(ToolEnum.Block)
+		function: () => editor.increaseGrid()
 	},
 	{
 		keyCodes: ["Digit1"],
@@ -142,6 +134,18 @@ let lowPriorityShortcuts: Shortcut[] = [
 	{
 		keyCodes: ["Digit4"],
 		function: () => editor.selectTool.setSelectMode(SelectMode.Mesh)
+	},
+	{
+		keyCodes: ["KeyQ"],
+		function: () => editor.setTool(ToolEnum.Select)
+	},
+	{
+		keyCodes: ["KeyB"],
+		function: () => editor.setTool(ToolEnum.Block)
+	},
+	{
+		keyCodes: ["KeyC"],
+		function: () => editor.setTool(ToolEnum.Cut)
 	},
 ];
 
