@@ -130,9 +130,7 @@ export class Viewport3D extends Viewport {
 		let a = new vec3(v.x, 0, v.y);
 
 		// Snap
-		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize;
-		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize;
-		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize;
+		editor.snapToGrid(a);
 
 		return a;
 	}

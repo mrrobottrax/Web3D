@@ -110,7 +110,7 @@ export class SelectTool extends Tool {
 
 		if (activeViewport.looking) return false;
 
-		if (this.dragging) {
+		if (this.dragging && this.mode == SelectMode.Vertex) {
 			const start = this.dragPos;
 			const end = activeViewport.getMouseWorldRounded();
 
@@ -118,17 +118,9 @@ export class SelectTool extends Tool {
 				const delta = end.minus(start);
 				this.hasDragged = true;
 
-				const move = (thing: EditorVertex | EditorFullEdge | EditorFace | EditorMesh,
-					delta: vec3) => {
-					switch (this.mode) {
-						case SelectMode.Vertex:
-							const v = thing as EditorVertex;
-							v.position.add(delta);
-							v.position.x = Math.round(v.position.x / editor.gridSize) * editor.gridSize;
-							v.position.y = Math.round(v.position.y / editor.gridSize) * editor.gridSize;
-							v.position.z = Math.round(v.position.z / editor.gridSize) * editor.gridSize;
-							break;
-					}
+				const move = (vert: EditorVertex, delta: vec3) => {
+					vert.position.add(delta);
+					editor.snapToGrid(vert.position);
 				}
 
 				// move selected

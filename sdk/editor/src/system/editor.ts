@@ -11,7 +11,7 @@ import { SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
-import { quaternion } from "../../../../src/common/math/vector.js";
+import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -132,5 +132,11 @@ export class Editor {
 		this.activeTool.onSwitch();
 
 		updateToolButtonVisuals();
+	}
+
+	snapToGrid(v: vec3): void {
+		v.x = Math.round(v.x / this.gridSize) * this.gridSize;
+		v.y = Math.round(v.y / this.gridSize) * this.gridSize;
+		v.z = Math.round(v.z / this.gridSize) * this.gridSize;
 	}
 }

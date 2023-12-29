@@ -177,9 +177,7 @@ export class Viewport2D extends Viewport {
 		a = a.rotate(this.camera.rotation);
 
 		// Snap
-		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize;
-		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize;
-		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize;
+		editor.snapToGrid(a);
 
 		return a;
 	}
