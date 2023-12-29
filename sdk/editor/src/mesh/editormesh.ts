@@ -191,7 +191,7 @@ export class EditorMesh {
 		}
 	}
 
-	static fromJson(json: any): EditorMesh {
+	static fromJson(json: any): EditorMesh | null {
 		const edgesArray: any[] = json.edges;
 		const facesArray: any[] = json.faces;
 		const halfEdgesArray: any[] = json.halfEdges;
@@ -201,6 +201,8 @@ export class EditorMesh {
 		let faces: EditorFace[] = [];
 		let halfEdges: EditorHalfEdge[] = [];
 		let verts: EditorVertex[] = [];
+
+		if (facesArray.length == 0) return null;
 
 		// allocate memory
 		edgesArray.forEach(() => {
@@ -223,7 +225,7 @@ export class EditorMesh {
 				mesh: null,
 				offset: face.offset ? new vec2(face.offset[0], face.offset[1]) : vec2.origin(),
 				rotation: face.rotation ? face.rotation : 0,
-				scale: face.scale ? new vec2(face.scale[0], face.scale[1]) : vec2.one(),
+				scale: face.scale ? new vec2(face.scale[0], face.scale[1]) : vec2.one()
 			});
 		});
 
@@ -857,5 +859,145 @@ export class EditorMesh {
 				v: new vec3(0, scaleV, 0)
 			}
 		}
+	}
+
+	validate(): boolean {
+		// validate half edges
+		this.halfEdges.forEach(edge => {
+			if (edge.twin) {
+				const twin = edge.twin;
+				if (twin.twin != edge) return false;
+				if (!this.halfEdges.has(twin)) return false;
+			}
+		});
+
+		let invalid = false;
+
+		// remove extra verts
+		this.verts.forEach(vert => {
+			if (vert.edges.size == 0) {
+				this.verts.delete(vert);
+				invalid = true;
+				return;
+			}
+
+			const it = vert.edges.values();
+			let i = it.next();
+			while (!i.done) {
+				const edge: EditorHalfEdge = i.value;
+
+				if (!this.halfEdges.has(edge) || edge.tail != vert) {
+					vert.edges.delete(edge);
+					invalid = true;
+				}
+
+				i = it.next();
+			}
+		});
+
+		this.halfEdges.forEach(edge => {
+			if (!edge.full || !this.faces.has(edge.face!)) {
+				this.halfEdges.delete(edge);
+				invalid = true;
+				return;
+			}
+		});
+
+		this.edges.forEach(edge => {
+			if (!(edge.halfA && this.halfEdges.has(edge.halfA)) && !(edge.halfB && this.halfEdges.has(edge.halfB))) {
+				this.edges.delete(edge);
+				invalid = true;
+				return;
+			}
+		});
+
+		this.faces.forEach(face => {
+			let loops = true;
+			let allLeadBack = true;
+			let allExist = true;
+			let numEdge = 0;
+
+			const start = face.halfEdge;
+			let edge = start;
+			do {
+				if (edge?.face != face) {
+					allLeadBack = false;
+					break;
+				}
+
+				if (!this.halfEdges.has(edge)) {
+					allExist = false;
+					break;
+				}
+
+				if (edge?.next) {
+					edge = edge.next;
+				} else {
+					loops = false;
+					break;
+				}
+				++numEdge;
+			} while (edge != start);
+
+			if (!allLeadBack || !loops || !allExist) {
+				this.faces.delete(face);
+				invalid = true;
+				return;
+			}
+		});
+
+		return !invalid;
+	}
+
+	deleteFace(face: EditorFace) {
+		this.faces.delete(face);
+
+		// remove all connected half edges
+		const startEdge = face.halfEdge!;
+		let edge = startEdge;
+		do {
+			// remove half edges
+			this.halfEdges.delete(edge);
+
+			// remove half edges from vertices
+			edge.tail?.edges.delete(edge);
+			if (edge.tail?.edges.size == 0) this.verts.delete(edge.tail);
+
+			// remove half edges from full edges
+			if (edge.full?.halfA == edge) edge.full.halfA = null;
+			if (edge.full?.halfB == edge) edge.full.halfB = null;
+			if (!edge.full?.halfA && !edge.full?.halfB) this.edges.delete(edge.full!);
+
+			// remove half edges from twins
+			if (edge.twin) edge.twin.twin = null;
+
+			if (edge?.next)
+				edge = edge.next;
+			else
+				break;
+		} while (edge != startEdge);
+	}
+
+	deleteEdge(edge: EditorFullEdge) {
+		if (edge.halfA?.face) {
+			this.deleteFace(edge.halfA.face);
+		}
+		if (edge.halfB?.face) {
+			this.deleteFace(edge.halfB.face);
+		}
+	}
+
+	unsafeDeleteEdge(edge: EditorFullEdge) {
+		if (edge.halfA) {
+			this.unsafeDeleteHalfEdge(edge.halfA);
+		}
+		if (edge.halfB) {
+			this.unsafeDeleteHalfEdge(edge.halfB);
+		}
+	}
+
+	unsafeDeleteHalfEdge(edge: EditorHalfEdge) {
+		this.halfEdges.delete(edge);
+		edge.tail?.edges.delete(edge);
 	}
 }

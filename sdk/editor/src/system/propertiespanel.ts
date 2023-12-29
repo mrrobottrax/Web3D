@@ -1,7 +1,8 @@
+import { drawLine } from "../../../../src/client/render/render.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
-import { EditorFace, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
+import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { SelectMode } from "../tools/selecttool.js";
 
 export class PropertiesPanel {
@@ -65,6 +66,50 @@ export class PropertiesPanel {
 									edges.add(edge);
 								});
 
+								const collapseEdge = (edge: EditorHalfEdge) => {
+									const full = edge.full!;
+
+									mesh.edges.delete(full);
+									edges.delete(edge);
+									edges.delete(edge.twin!);
+
+									const a = full.halfA;
+									const b = full.halfB;
+
+									const inner = (e: EditorHalfEdge) => {
+										mesh.halfEdges.delete(e);
+										e.tail?.edges.delete(e);
+										if (e.next) {
+											e.next.tail = e.tail;
+											e.next.prev = e.prev;
+											if (e.prev) e.prev.next = e.next;
+										}
+									}
+
+									if (a) {
+										inner(a);
+									}
+
+									if (b) {
+										inner(b);
+									}
+								}
+
+								// check if these verts share an edge
+								vert1.edges.forEach((edge) => {
+									if (edge.next?.tail == vert2) {
+										// collapse the shared edge
+										collapseEdge(edge);
+									}
+								});
+
+								// try the other way around too
+								vert2.edges.forEach((edge) => {
+									if (edge.next?.tail == vert1) {
+										collapseEdge(edge);
+									}
+								});
+
 								const newVert: EditorVertex = {
 									position: position,
 									edges: edges
@@ -80,6 +125,50 @@ export class PropertiesPanel {
 								mesh.verts.delete(vert1);
 								mesh.verts.delete(vert2);
 								newVerts.push(newVert);
+
+								// check if we've created a new pair of twins
+								newVert.edges.forEach(edge1 => {
+									const otherVert = edge1.next?.tail;
+
+									if (!otherVert) return;
+
+									otherVert.edges.forEach(edge2 => {
+										if (edge2.next?.tail == newVert) {
+											if (edge2.twin != edge1 || edge1.twin != edge2) {
+												if (edge1.face && edge1.face == edge2.face) {
+													// inner
+													if (edge1.twin && edge2.twin) {
+														mesh.deleteFace(edge1.face);
+														mesh.edges.delete(edge2.full!);
+														const full = edge1.full!
+
+														edge1.twin.twin = edge2.twin;
+														edge2.twin.twin = edge1.twin;
+
+														full.halfA = edge1.twin;
+														full.halfB = edge2.twin;
+
+														edge1.twin.full = full;
+														edge2.twin.full = full;
+													}
+												} else if (!edge1.twin && !edge2.twin) {
+													// outer
+													mesh.edges.delete(edge2.full!);
+													const full = edge1.full!
+
+													full.halfA = edge1;
+													full.halfB = edge2;
+
+													edge1.twin = edge2;
+													edge2.twin = edge1;
+
+													edge1.full = full;
+													edge2.full = full;
+												}
+											}
+										}
+									});
+								});
 							}
 						}
 						i2 = it2.next();
@@ -94,7 +183,9 @@ export class PropertiesPanel {
 				newVerts.forEach(vert => {
 					mesh.verts.add(vert);
 				});
-			})
+
+				mesh.updateShape();
+			});
 		}
 	}
 
@@ -103,9 +194,24 @@ export class PropertiesPanel {
 		if (select.selectedMeshes.size == 0) return;
 
 		properties.innerHTML += `
-		<button class="wide margin" id="cleanup">Clean up</button>
+		<button class="wide margin" id="print">Print</button>
+		<button class="wide margin" id="validate">Validate</button>
 		<button class="wide margin" id="combine">Combine meshes</button>
 		`;
+
+		const print = document.getElementById("print") as HTMLElement;
+		print.onclick = () => {
+			console.log(select.selectedMeshes);
+		}
+
+		const validate = document.getElementById("validate") as HTMLElement;
+		validate.onclick = () => {
+			select.selectedMeshes.forEach(mesh => {
+				if (mesh.faces.size == 0 || !mesh.validate()) {
+					editor.meshes.delete(mesh);
+				}
+			});
+		}
 
 		const combine = document.getElementById("combine") as HTMLElement;
 		combine.onclick = () => {
@@ -134,17 +240,6 @@ export class PropertiesPanel {
 			editor.meshes.add(newMesh);
 			newMesh.updateShape();
 		}
-
-		const cleanup = document.getElementById("cleanup") as HTMLElement;
-		cleanup.onclick = () => {
-			select.selectedMeshes.forEach(mesh => {
-				mesh.verts.forEach(vert => {
-					if (vert.edges.size == 0) mesh.verts.delete(vert);
-				});
-
-				mesh.updateShape();
-			});
-		}
 	}
 
 	static faceProperties(properties: HTMLElement) {
@@ -153,7 +248,12 @@ export class PropertiesPanel {
 
 		const face: EditorFace = select.selectedFaces.values().next().value;
 
-		const colorHex = "#" + (face.color[0] * 255).toString(16) + (face.color[1] * 255).toString(16) + (face.color[2] * 255).toString(16);
+		const d2h = (d: number) => {
+			var h = (d).toString(16);
+			return h.length % 2 ? '0' + h : h;
+		}
+
+		const colorHex = "#" + d2h(face.color[0] * 255) + d2h(face.color[1] * 255) + d2h(face.color[2] * 255);
 		const faceBright = Math.floor(((face.color[0] + face.color[1] + face.color[2]) / 3) * 255);
 
 		let textureOptions = "";

@@ -71,6 +71,85 @@ export class CutTool extends Tool {
 
 	finishCut() {
 		console.log("DONE");
+
+		// for each line
+		this.points.forEach((point, index) => {
+			if (this.points.length <= index + 1) return;
+
+			const next = this.points[index + 1];
+
+			// todo: allow other types of points
+
+			// add vertex in the middle of the first edge
+			const full = point.edge!.full;
+			const mesh = point.edge!.face!.mesh!;
+
+			const newFull: EditorFullEdge = {
+				halfA: null,
+				halfB: null
+			}
+
+			const newVert: EditorVertex = {
+				position: point.position,
+				edges: new Set()
+			}
+
+			// mesh.edges.add(newFull);
+			// mesh.verts.add(newVert);
+
+			let c: EditorHalfEdge | null = null;
+			let d: EditorHalfEdge | null = null;
+
+			if (full?.halfA) {
+				console.log("A");
+
+				// const a = full.halfA;
+
+				// c = {
+				// 	prev: a,
+				// 	next: a.next,
+				// 	twin: null,
+				// 	face: a.face,
+				// 	full: newFull,
+				// 	tail: newVert
+				// }
+
+				// newFull.halfA = c;
+				// a.next!.prev = c;
+				// a.next = c;
+
+				// mesh.halfEdges.add(c);
+			}
+
+			if (full?.halfB) {
+				console.log("B");
+
+				// const b = full.halfB;
+
+				// d = {
+				// 	prev: b.prev,
+				// 	next: b,
+				// 	twin: null,
+				// 	face: b.face,
+				// 	full: newFull,
+				// 	tail: b.tail
+				// }
+
+				// b.tail = newVert;
+
+				// newFull.halfB = d;
+				// b.prev!.next = d;
+				// b.prev = d;
+
+				// mesh.halfEdges.add(d);
+			}
+			
+			// if (c && d) {
+			// 	c.twin = d;
+			// 	d.twin = c;
+			// }
+		});
+
 		this.cutting = false;
 		this.points = [];
 	}
@@ -223,7 +302,7 @@ export class CutTool extends Tool {
 		let bestDist = Infinity;
 		let bestPoint: Point | null = null;
 
-		this.allPoints.forEach(point => {
+		const inner = (point: Point) => {
 			const screenPoint = point.position.multMat4(toScreen);
 
 			if (viewport.perspective) {
@@ -239,7 +318,13 @@ export class CutTool extends Tool {
 				bestDist = d;
 				bestPoint = point;
 			}
+		}
+
+		this.allPoints.forEach(point => {
+			inner(point);
 		});
+
+		// todo: allow mid-face points
 
 		return bestPoint;
 	}

@@ -104,7 +104,9 @@ export class Editor {
 		this.close();
 
 		(meshes as any[]).forEach(mesh => {
-			this.meshes.add(EditorMesh.fromJson(mesh));
+			const m = EditorMesh.fromJson(mesh);
+			if (m)
+				this.meshes.add(m);
 		});
 	}
 

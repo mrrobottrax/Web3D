@@ -181,7 +181,7 @@ export class BlockTool extends Tool {
 				mesh: null,
 				offset: new vec2(0, 0),
 				rotation: 0,
-				scale: vec2.one()
+				scale: vec2.one(),
 			}
 
 			let ab: EditorHalfEdge = {

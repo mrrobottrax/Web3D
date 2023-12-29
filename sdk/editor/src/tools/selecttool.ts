@@ -240,34 +240,7 @@ export class SelectTool extends Tool {
 			case SelectMode.Face:
 				{
 					this.selectedFaces.forEach(face => {
-						face.mesh?.faces.delete(face);
-
-						// remove all connected half edges
-						const startEdge = face.halfEdge!;
-						let edge = startEdge;
-						do {
-							const mesh = face.mesh!;
-
-							// remove half edges
-							mesh.halfEdges.delete(edge);
-
-							// remove half edges from vertices
-							edge.tail?.edges.delete(edge);
-							if (edge.tail?.edges.size == 0) mesh.verts.delete(edge.tail);
-
-							// remove half edges from full edges
-							if (edge.full?.halfA == edge) edge.full.halfA = null;
-							if (edge.full?.halfB == edge) edge.full.halfB = null;
-							if (!edge.full?.halfA && !edge.full?.halfB) mesh.edges.delete(edge.full!);
-
-							// remove half edges from twins
-							if (edge.twin) edge.twin.twin = null;
-
-							if (edge?.next)
-								edge = edge.next;
-							else
-								break;
-						} while (edge != startEdge);
+						face.mesh!.deleteFace(face);
 					});
 
 					this.selectedMeshes.forEach(mesh => {
