@@ -155,7 +155,7 @@ export class Viewport2D extends Viewport {
 	}
 
 	override screenToGrid(v: vec2): vec2 {
-		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(new vec2(this.camera.position.x, this.camera.position.y));
 	}
 
 	override screenRay(): Ray {

@@ -327,7 +327,7 @@ export class vec2 {
 		return Math.sqrt(this.sqrMagnitude());
 	}
 
-	public normalise() {
+	public normalize() {
 		const m = this.magnitide();
 		if (m == 0)
 			return;
@@ -336,7 +336,7 @@ export class vec2 {
 		this.y /= m;
 	}
 
-	public normalised(): vec2 {
+	public normalized(): vec2 {
 		const m = this.magnitide();
 		if (m == 0)
 			return this;
@@ -420,7 +420,7 @@ export class quaternion {
 		result.z = gMath.lerp(a.z, b.z, t);
 		result.w = gMath.lerp(a.w, b.w, t);
 
-		result.normalise();
+		result.normalize();
 
 		return result;
 	}
@@ -452,7 +452,7 @@ export class quaternion {
 		const theta = theta0 * t;
 
 		const b2 = _b.add(a.mult(-dot));
-		b2.normalise(); // todo: needed?
+		b2.normalize(); // todo: needed?
 
 		return a.mult(Math.cos(theta)).add(b2.mult(Math.sin(theta)));
 	}
@@ -487,7 +487,7 @@ export class quaternion {
 		return q;
 	}
 
-	public normalise(): void {
+	public normalize(): void {
 		const squared_norm = this.w * this.w + this.x * this.x + this.y * this.y + this.z * this.z;
 		const length = Math.sqrt(squared_norm);
 		this.w /= length;
@@ -500,9 +500,9 @@ export class quaternion {
 		return new quaternion(q.w, q.x, q.y, q.z);
 	}
 
-	public normalised(): quaternion {
+	public normalized(): quaternion {
 		let result = quaternion.copy(this);
-		result.normalise();
+		result.normalize();
 		return result;
 	}
 

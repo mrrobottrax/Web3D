@@ -1,4 +1,4 @@
-import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, defaultShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, UninstancedTextureShaderBase, defaultShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
@@ -146,7 +146,7 @@ function drawPlayersDebug(otherPlayers: IterableIterator<ClientPlayer>, camera: 
 	}
 }
 
-function drawProp(prop: PropBase, shader: UninstancedShaderBase, camera: Camera) {
+function drawProp(prop: PropBase, shader: UninstancedTextureShaderBase, camera: Camera) {
 	// apply hierarchy
 	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
 		const transform = prop.nodeTransforms[node.index];
@@ -181,7 +181,7 @@ function drawProp(prop: PropBase, shader: UninstancedShaderBase, camera: Camera)
 	}
 }
 
-function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix: mat4, shader: UninstancedShaderBase, camera: Camera) {
+function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix: mat4, shader: UninstancedTextureShaderBase, camera: Camera) {
 	// apply hierarchy
 	const hierarchyRecursive = (node: HierarchyNode, parentMat: mat4) => {
 		const transform = nodeTransforms[node.index];
@@ -272,7 +272,7 @@ export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: numb
 	}
 }
 
-export function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedShaderBase, tint?: number[]) {
+export function drawPrimitive(primitive: Primitive, mat: mat4, shader: UninstancedTextureShaderBase, tint?: number[]) {
 	gl.bindVertexArray(primitive.vao);
 
 	gl.activeTexture(gl.TEXTURE0);

@@ -400,39 +400,33 @@ export class SelectTool extends Tool {
 	}
 
 	drawFaceHandles(viewport: Viewport) {
-		gl.useProgram(defaultShader.program);
+		gl.useProgram(solidShader.program);
 
-		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
-		gl.uniformMatrix4fv(defaultShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
+		gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
 
-		gl.activeTexture(gl.TEXTURE0);
-		gl.uniform1i(defaultShader.samplerUnif, 0);
-
+		// face under cursor
+		gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 0.2]);
 		if (viewport.perspective) {
 			const face = this.faceUnderCursor;
-			if (face?.primitive) {
+			if (face?.primitive && !this.selectedFaces.has(face)) {
 				gl.bindVertexArray(face.primitive.vao);
-				gl.bindTexture(gl.TEXTURE_2D, face.primitive.texture);
-
-				gl.uniform4fv(defaultShader.colorUnif, [0.5, 0.8, 1, 1]);
 
 				gl.drawElements(gl.TRIANGLES, face.elementCount, gl.UNSIGNED_SHORT, face.elementOffset * 2);
 
-				gl.bindTexture(gl.TEXTURE_2D, null);
 				gl.bindVertexArray(null);
 			}
 		}
 
+
+		// selected faces
+		gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 0.1]);
 		this.selectedFaces.forEach(face => {
 			if (face.primitive) {
 				gl.bindVertexArray(face.primitive.vao);
-				gl.bindTexture(gl.TEXTURE_2D, face.primitive.texture);
-
-				gl.uniform4fv(defaultShader.colorUnif, [1, 1, 0.8, 1]);
 
 				gl.drawElements(gl.TRIANGLES, face.elementCount, gl.UNSIGNED_SHORT, face.elementOffset * 2);
 
-				gl.bindTexture(gl.TEXTURE_2D, null);
 				gl.bindVertexArray(null);
 			}
 		})
@@ -1007,7 +1001,7 @@ export class SelectTool extends Tool {
 			const b = s.b;
 
 			const dir = b.minus(a);
-			dir.normalise(); // todo: probably not needed
+			dir.normalize(); // todo: probably not needed
 
 			// closest point on line to cursor
 			const t = vec2.dot(cursor, dir) - vec2.dot(a, dir);

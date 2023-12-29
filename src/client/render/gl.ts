@@ -27,6 +27,13 @@ export interface UninstancedShaderBase extends ShaderBase {
 	program: WebGLProgram | null;
 	modelViewMatrixUnif: WebGLUniformLocation | null;
 	projectionMatrixUnif: WebGLUniformLocation | null;
+	colorUnif: WebGLUniformLocation | null;
+}
+
+export interface UninstancedTextureShaderBase extends ShaderBase {
+	program: WebGLProgram | null;
+	modelViewMatrixUnif: WebGLUniformLocation | null;
+	projectionMatrixUnif: WebGLUniformLocation | null;
 	samplerUnif: WebGLUniformLocation | null;
 	colorUnif: WebGLUniformLocation | null;
 }
@@ -38,7 +45,7 @@ interface InstancedShaderBase extends ShaderBase {
 	samplerAttrib: number | null;
 }
 
-export let solidShader: UninstancedShaderBase = {
+export let solidShader: UninstancedTextureShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
@@ -46,7 +53,7 @@ export let solidShader: UninstancedShaderBase = {
 	colorUnif: null
 };
 
-export let fallbackShader: UninstancedShaderBase = {
+export let fallbackShader: UninstancedTextureShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
@@ -54,7 +61,7 @@ export let fallbackShader: UninstancedShaderBase = {
 	colorUnif: null
 };
 
-interface DefaultShader extends UninstancedShaderBase {
+interface DefaultShader extends UninstancedTextureShaderBase {
 }
 export let defaultShader: DefaultShader = {
 	program: null,
@@ -64,7 +71,7 @@ export let defaultShader: DefaultShader = {
 	colorUnif: null
 };
 
-export interface SkinnedShaderBase extends UninstancedShaderBase {
+export interface SkinnedShaderBase extends UninstancedTextureShaderBase {
 	boneMatricesUnif: WebGLUniformLocation | null
 }
 export let skinnedShader: SkinnedShaderBase = {
@@ -76,7 +83,7 @@ export let skinnedShader: SkinnedShaderBase = {
 	boneMatricesUnif: null
 };
 
-interface UiShader extends UninstancedShaderBase {
+interface UiShader extends UninstancedTextureShaderBase {
 }
 export let uiShader: UiShader = {
 	program: null,
@@ -232,13 +239,21 @@ export function initializeGl() {
 
 	gl = _gl;
 
+	// clear
 	gl.clearColor(0.15, 0.15, 0.15, 1.0);
 	gl.clearDepth(1.0);
 
+	// depth
 	gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LEQUAL);
+
+	// cull
 	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.BACK);
+
+	// blend
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 
 export function resizeCanvas() {
