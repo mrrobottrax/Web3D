@@ -1,4 +1,4 @@
-import { gl, lineBuffer, solidShader } from "../../../../src/client/render/gl.js";
+import { SharedAttribs, gl, lineBuffer, solidShader } from "../../../../src/client/render/gl.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
@@ -239,8 +239,6 @@ export class CutTool extends Tool {
 		gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
 		gl.uniform4fv(solidShader.colorUnif, [1, 0, 1, 1]);
 		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
-		gl.enableVertexAttribArray(0);
-		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
 
 		this.points.forEach((point, index) => {
 			let nextPoint: Point | null = this.points[index + 1];

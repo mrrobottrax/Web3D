@@ -412,6 +412,7 @@ export class quaternion {
 	}
 
 	public static lerp(a: quaternion, b: quaternion, t: number): quaternion {
+		// todo: fix with signs
 		let result = quaternion.identity();
 
 		result.x = gMath.lerp(a.x, b.x, t);
@@ -451,7 +452,7 @@ export class quaternion {
 		const theta = theta0 * t;
 
 		const b2 = _b.add(a.mult(-dot));
-		b2.normalise();
+		b2.normalise(); // todo: needed?
 
 		return a.mult(Math.cos(theta)).add(b2.mult(Math.sin(theta)));
 	}

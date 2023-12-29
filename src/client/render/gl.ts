@@ -356,9 +356,15 @@ export function initShaderProgram(vsSource: string, fsSource: string): WebGLProg
 
 export function initLineBuffer() {
 	lineBuffer = gl.createBuffer();
+	gl.useProgram(solidShader.program);
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1]), gl.DYNAMIC_DRAW);
+	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(0);
+
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	gl.useProgram(null);
 }
 
 // ~~~~~~~~~~~~~ load shader from text ~~~~~~~~~~~~~~

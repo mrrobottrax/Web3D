@@ -1,5 +1,5 @@
-import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
-import { drawPrimitive } from "../../../../src/client/render/render.js";
+import { SharedAttribs, defaultShader, gl, lineBuffer, solidShader } from "../../../../src/client/render/gl.js";
+import { drawLine, drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
@@ -29,9 +29,11 @@ export class SelectTool extends Tool {
 	meshUnderCursor: EditorMesh | null = null;
 	faceUnderCursor: EditorFace | null = null;
 	vertexUnderCursor: EditorVertex | null = null;
+	edgeUnderCursor: EditorFullEdge | null = null;
 
 	selectedMeshes: Set<EditorMesh> = new Set();
 	selectedVertices = new Set<EditorVertex>();
+	selectedEdges = new Set<EditorFullEdge>();
 	selectedFaces = new Set<EditorFace>();
 
 	cursorCopy: boolean = false;
@@ -162,8 +164,8 @@ export class SelectTool extends Tool {
 			return false;
 		}
 
-		if (activeViewport.perspective
-			|| (!activeViewport.perspective && this.mode == SelectMode.Mesh || this.mode == SelectMode.Face)) {
+		// shouldn't be done in 2d viewport for vertex mode
+		if (activeViewport.perspective || (this.mode != SelectMode.Vertex)) {
 			const underCursor = this.getMeshUnderCursor(activeViewport, activeViewport.perspective && this.mode == SelectMode.Vertex);
 			if (underCursor.mesh) {
 				this.meshUnderCursor = underCursor.mesh;
@@ -181,6 +183,9 @@ export class SelectTool extends Tool {
 
 				const secondVertex = this.getVertexUnderCursor(activeViewport);
 				if (secondVertex) this.vertexUnderCursor = secondVertex;
+				break;
+			case SelectMode.Edge:
+				this.edgeUnderCursor = this.getEdgeUnderCursor(activeViewport);
 				break;
 		}
 
@@ -311,6 +316,9 @@ export class SelectTool extends Tool {
 			case SelectMode.Face:
 				this.drawFaceHandles(viewport);
 				break;
+			case SelectMode.Edge:
+				this.drawEdgeHandles(viewport);
+				break;
 		}
 
 		// draw select box
@@ -337,6 +345,58 @@ export class SelectTool extends Tool {
 			gl.bindVertexArray(null);
 			gl.useProgram(null);
 		}
+	}
+
+	drawEdgeHandles(viewport: Viewport) {
+		gl.useProgram(solidShader.program);
+		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
+
+		// perspective
+		const p = viewport.camera.perspectiveMatrix.copy();
+		p.setValue(3, 2, p.getValue(3, 2) - this.outlineFudge); // fudge the numbers for visibility
+		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
+
+		gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+
+		// colour
+		gl.uniform4fv(solidShader.colorUnif, new Float32Array([0, 1, 0, 1]));
+
+		const drawEdgeHalf = (edge: EditorHalfEdge, directionIndicator = false) => {
+			const a = edge.tail!.position;
+			const b = edge.next!.tail!.position;
+
+			gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([a.x, a.y, a.z, b.x, b.y, b.z]));
+			gl.drawArrays(gl.LINES, 0, 2);
+		}
+
+		const drawEdge = (edge: EditorFullEdge | null) => {
+			if (!edge) return;
+
+			if (edge?.halfA && edge?.halfB) {
+				// double sided
+				drawEdgeHalf(edge.halfA);
+			} else if (edge?.halfA) {
+				// a
+				drawEdgeHalf(edge.halfA, true);
+			} else if (edge?.halfB) {
+				// b
+				drawEdgeHalf(edge.halfB, true);
+			}
+		}
+
+		drawEdge(this.edgeUnderCursor);
+
+		gl.disable(gl.DEPTH_TEST);
+
+		gl.uniform4fv(solidShader.colorUnif, new Float32Array([1, 1, 0, 1]));
+		this.selectedEdges.forEach(edge => {
+			drawEdge(edge);
+		});
+
+		gl.enable(gl.DEPTH_TEST);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, null)
+		gl.useProgram(null);
 	}
 
 	drawFaceHandles(viewport: Viewport) {
@@ -470,7 +530,7 @@ export class SelectTool extends Tool {
 			});
 
 			// draw vertex under cursor
-			gl.uniform4fv(solidShader.colorUnif, [1, 1, 1, 1]);
+			gl.uniform4fv(solidShader.colorUnif, [0, 1, 0, 1]);
 
 			if (this.vertexUnderCursor && !this.selectedVertices.has(this.vertexUnderCursor)) {
 				let mat = viewport.camera.viewMatrix.copy();
@@ -768,6 +828,7 @@ export class SelectTool extends Tool {
 						if (!remove) {
 							const edge: EditorHalfEdge = this.vertexUnderCursor.edges.values().next().value;
 
+							// also add mesh
 							if (edge && edge.face?.mesh) {
 								this.selectedVertices.add(this.vertexUnderCursor);
 								this.selectedMeshes.add(edge.face.mesh);
@@ -775,6 +836,24 @@ export class SelectTool extends Tool {
 						}
 						else
 							this.selectedVertices.delete(this.vertexUnderCursor);
+					}
+					break;
+				case SelectMode.Edge:
+					if (this.edgeUnderCursor) {
+						if (!remove) {
+							const edge: EditorFullEdge = this.edgeUnderCursor;
+
+							if (edge) {
+								this.selectedEdges.add(edge);
+
+								if (edge.halfA?.face?.mesh)
+									this.selectedMeshes.add(edge.halfA.face.mesh);
+								else if (edge.halfB?.face?.mesh)
+									this.selectedMeshes.add(edge.halfB.face.mesh);
+							}
+						}
+						else
+							this.selectedEdges.delete(this.edgeUnderCursor);
 					}
 					break;
 				case SelectMode.Face:
@@ -815,10 +894,15 @@ export class SelectTool extends Tool {
 						case SelectMode.Vertex:
 							it = mesh.verts.values();
 							break;
+						case SelectMode.Edge:
+							it = mesh.edges.values();
+							break;
 						case SelectMode.Face:
 							it = mesh.faces.values();
 							break;
 					}
+
+					if (!it) return;
 
 					let i = it.next();
 					while (!i.done) {
@@ -828,6 +912,10 @@ export class SelectTool extends Tool {
 						switch (this.mode) {
 							case SelectMode.Vertex:
 								if (this.selectedVertices.has(v))
+									return;
+								break;
+							case SelectMode.Edge:
+								if (this.selectedEdges.has(v))
 									return;
 								break;
 							case SelectMode.Face:
@@ -855,6 +943,7 @@ export class SelectTool extends Tool {
 
 	clearSelected() {
 		this.selectedVertices.clear();
+		this.selectedEdges.clear();
 		this.selectedFaces.clear();
 		this.selectedMeshes.clear();
 
@@ -863,8 +952,80 @@ export class SelectTool extends Tool {
 
 	clearSelectionState() {
 		this.faceUnderCursor = null;
-		this.meshUnderCursor = null;
 		this.vertexUnderCursor = null;
+		this.edgeUnderCursor = null;
+		this.meshUnderCursor = null;
+
+		this.mouseMove(0, 0); // ux
+	}
+
+	getEdgeUnderCursor(viewport: Viewport): EditorFullEdge | null {
+		if (!this.faceUnderCursor) return null;
+
+		const persp = viewport.camera.perspectiveMatrix.copy();
+		const view = viewport.camera.viewMatrix.copy();
+
+		// don't remap z
+		persp.setValue(2, 2, 1);
+		persp.setValue(3, 2, 0);
+
+		const toScreen = persp.multiply(view);
+
+		const cursor = viewport.getGlMousePos();
+
+		// get the closest edge on the face under the cursor
+		let bestDist = 0.02;
+		let bestEdge: EditorHalfEdge | null = null;
+
+		const edgeToScreen = (edge: EditorHalfEdge) => {
+			const start = edge.tail!.position.multMat4(toScreen);
+			const end = edge.next!.tail!.position.multMat4(toScreen);
+
+			if (viewport.perspective) {
+				start.x /= -start.z;
+				start.y /= -start.z;
+				end.x /= -end.z;
+				end.y /= -end.z;
+			}
+
+			const start2D = new vec2(start.x, start.y);
+			const end2D = new vec2(end.x, end.y);
+
+			return {
+				a: start2D,
+				b: end2D
+			}
+		}
+
+		const start = this.faceUnderCursor.halfEdge!;
+		let edge = start;
+		do {
+			// get distance to cursor
+			const s = edgeToScreen(edge);
+
+			const a = s.a;
+			const b = s.b;
+
+			const dir = b.minus(a);
+			dir.normalise(); // todo: probably not needed
+
+			// closest point on line to cursor
+			const t = vec2.dot(cursor, dir) - vec2.dot(a, dir);
+			const p = a.plus(dir.times(t));
+
+			const dist = vec2.sqrDist(cursor, p);
+
+			if (dist < bestDist) {
+				bestDist = dist;
+				bestEdge = edge;
+			}
+
+			edge = edge!.next!;
+		} while (edge != start)
+
+		if (bestEdge?.full) return bestEdge.full;
+
+		return null;
 	}
 
 	getVertexUnderCursor(viewport: Viewport, selectedOnly: boolean = false): EditorVertex | null {

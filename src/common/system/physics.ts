@@ -350,6 +350,7 @@ export function castRay(start: vec3, move: vec3): CastResult {
 		triVerts[1] = vec3.copy(level.vertices[triEdges[1].vert].position);
 		triVerts[2] = vec3.copy(level.vertices[triEdges[2].vert].position);
 
+		// todo: normalization needed?
 		const x = triVerts[1].minus(triVerts[0]).normalised();
 		const y = vec3.cross(tri.normal, x).normalised();
 

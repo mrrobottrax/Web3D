@@ -1,4 +1,4 @@
-import { SkinnedShaderBase, UninstancedShaderBase, defaultShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, defaultShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
@@ -104,8 +104,6 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 
 	gl.disable(gl.DEPTH_TEST);
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
-	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(0);
 
 	for (let i = 0; i < lines.length; ++i) {
 		const line = lines[i];
