@@ -12,13 +12,13 @@ export function initEditorInput() {
 	document.addEventListener('keydown', event => {
 		keys[event.code] = true;
 
-		if (tryHighShortcuts()) { event.preventDefault(); return; };
+		if (tryHighShortcuts(event.code)) { event.preventDefault(); return; };
 
 		if (document.activeElement?.tagName != "BODY") return;
 
 		event.preventDefault();
 
-		if (tryLowShortcuts()) return;
+		if (tryLowShortcuts(event.code)) return;
 
 		if (editor.activeTool.key(event.code, true)) return;
 		editor.windowManager.activeWindow?.key(event.code, true);
@@ -168,49 +168,41 @@ let highPriorityShortcuts: Shortcut[] = [
 	},
 ]
 
-function tryLowShortcuts(): boolean {
+function tryShortCut(shortcut: Shortcut, code: string) {
+	// check if all keys in shortcut are down
+	let failedShortcut = false;
+	let firstFrame = false; // only do it once
+	for (let i = 0; i < shortcut.keyCodes.length; ++i) {
+		const key = shortcut.keyCodes[i];
+		firstFrame ||= key == code;
+
+		if (!keys[key]) {
+			failedShortcut = true;
+			break;
+		}
+	}
+
+	if (!failedShortcut && firstFrame) {
+		shortcut.function();
+		return true;
+	}
+}
+
+function tryLowShortcuts(code: string): boolean {
 	for (let i = 0; i < lowPriorityShortcuts.length; ++i) {
 		const shortcut = lowPriorityShortcuts[i];
 
-		// check if all keys in shortcut are down
-		let failedShortcut = false;
-		for (let i = 0; i < shortcut.keyCodes.length; ++i) {
-			const key = shortcut.keyCodes[i];
-
-			if (!keys[key]) {
-				failedShortcut = true;
-				break;
-			}
-		}
-
-		if (!failedShortcut) {
-			shortcut.function();
-			return true;
-		}
+		tryShortCut(shortcut, code);
 	}
 
 	return false;
 }
 
-function tryHighShortcuts(): boolean {
+function tryHighShortcuts(code: string): boolean {
 	for (let i = 0; i < highPriorityShortcuts.length; ++i) {
 		const shortcut = highPriorityShortcuts[i];
 
-		// check if all keys in shortcut are down
-		let failedShortcut = false;
-		for (let i = 0; i < shortcut.keyCodes.length; ++i) {
-			const key = shortcut.keyCodes[i];
-
-			if (!keys[key]) {
-				failedShortcut = true;
-				break;
-			}
-		}
-
-		if (!failedShortcut) {
-			shortcut.function();
-			return true;
-		}
+		tryShortCut(shortcut, code);
 	}
 
 	return false;
