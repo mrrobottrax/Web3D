@@ -116,6 +116,7 @@ export class SelectTool extends Tool {
 
 			if (!start.equals(end)) {
 				const delta = end.minus(start);
+				this.hasDragged = true;
 
 				const move = (thing: EditorVertex | EditorFullEdge | EditorFace | EditorMesh,
 					delta: vec3) => {
@@ -665,11 +666,9 @@ export class SelectTool extends Tool {
 
 				editor.windowManager.lockActive = false;
 
-				// hasn't dragged
-				const hasntDragged = this.dragPos.equals(this.startDragPos);
 				const hasntSelectBoxed = this.selectBoxStart.equals(this.selectBoxEnd);
 
-				if (hasntDragged && hasntSelectBoxed) {
+				if (!this.hasDragged && hasntSelectBoxed) {
 					this.select();
 				} else if (!hasntSelectBoxed)
 					this.getUnderSelectBox();
@@ -742,12 +741,14 @@ export class SelectTool extends Tool {
 		}
 	}
 
+	hasDragged = false;
 	startDrag(viewport: Viewport): boolean {
 		// probably don't want to drag
 		if (document.body.style.cursor != "move")
 			return false;
 
 		this.dragging = true;
+		this.hasDragged = false;
 		this.dragPos = viewport.getMouseWorldRounded();
 		this.startDragPos = vec3.copy(this.dragPos);
 

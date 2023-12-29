@@ -147,6 +147,18 @@ let lowPriorityShortcuts: Shortcut[] = [
 		keyCodes: ["KeyC"],
 		function: () => editor.setTool(ToolEnum.Cut)
 	},
+	{
+		keyCodes: ["KeyE"],
+		function: () => editor.setTool(ToolEnum.Scale)
+	},
+	{
+		keyCodes: ["KeyR"],
+		function: () => editor.setTool(ToolEnum.Rotate)
+	},
+	{
+		keyCodes: ["KeyT"],
+		function: () => editor.setTool(ToolEnum.Translate)
+	},
 ];
 
 let highPriorityShortcuts: Shortcut[] = [
