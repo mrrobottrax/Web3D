@@ -83,9 +83,9 @@ export abstract class Viewport extends EditorWindow {
 		return this.screenToGrid(this.getRelativeMousePos());
 	}
 
-	abstract screenToGrid(v: vec2): vec2;
-	abstract gridToWorld(v: vec2): vec3;
-	abstract mouseRay(): Ray;
+	abstract screenToGrid(v: vec2): vec2; // screen position to 2d grid position
+	abstract gridToWorld(v: vec2): vec3; // 2d grid position to 3d world
+	abstract screenRay(screenPos: vec2): Ray;
 	abstract getMask(): vec3;
 
 	getMouseWorldRounded(): vec3 {

@@ -187,7 +187,8 @@ export class SelectTool extends Tool {
 				this.vertexUnderCursor = this.getVertexUnderCursor(activeViewport, true);
 				this.cursorMove = this.vertexUnderCursor != null;
 
-				this.vertexUnderCursor = this.getVertexUnderCursor(activeViewport);
+				const secondVertex = this.getVertexUnderCursor(activeViewport);
+				if (secondVertex) this.vertexUnderCursor = secondVertex;
 				break;
 		}
 
@@ -588,7 +589,7 @@ export class SelectTool extends Tool {
 		};
 
 		// try a bunch of rays to make it easier to select stuff
-		const baseRay = viewport.mouseRay();
+		const baseRay = viewport.screenRay(viewport.getRelativeMousePos());
 		let ray: Ray = { origin: baseRay.origin, direction: vec3.copy(baseRay.direction) };
 
 		let results: {
@@ -673,6 +674,8 @@ export class SelectTool extends Tool {
 				} else if (!hasntSelectBoxed)
 					this.getUnderSelectBox();
 
+				this.hasDragged = false;
+
 				this.startDragPos.x = 0;
 				this.startDragPos.y = 0;
 				this.startDragPos.z = 0;
@@ -746,6 +749,12 @@ export class SelectTool extends Tool {
 		// probably don't want to drag
 		if (document.body.style.cursor != "move")
 			return false;
+
+		if (!this.vertexUnderCursor)
+			return false;
+
+		editor.gridOffset = this.vertexUnderCursor.position.y;
+		this.vertexUnderCursor = null;
 
 		this.dragging = true;
 		this.hasDragged = false;

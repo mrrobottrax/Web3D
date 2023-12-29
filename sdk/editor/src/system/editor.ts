@@ -11,6 +11,7 @@ import { SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
+import { quaternion } from "../../../../src/common/math/vector.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -18,6 +19,8 @@ export class Editor {
 	activeTool: Tool;
 
 	gridSize: number = 1;
+	gridRotation: quaternion = quaternion.identity();
+	gridOffset: number = 0;
 
 	windowManager: WindowManager;
 	selectTool: SelectTool;

@@ -158,7 +158,7 @@ export class Viewport2D extends Viewport {
 		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
 	}
 
-	override mouseRay(): Ray {
+	override screenRay(): Ray {
 		if (!this.pos)
 			return { origin: vec3.origin(), direction: vec3.origin() };
 

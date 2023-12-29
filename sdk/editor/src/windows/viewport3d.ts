@@ -7,6 +7,7 @@ import gMath from "../../../../src/common/math/gmath.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Time } from "../../../../src/common/system/time.js";
+import { editor } from "../main.js";
 import { editorConfig } from "../system/editorconfig.js";
 import { getKeyDown } from "../system/input.js";
 import { Viewport } from "./viewport.js";
@@ -111,18 +112,36 @@ export class Viewport3D extends Viewport {
 	}
 
 	screenToGrid(v: vec2): vec2 {
-		throw new Error("Method not implemented.");
+		// get ray
+		const ray = this.screenRay(this.getRelativeMousePos());
+
+		// find where ray intersects with grid
+		// todo: currently only does 0, 0
+		const slope = ray.direction.y;
+
+		const t = (editor.gridOffset - ray.origin.y) / slope;
+
+		const point = ray.origin.plus(ray.direction.times(t));
+
+		return new vec2(point.x, point.z);
 	}
+
 	gridToWorld(v: vec2): vec3 {
-		throw new Error("Method not implemented.");
+		let a = new vec3(v.x, 0, v.y);
+
+		// Snap
+		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize;
+		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize;
+		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize;
+
+		return a;
 	}
+
 	getMask(): vec3 {
 		throw new Error("Method not implemented.");
 	}
 
-	override mouseRay(): Ray {
-		const v = this.getRelativeMousePos();
-
+	override screenRay(v: vec2): Ray {
 		// size of view frustum at 1 unit dist
 		const ySize = Math.tan(gMath.deg2Rad(this.camera.fov / 2)) * 2;
 		const xSize = ySize * (this.size.x / this.size.y);
