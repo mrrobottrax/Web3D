@@ -84,6 +84,22 @@ export class SelectExtension extends Tool {
 
 					return position;
 				}
+			case SelectMode.Mesh:
+				// average all vertices
+				{
+					let position = vec3.origin();
+					let count = 0;
+					editor.selectTool.selectedMeshes.forEach(mesh => {
+						mesh.verts.forEach(vert => {
+							position.add(vert.position);
+							++count;
+						});
+					});
+
+					position.mult(1 / count);
+
+					return position;
+				}
 
 			default:
 				return vec3.origin();

@@ -192,6 +192,7 @@ export class TranslateTool extends SelectExtension {
 			this.dragPos = viewport.getMouseWorldRounded();
 
 			let delta = this.dragPos.minus(lastDrag);
+			editor.snapToGrid(delta);
 
 			switch (this.gizmoPartUnderMouse) {
 				case GizmoPart.X:
@@ -216,7 +217,7 @@ export class TranslateTool extends SelectExtension {
 				case SelectMode.Vertex:
 					select.selectedVertices.forEach(vert => {
 						vert.position.add(delta);
-						editor.snapToGrid(vert.position);
+						// editor.snapToGrid(vert.position);
 					});
 					break;
 				case SelectMode.Edge:
@@ -224,19 +225,19 @@ export class TranslateTool extends SelectExtension {
 						if (edge.halfA) {
 							const v = edge.halfA.tail!;
 							v.position.add(delta);
-							editor.snapToGrid(v.position);
+							// editor.snapToGrid(v.position);
 
 							const w = edge.halfA.next!.tail!;
 							w.position.add(delta);
-							editor.snapToGrid(w.position);
+							// editor.snapToGrid(w.position);
 						} else if (edge.halfB) {
 							const v = edge.halfB.tail!;
 							v.position.add(delta);
-							editor.snapToGrid(v.position);
+							// editor.snapToGrid(v.position);
 
 							const w = edge.halfB.next!.tail!;
 							w.position.add(delta);
-							editor.snapToGrid(w.position);
+							// editor.snapToGrid(w.position);
 						}
 					});
 				case SelectMode.Face:
@@ -246,10 +247,18 @@ export class TranslateTool extends SelectExtension {
 						do {
 							const v = edge.tail!;
 							v.position.add(delta);
-							editor.snapToGrid(v.position);
+							// editor.snapToGrid(v.position);
 
 							edge = edge.next!;
 						} while (edge != start)
+					});
+					break;
+				case SelectMode.Mesh:
+					select.selectedMeshes.forEach(mesh => {
+						mesh.verts.forEach(vert => {
+							vert.position.add(delta);
+							// editor.snapToGrid(vert.position);
+						});
 					});
 					break;
 			}
