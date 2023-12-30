@@ -60,6 +60,7 @@ export function initUiBuffers() {
 	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 }
 
@@ -178,6 +179,7 @@ export function drawText(position: vec3, text: string,
 	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 
 	screenTexts.push({

@@ -381,6 +381,7 @@ export function initLineBuffer() {
 	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
 	gl.enableVertexAttribArray(0);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 }
 

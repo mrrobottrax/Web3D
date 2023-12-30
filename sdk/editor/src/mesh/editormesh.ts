@@ -431,6 +431,7 @@ export class EditorMesh {
 
 		gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
 
 		return {
@@ -709,6 +710,7 @@ export class EditorMesh {
 		gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 		gl.enableVertexAttribArray(SharedAttribs.colorAttrib);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
 
 		let p: Primitive = {

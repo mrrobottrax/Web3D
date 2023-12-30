@@ -108,6 +108,7 @@ function createPrimitive(file: Uint8Array, index: number, vertLength: number, el
 	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 	gl.enableVertexAttribArray(SharedAttribs.colorAttrib);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 
 	let p: Primitive = {

@@ -140,6 +140,7 @@ export class ClientGltfLoader extends GltfLoader {
 			gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 			gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			gl.bindVertexArray(null);
 		}
 
