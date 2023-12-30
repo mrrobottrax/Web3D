@@ -16,18 +16,18 @@ export class TranslateTool extends SelectExtension {
 
 	init() {
 		this.gizmoBuffer = gl.createBuffer();
-		// gl.bindBuffer(gl.ARRAY_BUFFER, this.gizmoBuffer);
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.gizmoBuffer);
 
-		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, lineLength, 0, 0]), gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, lineLength, 0, 0]), gl.STATIC_DRAW);
 
-		// gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
-		// gl.enableVertexAttribArray(0);
+		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(0);
 
-		// gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-		// ClientGltfLoader.loadGltfFromWeb("./sdk/editor/data/models/arrow").then(model => {
-		// 	this.arrowHeadModel = model;
-		// });
+		ClientGltfLoader.loadGltfFromWeb("./sdk/editor/data/models/arrow").then(model => {
+			this.arrowHeadModel = model;
+		});
 	}
 
 	override draw(viewport: Viewport) {
