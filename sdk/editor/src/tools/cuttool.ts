@@ -143,7 +143,7 @@ export class CutTool extends Tool {
 
 				// mesh.halfEdges.add(d);
 			}
-			
+
 			// if (c && d) {
 			// 	c.twin = d;
 			// 	d.twin = c;
@@ -249,6 +249,7 @@ export class CutTool extends Tool {
 
 		gl.enable(gl.DEPTH_TEST);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
 	}

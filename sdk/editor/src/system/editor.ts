@@ -12,6 +12,9 @@ import { FileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
+import { RotateTool } from "../tools/rotate.js";
+import { ScaleTool } from "../tools/scale.js";
+import { TranslateTool } from "../tools/translate.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -24,6 +27,9 @@ export class Editor {
 
 	windowManager: WindowManager;
 	selectTool: SelectTool;
+	translateTool: TranslateTool;
+	rotateTool: RotateTool;
+	scaleTool: ScaleTool;
 	blockTool: BlockTool;
 	cutTool: CutTool;
 
@@ -31,6 +37,9 @@ export class Editor {
 		this.windowManager = new WindowManager();
 
 		this.selectTool = new SelectTool();
+		this.translateTool = new TranslateTool();
+		this.rotateTool = new RotateTool();
+		this.scaleTool = new ScaleTool();
 		this.blockTool = new BlockTool();
 		this.cutTool = new CutTool();
 
@@ -76,6 +85,8 @@ export class Editor {
 
 		// await setLevelClient("./data/levels/styletest");
 		// drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1], Infinity);
+
+		this.translateTool.init();
 	}
 
 	frame() {
@@ -92,6 +103,12 @@ export class Editor {
 
 	close() {
 		this.selectTool.close();
+		this.translateTool.close();
+		this.rotateTool.close();
+		this.scaleTool.close();
+		this.blockTool.close();
+		this.cutTool.close();
+
 		this.unloadMeshes();
 	}
 
@@ -119,7 +136,15 @@ export class Editor {
 		switch (tool) {
 			case ToolEnum.Select:
 				this.activeTool = this.selectTool;
-
+				break;
+			case ToolEnum.Translate:
+				this.activeTool = this.translateTool;
+				break;
+			case ToolEnum.Rotate:
+				this.activeTool = this.rotateTool;
+				break;
+			case ToolEnum.Scale:
+				this.activeTool = this.scaleTool;
 				break;
 			case ToolEnum.Block:
 				this.activeTool = this.blockTool;

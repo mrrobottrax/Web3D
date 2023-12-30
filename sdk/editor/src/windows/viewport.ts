@@ -73,6 +73,16 @@ export abstract class Viewport extends EditorWindow {
 				editor.selectTool.draw(this);
 				break;
 
+			case ToolEnum.Translate:
+				editor.translateTool.draw(this);
+				break;
+			case ToolEnum.Rotate:
+				editor.rotateTool.draw(this);
+				break;
+			case ToolEnum.Scale:
+				editor.scaleTool.draw(this);
+				break;
+
 			case ToolEnum.Cut:
 				editor.cutTool.draw(this);
 				break;

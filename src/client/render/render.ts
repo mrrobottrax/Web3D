@@ -105,6 +105,9 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 	gl.disable(gl.DEPTH_TEST);
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
 
+	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
+
 	for (let i = 0; i < lines.length; ++i) {
 		const line = lines[i];
 
