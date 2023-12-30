@@ -141,6 +141,7 @@ export let canvas: HTMLCanvasElement;
 export let canvasContainer: HTMLElement;
 
 export let lineBuffer: WebGLBuffer | null;
+export let lineVao: WebGLVertexArrayObject | null;
 export async function initGl(): Promise<void> {
 	initCanvas();
 	initializeGl();
@@ -370,16 +371,17 @@ export function initShaderProgram(vsSource: string, fsSource: string): WebGLProg
 }
 
 export function initLineBuffer() {
+	lineVao = gl.createVertexArray();
+	gl.bindVertexArray(lineVao);
+
 	lineBuffer = gl.createBuffer();
-	gl.useProgram(solidShader.program);
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1]), gl.DYNAMIC_DRAW);
 	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
 	gl.enableVertexAttribArray(0);
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
-	gl.useProgram(null);
+	gl.bindVertexArray(null);
 }
 
 // ~~~~~~~~~~~~~ load shader from text ~~~~~~~~~~~~~~

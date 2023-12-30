@@ -1,4 +1,4 @@
-import { SharedAttribs, defaultShader, gl, lineBuffer, solidShader } from "../../../../src/client/render/gl.js";
+import { SharedAttribs, defaultShader, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
 import { drawLine, drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
@@ -349,6 +349,7 @@ export class SelectTool extends Tool {
 
 	drawEdgeHandles(viewport: Viewport) {
 		gl.useProgram(solidShader.program);
+		gl.bindVertexArray(lineVao);
 		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
 
 		// perspective
@@ -396,6 +397,7 @@ export class SelectTool extends Tool {
 		gl.enable(gl.DEPTH_TEST);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, null)
+		gl.bindVertexArray(null);
 		gl.useProgram(null);
 	}
 

@@ -161,97 +161,97 @@ export class CutTool extends Tool {
 	}
 
 	draw(viewport: Viewport) {
-		const select = editor.selectTool;
+		// const select = editor.selectTool;
 
-		{
-			// draw selected mesh outlines
-			gl.useProgram(solidShader.program);
-			const p = viewport.camera.perspectiveMatrix.copy();
-			p.setValue(3, 2, p.getValue(3, 2) - select.outlineFudge); // fudge the numbers for visibility
-			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
-			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
-			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+		// {
+		// 	// draw selected mesh outlines
+		// 	gl.useProgram(solidShader.program);
+		// 	const p = viewport.camera.perspectiveMatrix.copy();
+		// 	p.setValue(3, 2, p.getValue(3, 2) - select.outlineFudge); // fudge the numbers for visibility
+		// 	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
+		// 	gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
+		// 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
 
-			// mesh under cursor
-			if (viewport.perspective) {
-				if (select.meshUnderCursor) {
-					gl.bindVertexArray(select.meshUnderCursor.wireFrameData.vao);
+		// 	// mesh under cursor
+		// 	if (viewport.perspective) {
+		// 		if (select.meshUnderCursor) {
+		// 			gl.bindVertexArray(select.meshUnderCursor.wireFrameData.vao);
 
-					gl.drawElements(gl.LINES, select.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
-				}
-			}
-		}
+		// 			gl.drawElements(gl.LINES, select.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+		// 		}
+		// 	}
+		// }
 
-		// make em slightly more visible than they should be
-		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
-		gl.bindVertexArray(rectVao);
+		// // make em slightly more visible than they should be
+		// gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
+		// gl.bindVertexArray(rectVao);
 
-		gl.uniform4fv(solidShader.colorUnif, viewport.perspective ? [0.5, 0.8, 1, 1] : [1, 1, 1, 1]);
+		// gl.uniform4fv(solidShader.colorUnif, viewport.perspective ? [0.5, 0.8, 1, 1] : [1, 1, 1, 1]);
 
-		const cameraQuat = viewport.camera.rotation;
+		// const cameraQuat = viewport.camera.rotation;
 
-		gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
+		// gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
 
-		gl.disable(gl.DEPTH_TEST);
+		// gl.disable(gl.DEPTH_TEST);
 
-		const drawPoint = (point: Point) => {
-			let mat = viewport.camera.viewMatrix.copy();
+		// const drawPoint = (point: Point) => {
+		// 	let mat = viewport.camera.viewMatrix.copy();
 
-			const pos = point.position.multMat4(mat);
+		// 	const pos = point.position.multMat4(mat);
 
-			mat.translate(point.position);
-			mat.rotate(cameraQuat);
+		// 	mat.translate(point.position);
+		// 	mat.rotate(cameraQuat);
 
-			// don't do perspective divide
-			if (viewport.perspective)
-				mat.scale(new vec3(-pos.z, -pos.z, 1));
-			else
-				mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+		// 	// don't do perspective divide
+		// 	if (viewport.perspective)
+		// 		mat.scale(new vec3(-pos.z, -pos.z, 1));
+		// 	else
+		// 		mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
 
-			mat.scale(new vec3(0.015, 0.015, 1));
+		// 	mat.scale(new vec3(0.015, 0.015, 1));
 
-			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-		}
+		// 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+		// 	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+		// }
 
-		const drawLine = (point: Point, nextPoint: Point) => {
-			gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
-				point.position.x, point.position.y, point.position.z,
-				nextPoint.position.x, nextPoint.position.y, nextPoint.position.z]));
+		// const drawLine = (point: Point, nextPoint: Point) => {
+		// 	gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
+		// 		point.position.x, point.position.y, point.position.z,
+		// 		nextPoint.position.x, nextPoint.position.y, nextPoint.position.z]));
 
-			gl.drawArrays(gl.LINES, 0, 2);
-		}
+		// 	gl.drawArrays(gl.LINES, 0, 2);
+		// }
 
-		// draw all points for debug
-		// this.allPoints.forEach(point => {
+		// // draw all points for debug
+		// // this.allPoints.forEach(point => {
+		// // 	drawPoint(point);
+		// // });
+
+		// if (this.closestPoint)
+		// 	drawPoint(this.closestPoint);
+
+		// this.points.forEach(point => {
 		// 	drawPoint(point);
 		// });
 
-		if (this.closestPoint)
-			drawPoint(this.closestPoint);
+		// gl.bindVertexArray(null);
+		// gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
+		// gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+		// gl.uniform4fv(solidShader.colorUnif, [1, 0, 1, 1]);
+		// gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
-		this.points.forEach(point => {
-			drawPoint(point);
-		});
+		// this.points.forEach((point, index) => {
+		// 	let nextPoint: Point | null = this.points[index + 1];
+		// 	if (!nextPoint) nextPoint = this.closestPoint;
+		// 	if (nextPoint)
+		// 		drawLine(point, nextPoint);
+		// });
 
-		gl.bindVertexArray(null);
-		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
-		gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
-		gl.uniform4fv(solidShader.colorUnif, [1, 0, 1, 1]);
-		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+		// gl.enable(gl.DEPTH_TEST);
 
-		this.points.forEach((point, index) => {
-			let nextPoint: Point | null = this.points[index + 1];
-			if (!nextPoint) nextPoint = this.closestPoint;
-			if (nextPoint)
-				drawLine(point, nextPoint);
-		});
-
-		gl.enable(gl.DEPTH_TEST);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-		gl.bindVertexArray(null);
-		gl.useProgram(null);
+		// gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		// gl.bindVertexArray(null);
+		// gl.useProgram(null);
 	}
 
 	lastGridSize = 0;

@@ -1,4 +1,4 @@
-import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, UninstancedTextureShaderBase, defaultShader, gl, glProperties, lineBuffer, skinnedShader, solidShader } from "./gl.js";
+import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, UninstancedTextureShaderBase, defaultShader, gl, glProperties, lineBuffer, lineVao, skinnedShader, solidShader } from "./gl.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
@@ -97,16 +97,13 @@ export function debugTimers() {
 export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 	// draw lines
 	gl.useProgram(solidShader.program);
-	gl.bindVertexArray(null);
+	gl.bindVertexArray(lineVao);
+	gl.disable(gl.DEPTH_TEST);
 
 	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewMatrix.getData());
 
-	gl.disable(gl.DEPTH_TEST);
-	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer)
-
-	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
+	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
 
 	for (let i = 0; i < lines.length; ++i) {
 		const line = lines[i];
@@ -133,10 +130,10 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 		gl.drawArrays(gl.LINES, 0, 2);
 	}
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
 	gl.enable(gl.DEPTH_TEST);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, null)
-
+	gl.bindVertexArray(null);
 	gl.useProgram(null);
 }
 
