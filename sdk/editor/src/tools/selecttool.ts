@@ -1,6 +1,7 @@
 import { SharedAttribs, defaultShader, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
 import { drawLine, drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
+import gMath from "../../../../src/common/math/gmath.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
@@ -946,13 +947,14 @@ export class SelectTool extends Tool {
 		PropertiesPanel.updateProperties();
 	}
 
-	clearSelectionState() {
+	clearSelectionState(dontRefresh = false) {
 		this.faceUnderCursor = null;
 		this.vertexUnderCursor = null;
 		this.edgeUnderCursor = null;
 		this.meshUnderCursor = null;
 
-		this.mouseMove(0, 0); // ux
+		if (!dontRefresh)
+			this.mouseMove(0, 0); // ux
 	}
 
 	getEdgeUnderCursor(viewport: Viewport): EditorFullEdge | null {
@@ -1002,14 +1004,7 @@ export class SelectTool extends Tool {
 			const a = s.a;
 			const b = s.b;
 
-			const dir = b.minus(a);
-			dir.normalize(); // todo: probably not needed
-
-			// closest point on line to cursor
-			const t = vec2.dot(cursor, dir) - vec2.dot(a, dir);
-			const p = a.plus(dir.times(t));
-
-			const dist = vec2.sqrDist(cursor, p);
+			const dist = gMath.sqrDistToLine(a, b, cursor);
 
 			if (dist < bestDist) {
 				bestDist = dist;
@@ -1112,6 +1107,11 @@ export class SelectTool extends Tool {
 						this.selectedVertices.add(vert);
 					})
 					break;
+				case SelectMode.Edge:
+					mesh.edges.forEach(edge => {
+						this.selectedEdges.add(edge);
+					})
+					break;
 				case SelectMode.Face:
 					mesh.faces.forEach(face => {
 						this.selectedFaces.add(face);
@@ -1123,7 +1123,7 @@ export class SelectTool extends Tool {
 		this.selectedMeshes.forEach(mesh => {
 			selectMesh(mesh);
 		});
-		if (this.meshUnderCursor) {
+		if (this.meshUnderCursor && this.selectedMeshes.size == 0) {
 			selectMesh(this.meshUnderCursor);
 			this.selectedMeshes.add(this.meshUnderCursor);
 		}

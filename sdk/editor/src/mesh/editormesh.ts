@@ -3,6 +3,7 @@ import { SharedAttribs, gl, solidTex } from "../../../../src/client/render/gl.js
 import gMath from "../../../../src/common/math/gmath.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Primitive } from "../../../../src/common/mesh/model.js";
+import { editor } from "../main.js";
 
 export interface EditorFace {
 	halfEdge: EditorHalfEdge | null;
@@ -978,6 +979,11 @@ export class EditorMesh {
 			else
 				break;
 		} while (edge != startEdge);
+
+		// I'm useless now
+		if (this.faces.size == 0) {
+			editor.meshes.delete(this);
+		}
 	}
 
 	deleteEdge(edge: EditorFullEdge) {

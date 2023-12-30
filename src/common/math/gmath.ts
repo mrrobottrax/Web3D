@@ -1,3 +1,5 @@
+import { vec2 } from "./vector.js";
+
 export default class gMath {
 	static deg2Rad(angle: number): number {
 		return (angle * Math.PI) / 180;
@@ -26,5 +28,19 @@ export default class gMath {
 
 	static clamp(x: number, min: number, max: number) {
 		return Math.min(Math.max(x, min), max);
+	}
+
+	static sqrDistToLine(a: vec2, b: vec2, point: vec2): number {
+		const dir = b.minus(a);
+		const m = dir.magnitide();
+		dir.mult(1 / m);
+
+		// closest point on line to cursor
+		let t = vec2.dot(point.minus(a), dir);
+		t = this.clamp(t, 0, m);
+
+		const p = a.plus(dir.times(t));
+
+		return vec2.sqrDist(point, p);
 	}
 }

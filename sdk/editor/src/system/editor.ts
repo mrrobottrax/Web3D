@@ -15,6 +15,7 @@ import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { RotateTool } from "../tools/rotate.js";
 import { ScaleTool } from "../tools/scale.js";
 import { TranslateTool } from "../tools/translate.js";
+import { editor } from "../main.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -160,8 +161,16 @@ export class Editor {
 	}
 
 	snapToGrid(v: vec3): void {
-		v.x = Math.round(v.x / this.gridSize) * this.gridSize;
-		v.y = Math.round(v.y / this.gridSize) * this.gridSize;
-		v.z = Math.round(v.z / this.gridSize) * this.gridSize;
+		let r = v.rotate(this.gridRotation);
+		
+		r.x = Math.round(r.x / this.gridSize) * this.gridSize;
+		r.y = Math.round(r.y / this.gridSize) * this.gridSize;
+		r.z = Math.round(r.z / this.gridSize) * this.gridSize;
+
+		r = r.rotate(this.gridRotation.inverse());
+
+		v.x = r.x;
+		v.y = r.y;
+		v.z = r.z;
 	}
 }

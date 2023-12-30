@@ -46,7 +46,7 @@ export class Viewport3D extends Viewport {
 
 		moveVector = moveVector.rotatePitch(this.pitch);
 		moveVector = moveVector.rotateYaw(this.yaw);
-		
+
 		moveVector.normalise();
 
 		if (getKeyDown("Space")) moveVector.y += 0.5;
@@ -114,9 +114,10 @@ export class Viewport3D extends Viewport {
 	screenToGrid(v: vec2): vec2 {
 		// get ray
 		const ray = this.screenRay(this.getRelativeMousePos());
+		ray.origin = ray.origin.rotate(editor.gridRotation.inverse());
+		ray.direction = ray.direction.rotate(editor.gridRotation.inverse());
 
 		// find where ray intersects with grid
-		// todo: currently only does 0, 0
 		const slope = ray.direction.y;
 
 		const t = (editor.gridOffset - ray.origin.y) / slope;
@@ -128,6 +129,7 @@ export class Viewport3D extends Viewport {
 
 	gridToWorld(v: vec2): vec3 {
 		let a = new vec3(v.x, 0, v.y);
+		a = a.rotate(editor.gridRotation);
 
 		// Snap
 		editor.snapToGrid(a);
