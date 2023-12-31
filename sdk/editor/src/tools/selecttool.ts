@@ -71,7 +71,7 @@ export class SelectTool extends Tool {
 
 	override close(): void {
 		this.clearSelected();
-		this.clearSelectionState();
+		this.clearSelectionState(true);
 	}
 
 	setSelectMode(selectMode: SelectMode) {

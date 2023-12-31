@@ -1,4 +1,5 @@
-import { SharedAttribs, gl, lineBuffer, solidShader } from "../../../../src/client/render/gl.js";
+import { SharedAttribs, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
+import { drawLine } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
@@ -53,7 +54,6 @@ export class CutTool extends Tool {
 
 	startCutting() {
 		this.cutting = true;
-		console.log("START");
 
 		if (!editor.selectTool.faceUnderCursor) { console.error("PROBLEM!??"); return; };
 
@@ -64,94 +64,182 @@ export class CutTool extends Tool {
 	}
 
 	addPoint() {
-		console.log("Add point");
 		if (this.closestPoint)
 			this.points.push(this.closestPoint);
+
+		// temp, todo:
+		if (this.points.length == 2)
+			this.finishCut();
 	}
 
 	finishCut() {
-		console.log("DONE");
-
 		// for each line
 		this.points.forEach((point, index) => {
-			if (this.points.length <= index + 1) return;
+			// todo: allow other types of points
+			// only works for edges
+			const addVertex = (p: Point) => {
+				const full = p.edge!.full!;
+				const mesh = p.edge!.face!.mesh!;
+
+				const newFull: EditorFullEdge = {
+					halfA: null,
+					halfB: null
+				}
+
+				const newVert: EditorVertex = {
+					position: p.position,
+					edges: new Set()
+				}
+
+				mesh.edges.add(newFull);
+				mesh.verts.add(newVert);
+
+				let c: EditorHalfEdge | null = null;
+				let d: EditorHalfEdge | null = null;
+
+				if (full?.halfA) {
+					const a = full.halfA;
+
+					c = {
+						prev: a,
+						next: a.next,
+						twin: null,
+						face: a.face,
+						full: newFull,
+						tail: newVert
+					}
+
+					newFull.halfA = c;
+					a.next!.prev = c;
+					a.next = c;
+
+					mesh.halfEdges.add(c);
+					newVert.edges.add(c);
+				}
+
+				if (full?.halfB) {
+					const b = full.halfB;
+
+					b.tail?.edges.delete(b);
+
+					d = {
+						prev: b.prev,
+						next: b,
+						twin: null,
+						face: b.face,
+						full: newFull,
+						tail: b.tail
+					}
+
+					b.tail = newVert;
+
+					newFull.halfB = d;
+					b.prev!.next = d;
+					b.prev = d;
+
+					mesh.halfEdges.add(d);
+					newVert.edges.add(b);
+					b.tail?.edges.add(d);
+				}
+
+				if (c && d) {
+					c.twin = d;
+					d.twin = c;
+				}
+			}
+
+			if (this.points.length == 1) {
+				// add vertex in the middle of the first edge
+				addVertex(point);
+				return;
+			}
+
+			// line already created
+			if (this.points.length <= index + 1) {
+				return;
+			};
 
 			const next = this.points[index + 1];
 
-			// todo: allow other types of points
+			addVertex(point);
+			addVertex(next);
 
-			// add vertex in the middle of the first edge
-			const full = point.edge!.full;
-			const mesh = point.edge!.face!.mesh!;
+			// connect points with new edges
+			const face = point.edge!.face!;
+			const mesh = face.mesh;
+			const newFace: EditorFace = {
+				halfEdge: next.edge!,
+				texture: face.texture,
+				u: vec3.copy(face.u),
+				v: vec3.copy(face.v),
+				offset: vec2.copy(face.offset),
+				rotation: face.rotation,
+				scale: vec2.copy(face.scale),
+				color: face.color.concat(), // todo: better way to copy?
+				mesh: face.mesh,
+				elementOffset: 0,
+				elementCount: 0,
+				primitive: null
+			}
 
-			const newFull: EditorFullEdge = {
+			const a = point.edge!.next!;
+			const b = next.edge!.next!;
+
+			const xy: EditorFullEdge = {
 				halfA: null,
 				halfB: null
 			}
-
-			const newVert: EditorVertex = {
-				position: point.position,
-				edges: new Set()
+			const x: EditorHalfEdge = {
+				prev: point.edge!,
+				next: b,
+				twin: null,
+				face: point.edge!.face,
+				full: xy,
+				tail: a.tail
 			}
-
-			// mesh.edges.add(newFull);
-			// mesh.verts.add(newVert);
-
-			let c: EditorHalfEdge | null = null;
-			let d: EditorHalfEdge | null = null;
-
-			if (full?.halfA) {
-				console.log("A");
-
-				// const a = full.halfA;
-
-				// c = {
-				// 	prev: a,
-				// 	next: a.next,
-				// 	twin: null,
-				// 	face: a.face,
-				// 	full: newFull,
-				// 	tail: newVert
-				// }
-
-				// newFull.halfA = c;
-				// a.next!.prev = c;
-				// a.next = c;
-
-				// mesh.halfEdges.add(c);
+			b.prev = x;
+			point.edge!.next = x;
+			const y: EditorHalfEdge = {
+				prev: next.edge!,
+				next: a,
+				twin: null,
+				face: newFace,
+				full: xy,
+				tail: b.tail
 			}
+			a.prev = y;
+			next.edge!.next = y;
 
-			if (full?.halfB) {
-				console.log("B");
+			x.twin = y;
+			y.twin = x;
 
-				// const b = full.halfB;
+			xy.halfA = x;
+			xy.halfB = y;
 
-				// d = {
-				// 	prev: b.prev,
-				// 	next: b,
-				// 	twin: null,
-				// 	face: b.face,
-				// 	full: newFull,
-				// 	tail: b.tail
-				// }
+			a.tail?.edges.add(x);
+			b.tail?.edges.add(y);
+			mesh?.halfEdges.add(x);
+			mesh?.halfEdges.add(y);
+			mesh?.edges.add(xy);
+			mesh?.faces.add(newFace);
 
-				// b.tail = newVert;
+			// update edges
+			face.halfEdge = point.edge!;
+			{
+				const start = newFace.halfEdge;
+				let edge = start!;
+				do {
+					edge.face = newFace;
 
-				// newFull.halfB = d;
-				// b.prev!.next = d;
-				// b.prev = d;
-
-				// mesh.halfEdges.add(d);
+					edge = edge!.next!;
+				} while (edge != start)
 			}
-
-			// if (c && d) {
-			// 	c.twin = d;
-			// 	d.twin = c;
-			// }
 		});
 
 		this.cutting = false;
 		this.points = [];
+
+		this.cuttingFace.mesh?.updateShape();
 	}
 
 	cancelCut() {
@@ -161,97 +249,100 @@ export class CutTool extends Tool {
 	}
 
 	draw(viewport: Viewport) {
-		// const select = editor.selectTool;
+		const select = editor.selectTool;
 
-		// {
-		// 	// draw selected mesh outlines
-		// 	gl.useProgram(solidShader.program);
-		// 	const p = viewport.camera.perspectiveMatrix.copy();
-		// 	p.setValue(3, 2, p.getValue(3, 2) - select.outlineFudge); // fudge the numbers for visibility
-		// 	gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
-		// 	gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
-		// 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+		{
+			// draw selected mesh outlines
+			gl.useProgram(solidShader.program);
+			const p = viewport.camera.perspectiveMatrix.copy();
+			p.setValue(3, 2, p.getValue(3, 2) - select.outlineFudge); // fudge the numbers for visibility
+			gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, p.getData());
+			gl.uniform4fv(solidShader.colorUnif, [0.5, 0.8, 1, 1]);
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
 
-		// 	// mesh under cursor
-		// 	if (viewport.perspective) {
-		// 		if (select.meshUnderCursor) {
-		// 			gl.bindVertexArray(select.meshUnderCursor.wireFrameData.vao);
+			// mesh under cursor
+			if (viewport.perspective) {
+				if (select.meshUnderCursor) {
+					gl.bindVertexArray(select.meshUnderCursor.wireFrameData.vao);
 
-		// 			gl.drawElements(gl.LINES, select.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
-		// 		}
-		// 	}
-		// }
+					gl.drawElements(gl.LINES, select.meshUnderCursor.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
+				}
+			}
+		}
 
-		// // make em slightly more visible than they should be
-		// gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
-		// gl.bindVertexArray(rectVao);
+		// make em slightly more visible than they should be
+		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
+		gl.bindVertexArray(rectVao);
 
-		// gl.uniform4fv(solidShader.colorUnif, viewport.perspective ? [0.5, 0.8, 1, 1] : [1, 1, 1, 1]);
+		gl.uniform4fv(solidShader.colorUnif, viewport.perspective ? [0.5, 0.8, 1, 1] : [1, 1, 1, 1]);
 
-		// const cameraQuat = viewport.camera.rotation;
+		const cameraQuat = viewport.camera.rotation;
 
-		// gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
+		gl.uniform4fv(solidShader.colorUnif, [1, 1, 0, 1]);
 
-		// gl.disable(gl.DEPTH_TEST);
+		gl.disable(gl.DEPTH_TEST);
 
-		// const drawPoint = (point: Point) => {
-		// 	let mat = viewport.camera.viewMatrix.copy();
+		const drawPoint = (point: Point) => {
+			let mat = viewport.camera.viewMatrix.copy();
 
-		// 	const pos = point.position.multMat4(mat);
+			const pos = point.position.multMat4(mat);
 
-		// 	mat.translate(point.position);
-		// 	mat.rotate(cameraQuat);
+			mat.translate(point.position);
+			mat.rotate(cameraQuat);
 
-		// 	// don't do perspective divide
-		// 	if (viewport.perspective)
-		// 		mat.scale(new vec3(-pos.z, -pos.z, 1));
-		// 	else
-		// 		mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
+			// don't do perspective divide
+			if (viewport.perspective)
+				mat.scale(new vec3(-pos.z, -pos.z, 1));
+			else
+				mat.scale(new vec3(1 / viewport.camera.fov, 1 / viewport.camera.fov, 1));
 
-		// 	mat.scale(new vec3(0.015, 0.015, 1));
+			mat.scale(new vec3(0.015, 0.015, 1));
 
-		// 	gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
-		// 	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-		// }
+			gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, mat.getData());
+			gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+		}
 
-		// const drawLine = (point: Point, nextPoint: Point) => {
-		// 	gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
-		// 		point.position.x, point.position.y, point.position.z,
-		// 		nextPoint.position.x, nextPoint.position.y, nextPoint.position.z]));
+		const drawLine = (point: Point, nextPoint: Point) => {
+			gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array([
+				point.position.x, point.position.y, point.position.z,
+				nextPoint.position.x, nextPoint.position.y, nextPoint.position.z]));
 
-		// 	gl.drawArrays(gl.LINES, 0, 2);
-		// }
+			gl.drawArrays(gl.LINES, 0, 2);
+		}
 
-		// // draw all points for debug
-		// // this.allPoints.forEach(point => {
-		// // 	drawPoint(point);
-		// // });
-
-		// if (this.closestPoint)
-		// 	drawPoint(this.closestPoint);
-
-		// this.points.forEach(point => {
+		// draw all points for debug
+		// this.allPoints.forEach(point => {
 		// 	drawPoint(point);
 		// });
 
-		// gl.bindVertexArray(null);
-		// gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
-		// gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
-		// gl.uniform4fv(solidShader.colorUnif, [1, 0, 1, 1]);
-		// gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+		if (this.closestPoint)
+			drawPoint(this.closestPoint);
 
-		// this.points.forEach((point, index) => {
-		// 	let nextPoint: Point | null = this.points[index + 1];
-		// 	if (!nextPoint) nextPoint = this.closestPoint;
-		// 	if (nextPoint)
-		// 		drawLine(point, nextPoint);
-		// });
+		this.points.forEach(point => {
+			drawPoint(point);
+		});
 
-		// gl.enable(gl.DEPTH_TEST);
+		gl.bindVertexArray(null);
 
-		// gl.bindBuffer(gl.ARRAY_BUFFER, null);
-		// gl.bindVertexArray(null);
-		// gl.useProgram(null);
+		gl.uniformMatrix4fv(solidShader.projectionMatrixUnif, false, viewport.camera.perspectiveMatrix.getData());
+		gl.uniformMatrix4fv(solidShader.modelViewMatrixUnif, false, viewport.camera.viewMatrix.getData());
+		gl.uniform4fv(solidShader.colorUnif, [1, 0, 1, 1]);
+
+		gl.bindVertexArray(lineVao);
+		gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+
+		this.points.forEach((point, index) => {
+			let nextPoint: Point | null = this.points[index + 1];
+			if (!nextPoint) nextPoint = this.closestPoint;
+			if (nextPoint)
+				drawLine(point, nextPoint);
+		});
+
+		gl.enable(gl.DEPTH_TEST);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindVertexArray(null);
+		gl.useProgram(null);
 	}
 
 	lastGridSize = 0;
