@@ -1,4 +1,4 @@
-import { vec2 } from "./vector.js";
+import { quaternion, vec2 } from "./vector.js";
 
 export default class gMath {
 	static deg2Rad(angle: number): number {
@@ -42,5 +42,9 @@ export default class gMath {
 		const p = a.plus(dir.times(t));
 
 		return vec2.sqrDist(point, p);
+	}
+
+	static getClosestCardinalRotation(rotation: quaternion): quaternion {
+		return quaternion.identity();
 	}
 }

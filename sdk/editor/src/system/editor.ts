@@ -15,7 +15,6 @@ import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { RotateTool } from "../tools/rotate.js";
 import { ScaleTool } from "../tools/scale.js";
 import { TranslateTool } from "../tools/translate.js";
-import { editor } from "../main.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();

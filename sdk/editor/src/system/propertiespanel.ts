@@ -1,4 +1,3 @@
-import { drawLine } from "../../../../src/client/render/render.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
@@ -32,6 +31,7 @@ export class PropertiesPanel {
 
 		properties.innerHTML += `
 		<button class="wide margin" id="dist-merge">Grid merge</button>
+		<button class="wide margin" id="snap">Snap to grid</button>
 		`;
 
 		const distMerge = document.getElementById("dist-merge") as HTMLElement;
@@ -182,6 +182,17 @@ export class PropertiesPanel {
 				// prevents infinite loop
 				newVerts.forEach(vert => {
 					mesh.verts.add(vert);
+				});
+
+				mesh.updateShape();
+			});
+		}
+
+		const snap = document.getElementById("snap") as HTMLElement;
+		snap.onclick = () => {
+			select.selectedMeshes.forEach(mesh => {
+				mesh.verts.forEach(vert => {
+					editor.snapToGrid(vert.position);
 				});
 
 				mesh.updateShape();

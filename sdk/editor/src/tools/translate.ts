@@ -5,6 +5,8 @@ import gMath from "../../../../src/common/math/gmath.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
 import { editor } from "../main.js";
+import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorVertex } from "../mesh/editormesh.js";
+import { getKeyDown } from "../system/input.js";
 import { Viewport } from "../windows/viewport.js";
 import { SelectExtension } from "./selectextension.js";
 import { SelectMode } from "./selecttool.js";
@@ -26,6 +28,7 @@ export class TranslateTool extends SelectExtension {
 	gizmoPartUnderMouse: GizmoPart = GizmoPart.None;
 
 	dragging: boolean = false;
+	extruding: boolean = false;
 	dragPos: vec3 = vec3.origin();
 	dragViewport!: Viewport;
 
@@ -77,6 +80,7 @@ export class TranslateTool extends SelectExtension {
 
 	stopDrag() {
 		this.dragging = false;
+		this.extruding = false;
 	}
 
 	override mouse(button: number, pressed: boolean): boolean {
@@ -211,33 +215,45 @@ export class TranslateTool extends SelectExtension {
 
 			const select = editor.selectTool;
 
+			if (delta.sqrMagnitude() == 0) {
+				return false;
+			}
+
+			// extrude
+			if (!this.extruding && getKeyDown("ShiftLeft")) {
+				this.extruding = true;
+
+				switch (select.mode) {
+					case SelectMode.Edge:
+						this.extrudeEdges();
+						break;
+				}
+			}
+
 			this.center.add(delta);
+
+			let affectedVerts = new Set<EditorVertex>();
 
 			switch (select.mode) {
 				case SelectMode.Vertex:
 					select.selectedVertices.forEach(vert => {
-						vert.position.add(delta);
-						// editor.snapToGrid(vert.position);
+						affectedVerts.add(vert);
 					});
 					break;
 				case SelectMode.Edge:
 					select.selectedEdges.forEach(edge => {
 						if (edge.halfA) {
 							const v = edge.halfA.tail!;
-							v.position.add(delta);
-							// editor.snapToGrid(v.position);
+							affectedVerts.add(v);
 
 							const w = edge.halfA.next!.tail!;
-							w.position.add(delta);
-							// editor.snapToGrid(w.position);
+							affectedVerts.add(w);
 						} else if (edge.halfB) {
 							const v = edge.halfB.tail!;
-							v.position.add(delta);
-							// editor.snapToGrid(v.position);
+							affectedVerts.add(v);
 
 							const w = edge.halfB.next!.tail!;
-							w.position.add(delta);
-							// editor.snapToGrid(w.position);
+							affectedVerts.add(w);
 						}
 					});
 				case SelectMode.Face:
@@ -246,8 +262,7 @@ export class TranslateTool extends SelectExtension {
 						let edge = start!;
 						do {
 							const v = edge.tail!;
-							v.position.add(delta);
-							// editor.snapToGrid(v.position);
+							affectedVerts.add(v);
 
 							edge = edge.next!;
 						} while (edge != start)
@@ -256,12 +271,15 @@ export class TranslateTool extends SelectExtension {
 				case SelectMode.Mesh:
 					select.selectedMeshes.forEach(mesh => {
 						mesh.verts.forEach(vert => {
-							vert.position.add(delta);
-							// editor.snapToGrid(vert.position);
+							affectedVerts.add(vert);
 						});
 					});
 					break;
 			}
+
+			affectedVerts.forEach(vert => {
+				vert.position.add(delta);
+			});
 
 			select.selectedMeshes.forEach(mesh => {
 				mesh.updateShape();
@@ -347,5 +365,175 @@ export class TranslateTool extends SelectExtension {
 		}
 
 		return super.mouseMove(dx, dy);
+	}
+
+	extrudeEdges() {
+		const select = editor.selectTool;
+
+		const newSelection = new Set<EditorFullEdge>();
+		const extrudeEdge = (edge: EditorFullEdge) => {
+			if (edge.halfA && edge.halfB) {
+				// can't extrude full edges
+				return;
+			}
+
+			let half: EditorHalfEdge;
+			let isHalfA: boolean;
+			if (edge.halfA) {
+				half = edge.halfA;
+				isHalfA = true;
+			}
+			else {
+				half = edge.halfB!;
+				isHalfA = false;
+			}
+
+			// new face
+			const oldFace = half.face!;
+			const mesh = oldFace.mesh!;
+			const face: EditorFace = {
+				halfEdge: null,
+				texture: oldFace.texture,
+				u: vec3.copy(oldFace.u),
+				v: vec3.copy(oldFace.v),
+				offset: vec2.copy(oldFace.offset),
+				rotation: oldFace.rotation,
+				scale: vec2.copy(oldFace.scale),
+				color: oldFace.color.concat(),
+				mesh: mesh,
+				elementOffset: 0,
+				elementCount: 0,
+				primitive: null
+			}
+
+			// two new verts
+			const vertA: EditorVertex = {
+				position: vec3.copy(half.next!.tail!.position),
+				edges: new Set()
+			}
+			const vertB: EditorVertex = {
+				position: vec3.copy(half.tail!.position),
+				edges: new Set()
+			}
+
+			// 3 new full edges
+			const bFull: EditorFullEdge = {
+				halfA: null,
+				halfB: null
+			}
+			const cFull: EditorFullEdge = {
+				halfA: null,
+				halfB: null
+			}
+			const dFull: EditorFullEdge = {
+				halfA: null,
+				halfB: null
+			}
+
+			// 4 new edges
+			const a: EditorHalfEdge = {
+				prev: null,
+				next: null,
+				twin: half,
+				face: face,
+				full: half.full,
+				tail: half.next!.tail
+			}
+			a.tail?.edges.add(a);
+			face.halfEdge = a;
+			half.twin = a;
+			if (isHalfA) {
+				edge.halfB = a;
+			} else {
+				edge.halfA = a;
+			}
+
+			const b: EditorHalfEdge = {
+				prev: a,
+				next: null,
+				twin: null,
+				face: face,
+				full: bFull,
+				tail: half.tail
+			}
+			b.tail?.edges.add(b);
+			bFull.halfA = b;
+			a.next = b;
+			const c: EditorHalfEdge = {
+				prev: b,
+				next: null,
+				twin: null,
+				face: face,
+				full: cFull,
+				tail: vertB
+			}
+			c.tail?.edges.add(c);
+			cFull.halfA = c;
+			b.next = c;
+			const d: EditorHalfEdge = {
+				prev: c,
+				next: a,
+				twin: null,
+				face: face,
+				full: dFull,
+				tail: vertA
+			}
+			d.tail?.edges.add(d);
+			dFull.halfA = d;
+			a.prev = d;
+			c.next = d;
+
+			mesh.halfEdges.add(a);
+			mesh.halfEdges.add(b);
+			mesh.halfEdges.add(c);
+			mesh.halfEdges.add(d);
+			mesh.edges.add(bFull);
+			mesh.edges.add(cFull);
+			mesh.edges.add(dFull);
+			mesh.verts.add(vertA);
+			mesh.verts.add(vertB);
+			mesh.faces.add(face);
+
+			newSelection.add(cFull);
+		}
+
+		const edgesShouldConnect = (edge1: EditorFullEdge, edge2: EditorFullEdge): boolean => {
+			// check if they should be twins by checking if other verts are shared
+			// there may be cases where this breaks down, check later
+			if (edge1.halfA?.prev?.tail == edge2.halfA?.next?.next?.tail) {
+				return true;
+			}
+
+			return false;
+		}
+
+		const connectEdges = (edge1: EditorFullEdge, edge2: EditorFullEdge) => {
+			const a = edge1.halfA!.prev!;
+			const b = edge2.halfA!.next!;
+
+			const va = edge1.halfA!.tail!;
+			const vb = b.tail!;
+
+			a.twin = b;
+			b.twin = a;
+
+			const mesh = a.face!.mesh!;
+
+			mesh.verts.delete(vb);
+
+			b.tail = va;
+			va.edges.add(b);
+		}
+
+		select.selectedEdges.forEach(extrudeEdge);
+		select.selectedEdges = newSelection;
+
+		select.selectedEdges.forEach(edge1 => {
+			select.selectedEdges.forEach(edge2 => {
+				if (edgesShouldConnect(edge1, edge2)) {
+					connectEdges(edge1, edge2);
+				}
+			});
+		});
 	}
 }

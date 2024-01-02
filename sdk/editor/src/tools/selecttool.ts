@@ -4,7 +4,7 @@ import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
-import { vec2, vec3 } from "../../../../src/common/math/vector.js";
+import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
@@ -116,9 +116,10 @@ export class SelectTool extends Tool {
 		if (this.dragging && this.mode == SelectMode.Vertex) {
 			const start = this.dragPos;
 			const end = activeViewport.getMouseWorldRounded();
+			const delta = end.minus(start);
+			editor.snapToGrid(delta);
 
-			if (!start.equals(end)) {
-				const delta = end.minus(start);
+			if (delta.sqrMagnitude() > 0) {
 				this.hasDragged = true;
 
 				const move = (vert: EditorVertex, delta: vec3) => {
@@ -803,6 +804,7 @@ export class SelectTool extends Tool {
 			return false;
 
 		editor.gridOffset = this.vertexUnderCursor.position.y;
+		editor.gridRotation = gMath.getClosestCardinalRotation(viewport.camera.rotation);
 		this.vertexUnderCursor = null;
 
 		this.dragging = true;
