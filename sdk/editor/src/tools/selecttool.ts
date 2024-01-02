@@ -249,6 +249,37 @@ export class SelectTool extends Tool {
 					});
 				}
 				break;
+			case SelectMode.Edge:
+				{
+					this.selectedEdges.forEach(edge => {
+						let h;
+						if (edge.halfA) {
+							h = edge.halfA;
+						} else {
+							h = edge.halfB
+						}
+
+						h?.face?.mesh?.deleteEdge(edge);
+					});
+
+					this.selectedMeshes.forEach(mesh => {
+						mesh.updateShape();
+					});
+				}
+				break;
+			case SelectMode.Vertex:
+				{
+					this.selectedVertices.forEach(vert => {
+						vert.edges.forEach(edge => {
+							edge.face?.mesh?.deleteEdge(edge.full!);
+						});
+					});
+
+					this.selectedMeshes.forEach(mesh => {
+						mesh.updateShape();
+					});
+				}
+				break;
 		}
 
 		this.clearSelected();

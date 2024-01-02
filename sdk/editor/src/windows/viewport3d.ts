@@ -49,8 +49,8 @@ export class Viewport3D extends Viewport {
 
 		moveVector.normalise();
 
-		if (getKeyDown("Space")) moveVector.y += 0.5;
-		if (getKeyDown("ShiftLeft")) moveVector.y -= 0.5;
+		if (getKeyDown("Space")) moveVector.y += 0.8;
+		if (getKeyDown("ShiftLeft")) moveVector.y -= 0.8;
 
 
 		this.camera.position.add(moveVector.times(Time.deltaTime * editorConfig.moveSpeed));
