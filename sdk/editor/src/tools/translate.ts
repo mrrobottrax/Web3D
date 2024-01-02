@@ -523,6 +523,10 @@ export class TranslateTool extends SelectExtension {
 
 			b.tail = va;
 			va.edges.add(b);
+
+			a.full!.halfB = b;
+			mesh.edges.delete(b.full!);
+			b.full = a.full;
 		}
 
 		select.selectedEdges.forEach(extrudeEdge);
