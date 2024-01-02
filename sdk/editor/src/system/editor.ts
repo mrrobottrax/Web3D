@@ -172,4 +172,11 @@ export class Editor {
 		v.y = r.y;
 		v.z = r.z;
 	}
+
+	moveGridToPoint(p: vec3) {
+		let dir = new vec3(0, 1, 0);
+		dir = dir.rotate(this.gridRotation);
+
+		this.gridOffset = vec3.dot(p, dir);
+	}
 }

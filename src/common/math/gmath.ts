@@ -1,4 +1,4 @@
-import { quaternion, vec2 } from "./vector.js";
+import { quaternion, vec2, vec3 } from "./vector.js";
 
 export default class gMath {
 	static deg2Rad(angle: number): number {
@@ -45,6 +45,22 @@ export default class gMath {
 	}
 
 	static getClosestCardinalRotation(rotation: quaternion): quaternion {
-		return quaternion.identity();
+		let forward = new vec3(0, 0, 1);
+		forward = forward.rotate(rotation);
+
+		const dxz = Math.abs(vec3.dot(forward, new vec3(0, 1, 0)));
+		const dxy = Math.abs(vec3.dot(forward, new vec3(0, 0, 1)));
+		const dyz = Math.abs(vec3.dot(forward, new vec3(1, 0, 0)));
+
+		if (dxz > dxy && dxz > dyz) {
+			// console.log("XZ");
+			return quaternion.identity();
+		} else if (dxy > dxz && dxy > dyz) {
+			// console.log("XY");
+			return quaternion.euler(-90, 0, 0);
+		} else {
+			// console.log("YZ");
+			return quaternion.euler(0, 0, -90);
+		}
 	}
 }

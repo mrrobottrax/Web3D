@@ -803,8 +803,8 @@ export class SelectTool extends Tool {
 		if (!this.vertexUnderCursor)
 			return false;
 
-		editor.gridOffset = this.vertexUnderCursor.position.y;
 		editor.gridRotation = gMath.getClosestCardinalRotation(viewport.camera.rotation);
+		editor.moveGridToPoint(this.vertexUnderCursor.position);
 		this.vertexUnderCursor = null;
 
 		this.dragging = true;

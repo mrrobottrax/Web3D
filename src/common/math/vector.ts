@@ -534,4 +534,25 @@ export class quaternion {
 
 		return m;
 	}
+
+	minus(q: quaternion): quaternion {
+		return new quaternion(
+			this.w - q.w,
+			this.x - q.x,
+			this.y - q.y,
+			this.z - q.z
+		);
+	}
+
+	sqrMagnitude(): number {
+		return this.w * this.w +
+			this.x * this.x +
+			this.y * this.y +
+			this.z * this.z;
+	}
+
+	static sqrDist(a: quaternion, b: quaternion): number {
+		const d = b.minus(a);
+		return d.sqrMagnitude();
+	}
 }
