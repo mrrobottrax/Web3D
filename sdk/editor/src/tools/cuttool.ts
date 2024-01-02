@@ -73,14 +73,13 @@ export class CutTool extends Tool {
 	}
 
 	finishCut() {
+		const mesh = this.cuttingFace.mesh!;
+
 		// for each line
 		this.points.forEach((point, index) => {
 			// todo: allow other types of points
 			// only works for edges
-			const addVertex = (p: Point) => {
-				const full = p.edge!.full!;
-				const mesh = p.edge!.face!.mesh!;
-
+			const addVertex = (p: Point): EditorVertex => {
 				const newFull: EditorFullEdge = {
 					halfA: null,
 					halfB: null
@@ -94,32 +93,27 @@ export class CutTool extends Tool {
 				mesh.edges.add(newFull);
 				mesh.verts.add(newVert);
 
-				let c: EditorHalfEdge | null = null;
+				const a = p.edge!;
+				const b = p.edge!.twin;
+
+				let c: EditorHalfEdge = {
+					prev: a,
+					next: a.next,
+					twin: null,
+					face: a.face,
+					full: newFull,
+					tail: newVert
+				};
 				let d: EditorHalfEdge | null = null;
 
-				if (full?.halfA) {
-					const a = full.halfA;
+				newFull.halfA = c;
+				a.next!.prev = c;
+				a.next = c;
 
-					c = {
-						prev: a,
-						next: a.next,
-						twin: null,
-						face: a.face,
-						full: newFull,
-						tail: newVert
-					}
+				mesh.halfEdges.add(c);
+				newVert.edges.add(c);
 
-					newFull.halfA = c;
-					a.next!.prev = c;
-					a.next = c;
-
-					mesh.halfEdges.add(c);
-					newVert.edges.add(c);
-				}
-
-				if (full?.halfB) {
-					const b = full.halfB;
-
+				if (b) {
 					b.tail?.edges.delete(b);
 
 					d = {
@@ -140,12 +134,12 @@ export class CutTool extends Tool {
 					mesh.halfEdges.add(d);
 					newVert.edges.add(b);
 					b.tail?.edges.add(d);
-				}
 
-				if (c && d) {
 					c.twin = d;
 					d.twin = c;
 				}
+
+				return newVert;
 			}
 
 			if (this.points.length == 1) {
@@ -161,89 +155,135 @@ export class CutTool extends Tool {
 
 			const next = this.points[index + 1];
 
-			addVertex(point);
-			addVertex(next);
+			let vertA: EditorVertex = point.vertex!;
+			let vertB: EditorVertex = next.vertex!;
+			if (point.type != PointType.vertex) vertA = addVertex(point);
+			if (next.type != PointType.vertex) vertB = addVertex(next);
 
-			// connect points with new edges
-			const face = point.edge!.face!;
-			const mesh = face.mesh;
-			const newFace: EditorFace = {
-				halfEdge: next.edge!,
-				texture: face.texture,
-				u: vec3.copy(face.u),
-				v: vec3.copy(face.v),
-				offset: vec2.copy(face.offset),
-				rotation: face.rotation,
-				scale: vec2.copy(face.scale),
-				color: face.color.concat(), // todo: better way to copy?
-				mesh: face.mesh,
-				elementOffset: 0,
-				elementCount: 0,
-				primitive: null
-			}
+			const connectVertices = (vertA: EditorVertex, vertB: EditorVertex) => {
+				const oldFace = this.cuttingFace;
 
-			const a = point.edge!.next!;
-			const b = next.edge!.next!;
+				// get key edges
+				let a: EditorHalfEdge;
+				{
+					const it = vertA.edges.values();
+					let i = it.next();
+					while (!i.done) {
+						const edge = i.value;
 
-			const xy: EditorFullEdge = {
-				halfA: null,
-				halfB: null
-			}
-			const x: EditorHalfEdge = {
-				prev: point.edge!,
-				next: b,
-				twin: null,
-				face: point.edge!.face,
-				full: xy,
-				tail: a.tail
-			}
-			b.prev = x;
-			point.edge!.next = x;
-			const y: EditorHalfEdge = {
-				prev: next.edge!,
-				next: a,
-				twin: null,
-				face: newFace,
-				full: xy,
-				tail: b.tail
-			}
-			a.prev = y;
-			next.edge!.next = y;
+						if (edge.face == oldFace) {
+							a = edge;
+							break;
+						}
 
-			x.twin = y;
-			y.twin = x;
+						i = it.next();
+					}
+				}
+				let b: EditorHalfEdge;
+				{
+					const it = vertB.edges.values();
+					let i = it.next();
+					while (!i.done) {
+						const edge = i.value;
 
-			xy.halfA = x;
-			xy.halfB = y;
+						if (edge.face == oldFace) {
+							b = edge;
+							break;
+						}
 
-			a.tail?.edges.add(x);
-			b.tail?.edges.add(y);
-			mesh?.halfEdges.add(x);
-			mesh?.halfEdges.add(y);
-			mesh?.edges.add(xy);
-			mesh?.faces.add(newFace);
+						i = it.next();
+					}
+				}
+				a = a!;
+				b = b!;
+				if (!a || !b) {
+					console.error("ERROR WITH CUT TOOL");
+					return;
+				}
+				let c = b.prev!;
+				let d = a.prev!;
 
-			// update edges
-			face.halfEdge = point.edge!;
-			{
-				const start = newFace.halfEdge;
-				let edge = start!;
+				// create new edges
+				const x: EditorHalfEdge = {
+					prev: d,
+					next: b,
+					twin: null,
+					face: oldFace,
+					full: null,
+					tail: vertA
+				}
+				const y: EditorHalfEdge = {
+					prev: c,
+					next: a,
+					twin: null,
+					face: null,
+					full: null,
+					tail: vertB
+				}
+				mesh.halfEdges.add(x);
+				mesh.halfEdges.add(y);
+
+				// update oldface first edge
+				oldFace.halfEdge = x;
+
+				// update edge relationships
+				x.twin = y;
+				y.twin = x;
+				a.prev = y;
+				b.prev = x;
+				c.next = y;
+				d.next = x;
+
+				// add new edges to vertices
+				vertA.edges.add(x);
+				vertB.edges.add(y);
+
+				// create full edge
+				const full: EditorFullEdge = {
+					halfA: x,
+					halfB: y
+				}
+				x.full = full;
+				y.full = full;
+				mesh.edges.add(full);
+
+				// create new face
+				const newFace: EditorFace = {
+					halfEdge: y,
+					texture: oldFace.texture,
+					u: vec3.copy(oldFace.u),
+					v: vec3.copy(oldFace.v),
+					offset: vec2.copy(oldFace.offset),
+					rotation: oldFace.rotation,
+					scale: vec2.copy(oldFace.scale),
+					color: oldFace.color.concat(),
+					mesh: mesh,
+					elementOffset: 0,
+					elementCount: 0,
+					primitive: null
+				}
+				mesh.faces.add(newFace);
+
+				// update edges of new face to point to new face
+				const start = y;
+				let edge = start;
 				do {
 					edge.face = newFace;
 
-					edge = edge!.next!;
+					edge = edge.next!;
 				} while (edge != start)
 			}
+
+			connectVertices(vertA, vertB);
 		});
 
 		this.cutting = false;
 		this.points = [];
 
-		this.cuttingFace.mesh?.updateShape();
+		mesh.updateShape();
 	}
 
 	cancelCut() {
-		console.log("CANCEL");
 		this.cutting = false;
 		this.points = [];
 	}
