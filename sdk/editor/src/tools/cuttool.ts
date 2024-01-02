@@ -27,7 +27,7 @@ export class CutTool extends Tool {
 	closestPoint: Point | null = null;
 
 	cutting: boolean = false;
-	cuttingFace!: EditorFace;
+	cuttingFace: EditorFace | null = null;
 
 	points: Point[] = [];
 
@@ -73,7 +73,7 @@ export class CutTool extends Tool {
 	}
 
 	finishCut() {
-		const mesh = this.cuttingFace.mesh!;
+		const mesh = this.cuttingFace!.mesh!;
 
 		// for each line
 		this.points.forEach((point, index) => {
@@ -104,17 +104,16 @@ export class CutTool extends Tool {
 					full: newFull,
 					tail: newVert
 				};
-				let d: EditorHalfEdge | null = null;
-
+				mesh.halfEdges.add(c);
+				newVert.edges.add(c);
 				newFull.halfA = c;
 				a.next!.prev = c;
 				a.next = c;
 
-				mesh.halfEdges.add(c);
-				newVert.edges.add(c);
-
+				let d: EditorHalfEdge | null = null;
 				if (b) {
 					b.tail?.edges.delete(b);
+					newVert.edges.add(b);
 
 					d = {
 						prev: b.prev,
@@ -124,16 +123,14 @@ export class CutTool extends Tool {
 						full: newFull,
 						tail: b.tail
 					}
+					mesh.halfEdges.add(d);
+					b.tail?.edges.add(d);
 
 					b.tail = newVert;
 
 					newFull.halfB = d;
 					b.prev!.next = d;
 					b.prev = d;
-
-					mesh.halfEdges.add(d);
-					newVert.edges.add(b);
-					b.tail?.edges.add(d);
 
 					c.twin = d;
 					d.twin = c;
@@ -157,11 +154,15 @@ export class CutTool extends Tool {
 
 			let vertA: EditorVertex = point.vertex!;
 			let vertB: EditorVertex = next.vertex!;
-			if (point.type != PointType.vertex) vertA = addVertex(point);
-			if (next.type != PointType.vertex) vertB = addVertex(next);
+			if (point.type != PointType.vertex) {
+				vertA = addVertex(point);
+			}
+			if (next.type != PointType.vertex) {
+				vertB = addVertex(next);
+			}
 
 			const connectVertices = (vertA: EditorVertex, vertB: EditorVertex) => {
-				const oldFace = this.cuttingFace;
+				const oldFace = this.cuttingFace!;
 
 				// get key edges
 				let a: EditorHalfEdge;
@@ -198,6 +199,8 @@ export class CutTool extends Tool {
 				b = b!;
 				if (!a || !b) {
 					console.error("ERROR WITH CUT TOOL");
+					console.log(vertA);
+					console.log(vertB);
 					return;
 				}
 				let c = b.prev!;
@@ -278,7 +281,11 @@ export class CutTool extends Tool {
 		});
 
 		this.cutting = false;
+		this.cuttingFace = null;
 		this.points = [];
+		this.closestPoint = null;
+		this.allPoints.clear();
+		this.forceChange = true;
 
 		mesh.updateShape();
 	}
