@@ -1,5 +1,5 @@
 import { SharedAttribs, defaultShader, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
-import { drawLine, drawPrimitive } from "../../../../src/client/render/render.js";
+import { drawLine, drawLineScreen, drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
@@ -1028,8 +1028,10 @@ export class SelectTool extends Tool {
 		let bestEdge: EditorHalfEdge | null = null;
 
 		const edgeToScreen = (edge: EditorHalfEdge) => {
-			const start = edge.tail!.position.multMat4(toScreen);
-			const end = edge.next!.tail!.position.multMat4(toScreen);
+			let start = edge.tail!.position.multMat4(toScreen);
+			let end = edge.next!.tail!.position.multMat4(toScreen);
+
+			// todo: clip
 
 			if (viewport.perspective) {
 				start.x /= -start.z;
@@ -1055,6 +1057,8 @@ export class SelectTool extends Tool {
 
 			const a = s.a;
 			const b = s.b;
+
+			drawLineScreen(vec3.from2(a), vec3.from2(b), [1, 0, 0, 1]);
 
 			const dist = gMath.sqrDistToLine(a, b, cursor);
 

@@ -239,6 +239,10 @@ export class vec3 {
 			a.z + (b.z - a.z) * t
 		);
 	}
+
+	static from2(v: vec2): vec3 {
+		return new vec3(v.x, v.y, 0);
+	}
 }
 
 export class vec2 {
@@ -383,6 +387,10 @@ export class vec2 {
 			a.x + (b.x - a.x) * t,
 			a.y + (b.y - a.y) * t
 		);
+	}
+
+	static from3(v: vec3): vec2 {
+		return new vec2(v.x, v.y);
 	}
 }
 
