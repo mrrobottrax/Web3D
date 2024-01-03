@@ -30,9 +30,15 @@ export class PropertiesPanel {
 		if (select.selectedMeshes.size == 0) return;
 
 		properties.innerHTML += `
+		<button class="wide margin" id="print">Print</button>
 		<button class="wide margin" id="dist-merge">Grid merge</button>
 		<button class="wide margin" id="snap">Snap to grid</button>
 		`;
+
+		const print = document.getElementById("print") as HTMLElement;
+		print.onclick = () => {
+			console.log(editor.selectTool.selectedVertices);
+		}
 
 		const distMerge = document.getElementById("dist-merge") as HTMLElement;
 		distMerge.onclick = () => {

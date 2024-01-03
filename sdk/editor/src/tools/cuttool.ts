@@ -77,7 +77,7 @@ export class CutTool extends Tool {
 
 		// for each line
 		this.points.forEach((point, index) => {
-			// todo: allow other types of points
+			// todo: allow mid face points
 			// only works for edges
 			const addVertex = (p: Point): EditorVertex => {
 				const newFull: EditorFullEdge = {

@@ -982,8 +982,117 @@ export class EditorMesh {
 
 		// I'm useless now
 		if (this.faces.size == 0) {
-			editor.meshes.delete(this);
+			this.deleteSelf();
 		}
+	}
+
+	dissolveEdge(edge: EditorFullEdge) {
+		// only dissolve when a and b both exist
+		if (!edge.halfA || !edge.halfB) return;
+
+		this.edges.delete(edge);
+		const a = edge.halfA;
+		const b = edge.halfB;
+		this.halfEdges.delete(edge.halfA);
+		this.halfEdges.delete(edge.halfB);
+
+		// get important edges
+		const c = a.prev!;
+		const d = b.next!;
+		const e = a.next!;
+		const f = b.prev!;
+
+		// re-link edges
+		c.next = d;
+		d.prev = c;
+		f.next = e;
+		e.prev = f;
+
+		// remove from vertex edge lists
+		const vertA = a.tail!;
+		const vertB = b.tail!;
+		vertA.edges.delete(a);
+		vertB.edges.delete(b);
+
+		// merge faces
+		this.faces.delete(b.face!);
+		const face = a.face!;
+		face.halfEdge = c;
+		{
+			const start = face.halfEdge;
+			let edge = start;
+			do {
+				edge.face = face;
+
+				edge = edge.next!;
+			} while (edge != start)
+		}
+
+		// dissolve vertices
+		this.dissolveVertex(vertA);
+		this.dissolveVertex(vertB);
+	}
+
+	dissolveVertex(vert: EditorVertex) {
+		// only dissolve when vertex has one edge or two edges
+		if (vert.edges.size > 2) return;
+
+		// only dissolve when both edges are parallel
+		if (vert.edges.size == 2) {
+			const it = vert.edges.values();
+			const a: EditorHalfEdge = it.next().value;
+			const b: EditorHalfEdge = it.next().value;
+
+			if (a.next?.tail != b.prev?.tail || b.next?.tail != a.prev?.tail) {
+				return;
+			}
+		}
+
+		this.verts.delete(vert);
+
+		// link edges around vert
+		const linkEdges = (e: EditorHalfEdge) => {
+			const a = e.prev!;
+			const b = e.next!;
+
+			a.next = b;
+			b.prev = a;
+
+			// make sure faces don't point to removed edges
+			e.face!.halfEdge = a;
+		}
+
+		const it = vert.edges.values();
+		const edge: EditorHalfEdge = it.next().value;
+		linkEdges(edge);
+
+		this.edges.delete(edge.full!);
+
+		const a = edge.prev!
+
+		const full = a.full!;
+		full.halfA = a;
+		full.halfB = null;
+		a.twin = null;
+
+		const next: EditorHalfEdge = it.next().value;
+		this.halfEdges.delete(edge);
+		if (next) {
+			this.halfEdges.delete(next);
+
+			linkEdges(next);
+
+			const b = next.prev!;
+			a.twin = b;
+			b.twin = a;
+			full.halfB = next.prev;
+			b.full = full;
+		}
+	}
+
+	deleteSelf() {
+		this.cleanUpGl();
+		editor.meshes.delete(this);
 	}
 
 	deleteEdge(edge: EditorFullEdge) {

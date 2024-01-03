@@ -222,10 +222,38 @@ export class SelectTool extends Tool {
 				case "Delete":
 					this.deleteSelected();
 					break;
+				case "Backspace":
+					this.dissolveSelected();
+					break;
 			}
 		}
 
 		return false;
+	}
+
+	dissolveSelected() {
+		console.log("Dissolve");
+		switch (this.mode) {
+			case SelectMode.Edge:
+				this.selectedEdges.forEach(edge => {
+					if (edge.halfA && edge.halfB) {
+						edge.halfA.face!.mesh!.dissolveEdge(edge);
+					}
+				});
+				break;
+			case SelectMode.Vertex:
+				this.selectedVertices.forEach(vert => {
+					vert.edges.values().next().value.face.mesh.dissolveVertex(vert);
+				});
+				break;
+		}
+
+		this.selectedMeshes.forEach(mesh => {
+			mesh.updateShape();
+		});
+
+		this.clearSelected();
+		this.clearSelectionState();
 	}
 
 	deleteSelected() {
@@ -233,8 +261,7 @@ export class SelectTool extends Tool {
 			case SelectMode.Mesh:
 				{
 					this.selectedMeshes.forEach(mesh => {
-						mesh.cleanUpGl();
-						editor.meshes.delete(mesh);
+						mesh.deleteSelf();
 					});
 				}
 				break;
@@ -242,10 +269,6 @@ export class SelectTool extends Tool {
 				{
 					this.selectedFaces.forEach(face => {
 						face.mesh!.deleteFace(face);
-					});
-
-					this.selectedMeshes.forEach(mesh => {
-						mesh.updateShape();
 					});
 				}
 				break;
@@ -261,10 +284,6 @@ export class SelectTool extends Tool {
 
 						h?.face?.mesh?.deleteEdge(edge);
 					});
-
-					this.selectedMeshes.forEach(mesh => {
-						mesh.updateShape();
-					});
 				}
 				break;
 			case SelectMode.Vertex:
@@ -274,13 +293,13 @@ export class SelectTool extends Tool {
 							edge.face?.mesh?.deleteEdge(edge.full!);
 						});
 					});
-
-					this.selectedMeshes.forEach(mesh => {
-						mesh.updateShape();
-					});
 				}
 				break;
 		}
+
+		this.selectedMeshes.forEach(mesh => {
+			mesh.updateShape();
+		});
 
 		this.clearSelected();
 		this.clearSelectionState();
