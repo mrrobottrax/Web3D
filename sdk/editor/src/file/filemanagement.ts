@@ -172,7 +172,7 @@ export class FileManagement {
 	}
 
 	static getAssetList() {
-		const assetListPath = "sdk/editor/data/_assetlist.txt";
+		const assetListPath = "sdk/editor/data/_assetlist.json";
 
 		const req = new XMLHttpRequest();
 		req.open("GET", assetListPath);
@@ -191,7 +191,7 @@ export class FileManagement {
 	}
 
 	static getEntityList() {
-		const entityListPath = "sdk/editor/data/_entitylist.txt";
+		const entityListPath = "sdk/editor/data/_entitylist.json";
 
 		const req = new XMLHttpRequest();
 		req.open("GET", entityListPath);

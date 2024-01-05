@@ -1,13 +1,11 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { SharedAttribs, SkinnedShaderBase, defaultShader, gl, skinnedShader, solidShader } from "../../../../src/client/render/gl.js";
+import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
-import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
-import { entityModels } from "../system/entitymodels.js";
 import { ToolEnum } from "../tools/tool.js";
 import { EditorWindow } from "./window.js";
 
@@ -22,7 +20,7 @@ export abstract class Viewport extends EditorWindow {
 
 		editor.entities.forEach((entity) => {
 			if (entity.model) {
-				const model = entityModels.get(entity.model);
+				const model = editor.entityModels.get(entity.model);
 				if (model) {
 					model.nodes.forEach(node => {
 						node.primitives.forEach(prim => {

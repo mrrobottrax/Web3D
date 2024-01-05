@@ -183,7 +183,7 @@ async function initGameShaders() {
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
-		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default_skinned.frag"),
+		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
 		uiShader.program = results[1];

@@ -1,5 +1,6 @@
 attribute vec4 aVertexPosition;
 attribute vec2 aTexCoord;
+attribute vec3 aColor;
 attribute vec4 aBoneIds;
 attribute vec4 aBoneWeights;
 
@@ -10,9 +11,11 @@ uniform mat4 uProjectionMatrix;
 uniform mat4 uBoneMatrices[MAX_BONES];
 
 varying vec2 vTexCoord;
+varying vec3 vColor;
 
 void main() {
 	vTexCoord = aTexCoord;
+	vColor = aColor;
 
 	mat4 skinMat = aBoneWeights.x * uBoneMatrices[int(aBoneIds.x)] +
 		aBoneWeights.y * uBoneMatrices[int(aBoneIds.y)] +

@@ -3,7 +3,6 @@ import { drawLine } from "../../../../src/client/render/render.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
-import { entityModels } from "../system/entitymodels.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
 
@@ -14,6 +13,15 @@ export class EntityTool extends Tool {
 
 	draw(viewport: Viewport) {
 		drawLine(this.entityOrigin, this.entityOrigin.plus(new vec3(0, 1, 0)), [0, 1, 0, 1]);
+	}
+
+	cleanUpGl(entity: any) {
+		if (entity.model) {
+			const model = editor.entityModels.get(entity.model);
+			if (model) {
+				model.cleanUp();
+			}
+		}
 	}
 
 	override mouse(button: number, pressed: boolean): boolean {
@@ -67,10 +75,10 @@ export class EntityTool extends Tool {
 			entity.keyvalues.origin = this.entityOrigin.x.toString() + " " + this.entityOrigin.y.toString() + " " + this.entityOrigin.z.toString();
 			editor.entities.add(entity);
 
-			if (entity.model && !entityModels.has(entity.model)) {
+			if (entity.model && !editor.entityModels.has(entity.model)) {
 				// load model
 				const loadModel = async (model: string) => {
-					entityModels.set(model, await ClientGltfLoader.loadGltfFromWeb(model));
+					editor.entityModels.set(model, await ClientGltfLoader.loadGltfFromWeb(model));
 				}
 				loadModel(entity.model);
 			}

@@ -17,10 +17,13 @@ import { ScaleTool } from "../tools/scale.js";
 import { TranslateTool } from "../tools/translate.js";
 import { EntityTool } from "../tools/entitytool.js";
 import { EntityPanel } from "./entitypanel.js";
+import { Model } from "../../../../src/common/mesh/model.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
 	entities: Set<any> = new Set();
+	entityModels = new Map<string, Model>();
+
 	activeToolEnum: ToolEnum = ToolEnum.Select;
 	activeTool: Tool;
 
@@ -117,6 +120,7 @@ export class Editor {
 		this.cutTool.close();
 
 		this.unloadMeshes();
+		this.unloadEntities();
 	}
 
 	unloadMeshes() {
@@ -125,6 +129,15 @@ export class Editor {
 		});
 
 		this.meshes.clear();
+	}
+
+	unloadEntities() {
+		this.entities.forEach(entity => {
+			this.entityTool.cleanUpGl(entity);
+		});
+
+		this.entities.clear();
+		this.entityModels.clear();
 	}
 
 	loadMeshesFromJson(meshes: any) {

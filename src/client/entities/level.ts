@@ -111,14 +111,7 @@ function createPrimitive(file: Uint8Array, index: number, vertLength: number, el
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 
-	let p: Primitive = {
-		vao: vao,
-		texture: solidTex,
-		elementCount: elements.length / 2,
-		color: [1, 1, 1, 1],
-		vBuffer: vBuffer,
-		eBuffer: eBuffer
-	}
+	let p = new Primitive(vao, vBuffer, eBuffer, solidTex, elements.length / 2, [1, 1, 1, 1]);
 	if (currentLevel)
 		loadPrimitiveTexture(currentLevel.textureTable[texId], p);
 

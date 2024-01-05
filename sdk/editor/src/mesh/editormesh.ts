@@ -318,10 +318,8 @@ export class EditorMesh {
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-		this.primitives.forEach((value) => {
-			gl.deleteVertexArray(value.vao);
-			gl.deleteBuffer(value.vBuffer);
-			gl.deleteBuffer(value.eBuffer);
+		this.primitives.forEach(prim => {
+			prim.cleanUp();
 		});
 
 		this.primitives = [];
@@ -714,14 +712,7 @@ export class EditorMesh {
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
 
-		let p: Primitive = {
-			vao: vao,
-			texture: solidTex,
-			elementCount: data.elements.length,
-			color: [1, 1, 1, 1],
-			vBuffer: vBuffer,
-			eBuffer: eBuffer
-		}
+		let p = new Primitive(vao, vBuffer, eBuffer, solidTex, data.elements.length, [1, 1, 1, 1]);
 		loadPrimitiveTexture(submesh.texture, p);
 
 		// add primitive to each face
