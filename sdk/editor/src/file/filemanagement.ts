@@ -162,7 +162,9 @@ export class FileManagement {
 
 		const json = JSON.parse(await file.text());
 		
+		editor.close();
 		editor.loadMeshesFromJson(json.meshes);
+		editor.loadEntitiesFromJson(json.entities);
 	}
 
 	static closeMap() {

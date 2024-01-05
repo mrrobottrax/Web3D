@@ -9,7 +9,6 @@ import { Tool } from "./tool.js";
 export class EntityTool extends Tool {
 	entityOrigin: vec3 = vec3.origin();
 	currentEntityName: string = "";
-	currentEntity: any = null;
 
 	draw(viewport: Viewport) {
 		drawLine(this.entityOrigin, this.entityOrigin.plus(new vec3(0, 1, 0)), [0, 1, 0, 1]);
@@ -22,6 +21,13 @@ export class EntityTool extends Tool {
 				model.cleanUp();
 			}
 		}
+	}
+
+	static fromJson(fileEntity: any): any {
+		const entity = EntityTool.getNewEntity(fileEntity.classname);
+		entity.keyvalues = fileEntity.keyvalues;
+		EntityTool.loadEntityModel(entity);
+		return entity;
 	}
 
 	override mouse(button: number, pressed: boolean): boolean {
@@ -47,41 +53,60 @@ export class EntityTool extends Tool {
 		return false
 	}
 
+	static getNewEntity(name: string): any {
+		// add properties from base classes
+		const entity = FileManagement.engineEntities.get(name);
+		let newEntity: any = {};
+		let base = entity;
+		while (base) {
+			const base2 = FileManagement.baseClasses.get(base.base);
+
+			if (base2) {
+				base = base2;
+
+				for (const k in base) {
+					if (!newEntity[k])
+						newEntity[k] = base[k];
+				}
+			}
+			else break;
+		}
+
+		for (const k in entity) {
+			newEntity[k] = entity[k];
+		}
+
+		newEntity.className = name;
+
+		newEntity.toJSON = () => {
+			return {
+				classname: newEntity.className,
+				keyvalues: newEntity.keyvalues
+			}
+		}
+
+		return newEntity;
+	}
+
+	static loadEntityModel(entity: any) {
+		if (entity.model && !editor.entityModels.has(entity.model)) {
+			// load model
+			const loadModel = async (model: string) => {
+				editor.entityModels.set(model, await ClientGltfLoader.loadGltfFromWeb(model));
+			}
+			loadModel(entity.model);
+		}
+	}
+
 	override key(code: string, pressed: boolean): boolean {
 		if (code == "Enter" && pressed) {
-			if (!this.currentEntity) return false;
+			if (!this.currentEntityName) return false;
 
-			// add properties from base classes
-			let entity: any = {};
-			let base = this.currentEntity;
-			while (base) {
-				const base2 = FileManagement.baseClasses.get(base.base);
-
-				if (base2) {
-					base = base2;
-
-					for (const k in base) {
-						if (!entity[k])
-							entity[k] = base[k];
-					}
-				}
-				else break;
-			}
-
-			for (const k in this.currentEntity) {
-				entity[k] = this.currentEntity[k];
-			}
-
+			const entity = EntityTool.getNewEntity(this.currentEntityName);
 			entity.keyvalues.origin = this.entityOrigin.x.toString() + " " + this.entityOrigin.y.toString() + " " + this.entityOrigin.z.toString();
-			editor.entities.add(entity);
 
-			if (entity.model && !editor.entityModels.has(entity.model)) {
-				// load model
-				const loadModel = async (model: string) => {
-					editor.entityModels.set(model, await ClientGltfLoader.loadGltfFromWeb(model));
-				}
-				loadModel(entity.model);
-			}
+			EntityTool.loadEntityModel(entity);
+			editor.entities.add(entity);
 		}
 
 		return false;

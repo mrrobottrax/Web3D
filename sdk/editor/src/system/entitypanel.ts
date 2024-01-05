@@ -20,10 +20,8 @@ export class EntityPanel {
 
 			if (entity) {
 				editor.entityTool.currentEntityName = input.value;
-				editor.entityTool.currentEntity = entity;
 			} else {
-				editor.entityTool.currentEntityName = "base_class";
-				editor.entityTool.currentEntity = FileManagement.baseClasses.get("base_class");
+				editor.entityTool.currentEntityName = "player_start";
 			}
 		}
 	}

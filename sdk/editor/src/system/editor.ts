@@ -60,7 +60,10 @@ export class Editor {
 	}
 
 	toJSON() {
-		return { meshes: Array.from(this.meshes) };
+		return {
+			meshes: Array.from(this.meshes),
+			entities: Array.from(this.entities)
+		};
 	}
 
 	decreaseGrid() {
@@ -141,12 +144,17 @@ export class Editor {
 	}
 
 	loadMeshesFromJson(meshes: any) {
-		this.close();
-
 		(meshes as any[]).forEach(mesh => {
 			const m = EditorMesh.fromJson(mesh);
 			if (m)
 				this.meshes.add(m);
+		});
+	}
+
+	loadEntitiesFromJson(entities: any) {
+		(entities as any[]).forEach(entity => {
+			const m = EntityTool.fromJson(entity);
+			this.entities.add(m);
 		});
 	}
 
@@ -184,7 +192,7 @@ export class Editor {
 
 	snapToGrid(v: vec3): void {
 		let r = v.rotate(this.gridRotation);
-		
+
 		r.x = Math.round(r.x / this.gridSize) * this.gridSize;
 		r.y = Math.round(r.y / this.gridSize) * this.gridSize;
 		r.z = Math.round(r.z / this.gridSize) * this.gridSize;

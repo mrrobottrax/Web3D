@@ -22,9 +22,17 @@ export abstract class Viewport extends EditorWindow {
 			if (entity.model) {
 				const model = editor.entityModels.get(entity.model);
 				if (model) {
+					const mat = this.camera.viewMatrix.copy();
+					const origin: string = entity.keyvalues.origin;
+					const v = origin.split(" ");
+					const vector: number[] = [];
+					v.forEach(v => {
+						vector.push(Number.parseFloat(v));
+					});
+					mat.translate(new vec3(vector[0], vector[1], vector[2]));
 					model.nodes.forEach(node => {
 						node.primitives.forEach(prim => {
-							drawPrimitive(prim, this.camera.viewMatrix, defaultShader);
+							drawPrimitive(prim, mat, defaultShader);
 						});
 					});
 				}
