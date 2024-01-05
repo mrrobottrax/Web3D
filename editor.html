@@ -57,6 +57,8 @@
 				<input type="image" src="sdk/editor/data/sprites/scale.png" class="pixelated toolbar-button"
 					id="tool-scale" alt="scale">
 				<hr style="width: 100%;">
+				<input type="image" src="sdk/editor/data/sprites/entity.png" class="pixelated toolbar-button"
+					id="tool-entity" alt="entity">
 				<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
 					id="tool-block" alt="block">
 				<input type="image" src="sdk/editor/data/sprites/cut.png" class="pixelated toolbar-button" id="tool-cut"
@@ -68,29 +70,46 @@
 			<div class="panel" id="properties-panel">
 				<!-- ADDED BY SCRIPT -->
 			</div>
-			<!-- TEXTURE PANEL -->
-			<div class="vertical" id="textures-panel">
-				<div class="vertical">
-					<img id="texture-preview" src="data/levels/textures/dev.png"
-						style="align-self: center; width: 128px; height: 128px">
-					<button id="texture-apply">Apply</button>
-					<input id="texture-preview-name" type="text" value="data/levels/textures/dev.png" disabled>
-					<input type="search" placeholder="Search...">
+			<div id="assets-panel" style="padding: 0; margin: 0; display: grid; grid-template-rows: auto auto;">
+				<!-- TEXTURE PANEL -->
+				<div class="vertical" id="textures-panel">
+					<div class="vertical">
+						<img id="texture-preview" src="data/levels/textures/dev.png"
+							style="align-self: center; width: 128px; height: 128px">
+						<button id="texture-apply">Apply</button>
+						<input id="texture-preview-name" type="text" value="data/levels/textures/dev.png" disabled>
+						<input type="search" placeholder="Search...">
+					</div>
+					<div id="texture-list" style="
+						overflow-y: scroll;
+						display: flex;
+						height: 600px;
+						flex-direction: row;
+						flex-wrap: wrap;
+						justify-content: space-evenly;
+						border: 1px dotted rgb(62, 62, 62);
+					">
+						<!-- ADDED BY SCRIPT -->
+						<div style="overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;"
+							class="button subtle-button">
+							<img src="data/levels/textures/road_stripe.png"
+								style="align-self: center; width: 128px; height: 128px">
+							<p style="font-size: 0.5em;">data/levels/textures/road_stripe.png</p>
+						</div>
+						<div style="overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;"
+							class="button subtle-button">
+							<img src="data/levels/textures/road_stripe.png"
+								style="align-self: center; width: 128px; height: 128px">
+							<p style="font-size: 0.5em;">data/levels/textures/road_stripe.png</p>
+						</div>
+					</div>
 				</div>
-				<div id="texture-list" style="
-				overflow-y: scroll;
-				height: 640px;
-				display: flex;
-				flex-direction: row;
-				flex-wrap: wrap;
-				justify-content: space-evenly;
-				border: 1px dotted rgb(62, 62, 62);">
-					<!-- ADDED BY SCRIPT -->
-					<!-- <div style="overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;"
-						class="button subtle-button">
-						<img src="data/levels/textures/road_stripe.png" style="align-self: center; width: 128px; height: 128px">
-						<p style="font-size: 0.5em;">data/levels/textures/road_stripe.png</p>
-					</div> -->
+				<!-- ENTITY PANEL -->
+				<div class="vertical" id="entities-panel" spellcheck="false">
+					<input list="entities-list" id="entities-input">
+					<datalist id="entities-list">
+
+					</datalist>
 				</div>
 			</div>
 		</div>

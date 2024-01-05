@@ -19,6 +19,7 @@ export function loadPrimitiveTexture(texture: string, primitive: Primitive) {
 				if (!result.tex) {
 					return;
 				}
+
 				primitive.texture = result.tex;
 			});
 		}

@@ -15,9 +15,12 @@ import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { RotateTool } from "../tools/rotate.js";
 import { ScaleTool } from "../tools/scale.js";
 import { TranslateTool } from "../tools/translate.js";
+import { EntityTool } from "../tools/entitytool.js";
+import { EntityPanel } from "./entitypanel.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
+	entities: Set<any> = new Set();
 	activeToolEnum: ToolEnum = ToolEnum.Select;
 	activeTool: Tool;
 
@@ -30,6 +33,7 @@ export class Editor {
 	translateTool: TranslateTool;
 	rotateTool: RotateTool;
 	scaleTool: ScaleTool;
+	entityTool: EntityTool;
 	blockTool: BlockTool;
 	cutTool: CutTool;
 
@@ -40,12 +44,14 @@ export class Editor {
 		this.translateTool = new TranslateTool();
 		this.rotateTool = new RotateTool();
 		this.scaleTool = new ScaleTool();
+		this.entityTool = new EntityTool();
 		this.blockTool = new BlockTool();
 		this.cutTool = new CutTool();
 
 		this.activeTool = this.selectTool;
 
 		FileManagement.getAssetList();
+		FileManagement.getEntityList();
 
 		this.updateGridText();
 	}
@@ -74,6 +80,7 @@ export class Editor {
 		initEditorInput();
 		initToolButtons();
 		TexturePanel.initTexturePanel();
+		EntityPanel.initEntityPanel();
 
 		const w = 0.5;
 		const h = 0.5;
@@ -145,6 +152,9 @@ export class Editor {
 				break;
 			case ToolEnum.Scale:
 				this.activeTool = this.scaleTool;
+				break;
+			case ToolEnum.Entity:
+				this.activeTool = this.entityTool;
 				break;
 			case ToolEnum.Block:
 				this.activeTool = this.blockTool;

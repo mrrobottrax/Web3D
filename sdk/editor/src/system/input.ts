@@ -159,12 +159,16 @@ let lowPriorityShortcuts: Shortcut[] = [
 		keyCodes: ["KeyT"],
 		function: () => editor.setTool(ToolEnum.Translate)
 	},
+	{
+		keyCodes: ["ControlLeft", "KeyA"],
+		function: () => { if (editor.activeToolEnum == ToolEnum.Select) editor.selectTool.selectAll() }
+	},
 ];
 
 let highPriorityShortcuts: Shortcut[] = [
 	{
-		keyCodes: ["ControlLeft", "KeyA"],
-		function: () => { if (editor.activeToolEnum == ToolEnum.Select) editor.selectTool.selectAll() }
+		keyCodes: ["ShiftLeft", "KeyE"],
+		function: () => editor.setTool(ToolEnum.Entity)
 	},
 ]
 
@@ -186,13 +190,17 @@ function tryShortCut(shortcut: Shortcut, code: string) {
 		shortcut.function();
 		return true;
 	}
+
+	return false;
 }
 
 function tryLowShortcuts(code: string): boolean {
 	for (let i = 0; i < lowPriorityShortcuts.length; ++i) {
 		const shortcut = lowPriorityShortcuts[i];
 
-		tryShortCut(shortcut, code);
+		if (tryShortCut(shortcut, code)) {
+			return true;
+		}
 	}
 
 	return false;
@@ -202,7 +210,9 @@ function tryHighShortcuts(code: string): boolean {
 	for (let i = 0; i < highPriorityShortcuts.length; ++i) {
 		const shortcut = highPriorityShortcuts[i];
 
-		tryShortCut(shortcut, code);
+		if (tryShortCut(shortcut, code)) {
+			return true;
+		}
 	}
 
 	return false;

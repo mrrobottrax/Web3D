@@ -62,3 +62,8 @@
 .selected-button {
 	background-color: rgb(69, 69, 69);
 }
+
+.tab {
+	height: 100%;
+	float: left;
+}

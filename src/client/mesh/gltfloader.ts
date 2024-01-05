@@ -1,8 +1,8 @@
 import { GameContext, gameContext } from "../../common/system/context.js";
 import { GltfLoader } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
-import { SharedAttribs, gl, loadTexture, solidTex } from "../render/gl.js";
-import { loadPrimitiveTexture, textures } from "./textures.js";
+import { SharedAttribs, gl, solidTex } from "../render/gl.js";
+import { loadPrimitiveTexture } from "./textures.js";
 
 export class ClientGltfLoader extends GltfLoader {
 	static async loadGltfFromWeb(url: string): Promise<Model> {

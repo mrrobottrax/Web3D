@@ -273,10 +273,10 @@ export class PropertiesPanel {
 		const colorHex = "#" + d2h(face.color[0] * 255) + d2h(face.color[1] * 255) + d2h(face.color[2] * 255);
 		const faceBright = Math.floor(((face.color[0] + face.color[1] + face.color[2]) / 3) * 255);
 
-		let textureOptions = "";
-		FileManagement.texturesList.forEach(texture => {
-			textureOptions += `<option>${texture}</option>`;
-		});
+		// let textureOptions = "";
+		// FileManagement.texturesList.forEach(texture => {
+		// 	textureOptions += `<option>${texture}</option>`;
+		// });
 
 		properties.innerHTML += `
 		<input type="color" id="color-select" value="${colorHex}">

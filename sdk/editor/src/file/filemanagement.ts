@@ -7,6 +7,8 @@ export class FileManagement {
 	static filename: string = "untitled";
 
 	static texturesList: string[] = [];
+	static baseClasses: Map<string, any> = new Map();
+	static engineEntities: Map<string, any> = new Map();
 
 	static exportMap() {
 		console.log("Exporting map...");
@@ -183,6 +185,30 @@ export class FileManagement {
 
 			const json = JSON.parse(req.response);
 			this.texturesList = json.textures;
+		}
+
+		req.send();
+	}
+
+	static getEntityList() {
+		const entityListPath = "sdk/editor/data/_entitylist.txt";
+
+		const req = new XMLHttpRequest();
+		req.open("GET", entityListPath);
+
+		req.onloadend = () => {
+			if (req.status != 200) {
+				console.error("ERROR GETTING ENTITY LIST!");
+				return;
+			}
+
+			const json = JSON.parse(req.response);
+			for (const c in json.classes) {
+				this.baseClasses.set(c, json.classes[c]);
+			}
+			for (const c in json.engine) {
+				this.engineEntities.set(c, json.engine[c]);
+			}
 		}
 
 		req.send();

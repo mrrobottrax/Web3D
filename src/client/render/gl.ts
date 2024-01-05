@@ -255,6 +255,13 @@ export function initializeGl() {
 	// blend
 	gl.enable(gl.BLEND);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+	// defaults
+	gl.vertexAttrib4f(SharedAttribs.boneIdsAttrib, 0, 0, 0, 0);
+	gl.vertexAttrib4f(SharedAttribs.boneWeightsAttrib, 0, 0, 0, 0);
+	gl.vertexAttrib4f(SharedAttribs.colorAttrib, 1, 1, 1, 1);
+	gl.vertexAttrib4f(SharedAttribs.positionAttrib, 0, 0, 0, 1);
+	gl.vertexAttrib2f(SharedAttribs.texCoordAttrib, 0, 0);
 }
 
 export function resizeCanvas() {

@@ -1058,7 +1058,7 @@ export class SelectTool extends Tool {
 			const a = s.a;
 			const b = s.b;
 
-			drawLineScreen(vec3.from2(a), vec3.from2(b), [1, 0, 0, 1]);
+			// drawLineScreen(vec3.from2(a), vec3.from2(b), [1, 0, 0, 1]);
 
 			const dist = gMath.sqrDistToLine(a, b, cursor);
 

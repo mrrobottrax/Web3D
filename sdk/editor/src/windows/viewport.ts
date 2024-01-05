@@ -1,11 +1,13 @@
 import { Camera } from "../../../../src/client/render/camera.js";
-import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
+import { SharedAttribs, SkinnedShaderBase, defaultShader, gl, skinnedShader, solidShader } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
+import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
+import { entityModels } from "../system/entitymodels.js";
 import { ToolEnum } from "../tools/tool.js";
 import { EditorWindow } from "./window.js";
 
@@ -14,6 +16,26 @@ export abstract class Viewport extends EditorWindow {
 	looking!: boolean;
 	perspective: boolean = false;
 
+	drawEntities() {
+		gl.useProgram(defaultShader.program);
+		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, this.camera.perspectiveMatrix.getData());
+
+		editor.entities.forEach((entity) => {
+			if (entity.model) {
+				const model = entityModels.get(entity.model);
+				if (model) {
+					model.nodes.forEach(node => {
+						node.primitives.forEach(prim => {
+							drawPrimitive(prim, this.camera.viewMatrix, defaultShader);
+						});
+					});
+				}
+			}
+		});
+
+		gl.useProgram(null);
+	}
+
 	drawMeshesSolid() {
 		gl.useProgram(defaultShader.program);
 		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, this.camera.perspectiveMatrix.getData());
@@ -21,7 +43,7 @@ export abstract class Viewport extends EditorWindow {
 		editor.meshes.forEach((mesh) => {
 			mesh.primitives.forEach((prim) => {
 				drawPrimitive(prim, this.camera.viewMatrix, defaultShader);
-			})
+			});
 		});
 
 		gl.useProgram(null);
@@ -65,6 +87,9 @@ export abstract class Viewport extends EditorWindow {
 
 	drawTool() {
 		switch (editor.activeToolEnum) {
+			case ToolEnum.Entity:
+				editor.entityTool.draw(this);
+				break;
 			case ToolEnum.Block:
 				editor.blockTool.drawCurrentBlock();
 				break;

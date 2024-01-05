@@ -5,6 +5,7 @@ export enum ToolEnum {
 	Translate,
 	Rotate,
 	Scale,
+	Entity,
 	Block,
 	Cut
 }
@@ -13,6 +14,7 @@ let selectButton: HTMLElement | null;
 let translateButton: HTMLElement | null;
 let rotateButton: HTMLElement | null;
 let scaleButton: HTMLElement | null;
+let entityButton: HTMLElement | null;
 let blockButton: HTMLElement | null;
 let cutButton: HTMLElement | null;
 export function getToolButtons() {
@@ -20,11 +22,12 @@ export function getToolButtons() {
 	translateButton = document.getElementById("tool-translate");
 	rotateButton = document.getElementById("tool-rotate");
 	scaleButton = document.getElementById("tool-scale");
+	entityButton = document.getElementById("tool-entity");
 	blockButton = document.getElementById("tool-block");
 	cutButton = document.getElementById("tool-cut");
 
-	if (!(selectButton && blockButton && cutButton &&translateButton
-		&& rotateButton && scaleButton)) {
+	if (!(selectButton && blockButton && cutButton && translateButton
+		&& rotateButton && scaleButton && entityButton)) {
 		console.error("MISSING BUTTON ELEMENTS");
 		return;
 	}
@@ -33,6 +36,7 @@ export function getToolButtons() {
 	translateButton.onclick = () => editor.setTool(ToolEnum.Translate);
 	rotateButton.onclick = () => editor.setTool(ToolEnum.Rotate);
 	scaleButton.onclick = () => editor.setTool(ToolEnum.Scale);
+	entityButton.onclick = () => editor.setTool(ToolEnum.Entity);
 	blockButton.onclick = () => editor.setTool(ToolEnum.Block);
 	cutButton.onclick = () => editor.setTool(ToolEnum.Cut);
 
@@ -44,6 +48,7 @@ export function updateToolButtonVisuals() {
 	translateButton?.classList.remove("selected-button");
 	rotateButton?.classList.remove("selected-button");
 	scaleButton?.classList.remove("selected-button");
+	entityButton?.classList.remove("selected-button");
 	blockButton?.classList.remove("selected-button");
 	cutButton?.classList.remove("selected-button");
 
@@ -59,6 +64,9 @@ export function updateToolButtonVisuals() {
 			break;
 		case ToolEnum.Scale:
 			scaleButton?.classList.add("selected-button");
+			break;
+		case ToolEnum.Entity:
+			entityButton?.classList.add("selected-button");
 			break;
 		case ToolEnum.Block:
 			blockButton?.classList.add("selected-button");

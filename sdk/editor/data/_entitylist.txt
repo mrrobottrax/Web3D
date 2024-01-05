@@ -1,0 +1,30 @@
+{
+	"classes": {
+		"base_class": {
+			"base": null,
+			"description": null,
+			"keyvalues": {
+				"origin": "0 0 0",
+				"angles": "0 0 0"
+			}
+		},
+		"model_class": {
+			"base": "base_class",
+			"model": null
+		},
+		"bounds_class": {
+			"base": "model_class",
+			"min": [0, 0, 0],
+			"max": [1, 1, 1]
+		}
+	},
+	"engine": {
+		"player_spawn": {
+			"base": "bounds_class",
+			"min": [-1, 0, -1],
+			"max": [1, 2, 1],
+			"description": "A spawn point for players",
+			"model": "./data/models/texCube"
+		}
+	}
+}
