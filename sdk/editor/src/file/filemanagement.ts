@@ -119,16 +119,24 @@ export class FileManagement {
 			collisionBlob = new Blob(collisionBlobs, blobSettings);
 		}
 
+		// entities
+		let entityBlob: Blob;
+		{
+			let s = JSON.stringify(Array.from(editor.entities));
+			entityBlob = new Blob([encoder.encode(s)], blobSettings);
+		}
+
 		// offsets table
 		let offsetsTable: any = {
 			textureTable: 0,
 			glMeshData: texTableBlob.size,
 			collision: texTableBlob.size + glMeshBlob.size,
-			lastIndex: texTableBlob.size + glMeshBlob.size + collisionBlob.size,
+			entities: texTableBlob.size + glMeshBlob.size + collisionBlob.size,
+			lastIndex: texTableBlob.size + glMeshBlob.size + collisionBlob.size + entityBlob.size,
 		};
 
 		// download data
-		const blob = new Blob([JSON.stringify(offsetsTable) as BlobPart, new Uint8Array([0]), texTableBlob, glMeshBlob, collisionBlob], blobSettings);
+		const blob = new Blob([JSON.stringify(offsetsTable) as BlobPart, new Uint8Array([0]), texTableBlob, glMeshBlob, collisionBlob, entityBlob], blobSettings);
 		const link = document.createElement("a");
 
 		link.href = URL.createObjectURL(blob);
