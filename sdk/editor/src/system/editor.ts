@@ -1,4 +1,4 @@
-import { EditorMesh } from "../mesh/editormesh.js";
+import { EditorFace, EditorMesh } from "../mesh/editormesh.js";
 import { initEditorGl } from "../render/gl.js";
 import { WindowManager } from "../windows/windowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
@@ -7,7 +7,7 @@ import { initEditorInput } from "./input.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
-import { SelectTool } from "../tools/selecttool.js";
+import { SelectMode, SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
@@ -19,6 +19,7 @@ import { EntityTool } from "../tools/entitytool.js";
 import { EntityPanel } from "./entitypanel.js";
 import { Model } from "../../../../src/common/mesh/model.js";
 import { Ray } from "../../../../src/common/math/ray.js";
+import { editor } from "../main.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -205,6 +206,12 @@ export class Editor {
 		v.z = r.z;
 	}
 
+	snapToGrid2(v: vec3): vec3 {
+		const newVec = vec3.copy(v);
+		this.snapToGrid(newVec);
+		return newVec;
+	}
+
 	moveGridToPoint(p: vec3) {
 		let dir = new vec3(0, 1, 0);
 		dir = dir.rotate(this.gridRotation);
@@ -212,7 +219,79 @@ export class Editor {
 		this.gridOffset = vec3.dot(p, dir);
 	}
 
-	castRay(ray: Ray): vec3 {
-		return new vec3(0, 0, 0);
-	}
+	castRay(ray: Ray, ignoreBackfaces: boolean = true) {
+		let bestMesh: EditorMesh | null = null;
+		let bestFace: EditorFace | null = null;
+		let bestDist = Infinity;
+		let bestPoint = vec3.origin();
+
+		const it = this.meshes.values();
+		let i = it.next();
+		while (!i.done) {
+			const mesh = i.value;
+
+			for (let i = 0; i < mesh.collisionTris.length; ++i) {
+				const tri = mesh.collisionTris[i];
+
+				// ignore backfaces
+				if (ignoreBackfaces)
+					if (vec3.dot(tri.normal, ray.direction) > 0)
+						continue;
+
+				let positions = [
+					tri.edge1.tail!.position,
+					tri.edge2.tail!.position,
+					tri.edge3.tail!.position,
+				]
+
+				// find where ray and plane intersect
+				const denom = vec3.dot(tri.normal, ray.direction);
+
+				if (Math.abs(denom) == 0)
+					continue;
+
+				let t = (-vec3.dot(tri.normal, ray.origin) + tri.dist) / denom;
+				if (t < 0)
+					continue;
+
+				// get plane axis
+				const x = positions[1].minus(positions[0]).normalised();
+				const y = vec3.cross(tri.normal, x).normalised();
+
+				const point = ray.origin.plus(ray.direction.times(t));
+				const pointTrans = new vec3(vec3.dot(x, point), vec3.dot(y, point), 0);
+
+				let insideTri = true;
+
+				// for each edge
+				for (let i = 0; i < 3; ++i) {
+					// check if point is inside
+					const nextPoint = positions[(i + 1) % 3];
+					const edgeDir = nextPoint.minus(positions[i]);
+
+					const vertTrans = new vec3(vec3.dot(x, positions[i]), vec3.dot(y, positions[i]), 0);
+					const edgeDirTrans = new vec3(vec3.dot(edgeDir, x), vec3.dot(edgeDir, y), 0);
+
+					const edgeLeftTrans = new vec3(-edgeDirTrans.y, edgeDirTrans.x, 0);
+
+					const isInside = vec3.dot(edgeLeftTrans, pointTrans) >= vec3.dot(edgeLeftTrans, vertTrans);
+					if (!isInside) {
+						insideTri = false;
+						break;
+					}
+				}
+
+				if (insideTri && t < bestDist) {
+					bestPoint = point;
+					bestDist = t;
+					bestMesh = mesh;
+					bestFace = tri.edge1.face;
+				}
+			}
+
+			i = it.next();
+		};
+
+		return { mesh: bestMesh, face: bestFace, dist: bestDist, point: bestPoint };
+	};
 }

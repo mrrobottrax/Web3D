@@ -36,7 +36,7 @@ export class EntityTool extends Tool {
 		const viewport = editor.windowManager.activeWindow as Viewport;
 		if (!viewport) return false;
 
-		
+
 		if (!viewport.perspective) {
 			const pos = viewport.getMouseWorldRounded();
 			const mask = viewport.getMask();
@@ -48,8 +48,7 @@ export class EntityTool extends Tool {
 			this.entityOrigin.z = (1 - mask.z) * pos.z + mask.z * this.entityOrigin.z;
 		} else {
 			// cast ray
-
-			this.entityOrigin = editor.castRay(viewport.mouseRay());
+			this.entityOrigin = editor.snapToGrid2(editor.castRay(viewport.mouseRay()).point);
 		}
 
 		return false
@@ -79,6 +78,7 @@ export class EntityTool extends Tool {
 		}
 
 		newEntity.className = name;
+		newEntity.keyvalues = JSON.parse(JSON.stringify(newEntity.keyvalues)); // Sharing is NOT caring!
 
 		newEntity.toJSON = () => {
 			return {
@@ -109,6 +109,7 @@ export class EntityTool extends Tool {
 
 			EntityTool.loadEntityModel(entity);
 			editor.entities.add(entity);
+			console.log(editor.entities);
 		}
 
 		return false;

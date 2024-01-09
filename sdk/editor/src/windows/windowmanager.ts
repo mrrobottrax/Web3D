@@ -1,4 +1,4 @@
-import { glProperties } from "../../../../src/client/render/gl.js";
+import { canvas, glProperties } from "../../../../src/client/render/gl.js";
 import { EditorWindow } from "./window.js";
 
 export class WindowManager {
@@ -26,6 +26,11 @@ export class WindowManager {
 
 	setActiveWindowUnderMouse(): void {
 		if (this.lockActive) return;
+
+		if (document.activeElement != canvas && document.activeElement != document.body) {
+			this.activeWindow = null;
+			return;
+		}
 
 		for (const window of this.windows) {
 			const pos = window.getRelativeMousePos();
