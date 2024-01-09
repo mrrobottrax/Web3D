@@ -18,6 +18,7 @@ import { TranslateTool } from "../tools/translate.js";
 import { EntityTool } from "../tools/entitytool.js";
 import { EntityPanel } from "./entitypanel.js";
 import { Model } from "../../../../src/common/mesh/model.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -209,5 +210,9 @@ export class Editor {
 		dir = dir.rotate(this.gridRotation);
 
 		this.gridOffset = vec3.dot(p, dir);
+	}
+
+	castRay(ray: Ray): vec3 {
+		return new vec3(0, 0, 0);
 	}
 }

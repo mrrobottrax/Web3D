@@ -23,13 +23,7 @@ export abstract class Viewport extends EditorWindow {
 				const model = editor.entityModels.get(entity.model);
 				if (model) {
 					const mat = this.camera.viewMatrix.copy();
-					const origin: string = entity.keyvalues.origin;
-					const v = origin.split(" ");
-					const vector: number[] = [];
-					v.forEach(v => {
-						vector.push(Number.parseFloat(v));
-					});
-					mat.translate(new vec3(vector[0], vector[1], vector[2]));
+					mat.translate(vec3.parse(entity.keyvalues.origin));
 					model.nodes.forEach(node => {
 						node.primitives.forEach(prim => {
 							drawPrimitive(prim, mat, defaultShader);
@@ -129,8 +123,11 @@ export abstract class Viewport extends EditorWindow {
 	abstract screenRay(screenPos: vec2): Ray;
 	abstract getMask(): vec3;
 
+	mouseRay(): Ray {
+		return this.screenRay(this.getRelativeMousePos());
+	}
+
 	getMouseWorldRounded(): vec3 {
 		return this.gridToWorld(this.mouseToGrid());
 	}
-
 }

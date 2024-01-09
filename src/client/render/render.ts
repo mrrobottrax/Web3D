@@ -234,6 +234,30 @@ export function drawLine(start: vec3, end: vec3, color: number[], time: number =
 	lines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
 }
 
+export function drawBox(min: vec3, max: vec3, color: number[], t: number = 0) {
+	let a = new vec3(min.x, min.y, min.z);
+	let b = new vec3(min.x, min.y, max.z);
+	let c = new vec3(min.x, max.y, min.z);
+	let d = new vec3(min.x, max.y, max.z);
+	let e = new vec3(max.x, min.y, min.z);
+	let f = new vec3(max.x, min.y, max.z);
+	let g = new vec3(max.x, max.y, min.z);
+	let h = new vec3(max.x, max.y, max.z);
+
+	drawLine(a, b, color, t);
+	drawLine(a, c, color, t);
+	drawLine(a, e, color, t);
+	drawLine(b, d, color, t);
+	drawLine(b, f, color, t);
+	drawLine(c, d, color, t);
+	drawLine(c, g, color, t);
+	drawLine(d, h, color, t);
+	drawLine(e, g, color, t);
+	drawLine(e, f, color, t);
+	drawLine(h, f, color, t);
+	drawLine(h, g, color, t);
+}
+
 let screenLines: Line[] = [];
 export function drawLineScreen(start: vec3, end: vec3, color: number[], time: number = 0) {
 	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });

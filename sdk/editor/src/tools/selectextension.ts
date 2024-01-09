@@ -87,16 +87,27 @@ export class SelectExtension extends Tool {
 			case SelectMode.Mesh:
 				// average all vertices
 				{
+					let objCount = 0;
 					let position = vec3.origin();
-					let count = 0;
 					editor.selectTool.selectedMeshes.forEach(mesh => {
+						const meshOrigin = vec3.origin();
+						let vertCount = 0;
 						mesh.verts.forEach(vert => {
-							position.add(vert.position);
-							++count;
+							meshOrigin.add(vert.position);
+							++vertCount;
 						});
+						meshOrigin.mult(1 / vertCount);
+						position.add(meshOrigin);
+						++objCount;
 					});
 
-					position.mult(1 / count);
+					editor.selectTool.selectedEntities.forEach(entity => {
+						const origin = vec3.parse(entity.keyvalues.origin);
+						position.add(origin);
+						++objCount;
+					});
+
+					position.mult(1 / objCount);
 
 					return position;
 				}
@@ -108,5 +119,26 @@ export class SelectExtension extends Tool {
 
 	onSwitch(): void {
 		this.updateSelection();
+	}
+
+	shouldDraw(): boolean {
+		const select = editor.selectTool;
+
+		switch (select.mode) {
+			case SelectMode.Vertex:
+				if (select.selectedVertices.size == 0) return false;
+				break;
+			case SelectMode.Edge:
+				if (select.selectedEdges.size == 0) return false;
+				break;
+			case SelectMode.Face:
+				if (select.selectedFaces.size == 0) return false;
+				break;
+			case SelectMode.Mesh:
+				if (select.selectedMeshes.size == 0 && select.selectedEntities.size == 0) return false;
+				break;
+		}
+
+		return true;
 	}
 }

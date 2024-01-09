@@ -36,9 +36,9 @@ export class EntityTool extends Tool {
 		const viewport = editor.windowManager.activeWindow as Viewport;
 		if (!viewport) return false;
 
-		const pos = viewport.getMouseWorldRounded();
-
+		
 		if (!viewport.perspective) {
+			const pos = viewport.getMouseWorldRounded();
 			const mask = viewport.getMask();
 			this.entityOrigin.x = (1 - mask.x) * pos.x + mask.x * this.entityOrigin.x;
 			this.entityOrigin.y = (1 - mask.y) * pos.y + mask.y * this.entityOrigin.y;
@@ -47,7 +47,9 @@ export class EntityTool extends Tool {
 			this.entityOrigin.y = (1 - mask.y) * pos.y + mask.y * this.entityOrigin.y;
 			this.entityOrigin.z = (1 - mask.z) * pos.z + mask.z * this.entityOrigin.z;
 		} else {
-			this.entityOrigin = pos;
+			// cast ray
+
+			this.entityOrigin = editor.castRay(viewport.mouseRay());
 		}
 
 		return false

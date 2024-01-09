@@ -101,22 +101,7 @@ export class TranslateTool extends SelectExtension {
 	override draw(viewport: Viewport) {
 		super.draw(viewport);
 
-		const select = editor.selectTool;
-
-		switch (select.mode) {
-			case SelectMode.Vertex:
-				if (select.selectedVertices.size == 0) return;
-				break;
-			case SelectMode.Edge:
-				if (select.selectedEdges.size == 0) return;
-				break;
-			case SelectMode.Face:
-				if (select.selectedFaces.size == 0) return;
-				break;
-			case SelectMode.Mesh:
-				if (select.selectedMeshes.size == 0) return;
-				break;
-		}
+		if (!this.shouldDraw()) return;
 
 		const startMat = viewport.camera.viewMatrix.copy();
 
@@ -273,6 +258,11 @@ export class TranslateTool extends SelectExtension {
 						mesh.verts.forEach(vert => {
 							affectedVerts.add(vert);
 						});
+					});
+					select.selectedEntities.forEach(entity => {
+						const origin = vec3.parse(entity.keyvalues.origin)
+						origin.add(delta);
+						entity.keyvalues.origin = origin.toString();
 					});
 					break;
 			}

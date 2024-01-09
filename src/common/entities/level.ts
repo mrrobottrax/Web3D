@@ -8,7 +8,6 @@ import { PlayerSpawn } from "./playerSpawn.js";
 export class Level extends Entity {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
 	staticMeshes: Primitive[] = [];
-	entities: Entity[] = [];
 	spawns: PlayerSpawn[] = [];
 	textureTable: any;
 
@@ -105,20 +104,16 @@ export class Level extends Entity {
 		return mesh;
 	}
 
-	static getEntityData(file: Uint8Array, offsets: any): Entity[] {
+	static getEntityData(file: Uint8Array, offsets: any) {
 		const start = offsets.entities + offsets.base;
 		const subArray = file.subarray(start, start + offsets.entitiesSize);
 
 		const decoder = new TextDecoder();
 		const json = JSON.parse(decoder.decode(subArray));
 
-		const entities: Entity[] = [];
 		for (const entityAny of json) {
-			const e = this.createEntity(entityAny);
-			if (e) entities.push(e);
+			this.createEntity(entityAny);
 		}
-
-		return entities;
 	}
 
 	private static createEntity(entityAny: any): Entity | null {

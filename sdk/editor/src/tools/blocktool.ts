@@ -1,4 +1,4 @@
-import { drawLine } from "../../../../src/client/render/render.js";
+import { drawBox, drawLine } from "../../../../src/client/render/render.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
@@ -26,30 +26,7 @@ export class BlockTool extends Tool {
 	drawCurrentBlock() {
 		if (this.drawnThisFrame) return;
 
-		let a = new vec3(this.currentBlock.min.x, this.currentBlock.min.y, this.currentBlock.min.z);
-		let b = new vec3(this.currentBlock.min.x, this.currentBlock.min.y, this.currentBlock.max.z);
-		let c = new vec3(this.currentBlock.min.x, this.currentBlock.max.y, this.currentBlock.min.z);
-		let d = new vec3(this.currentBlock.min.x, this.currentBlock.max.y, this.currentBlock.max.z);
-		let e = new vec3(this.currentBlock.max.x, this.currentBlock.min.y, this.currentBlock.min.z);
-		let f = new vec3(this.currentBlock.max.x, this.currentBlock.min.y, this.currentBlock.max.z);
-		let g = new vec3(this.currentBlock.max.x, this.currentBlock.max.y, this.currentBlock.min.z);
-		let h = new vec3(this.currentBlock.max.x, this.currentBlock.max.y, this.currentBlock.max.z);
-
-		const color = [1, 1, 0, 1];
-		const t = 0;
-
-		drawLine(a, b, color, t);
-		drawLine(a, c, color, t);
-		drawLine(a, e, color, t);
-		drawLine(b, d, color, t);
-		drawLine(b, f, color, t);
-		drawLine(c, d, color, t);
-		drawLine(c, g, color, t);
-		drawLine(d, h, color, t);
-		drawLine(e, g, color, t);
-		drawLine(e, f, color, t);
-		drawLine(h, f, color, t);
-		drawLine(h, g, color, t);
+		drawBox(this.currentBlock.min, this.currentBlock.max, [1, 1, 0, 1]);
 
 		this.drawnThisFrame = true;
 	}

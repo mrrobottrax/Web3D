@@ -36,7 +36,7 @@ export async function setLevelClient(url: string): Promise<void> {
 	// currentLevel.collision = file.collision;
 	currentLevel.collision = Level.getCollisionData(file, offsets);
 	currentLevel.staticMeshes = getLevelPrimitives(file, offsets);
-	currentLevel.entities = Level.getEntityData(file, offsets);
+	Level.getEntityData(file, offsets);
 }
 
 function getTextureTable(file: Uint8Array, offsets: any): any {

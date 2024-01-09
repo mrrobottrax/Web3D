@@ -243,6 +243,15 @@ export class vec3 {
 	static from2(v: vec2): vec3 {
 		return new vec3(v.x, v.y, 0);
 	}
+
+	static parse(s: string): vec3 {
+		const split = s.split(" ");
+		return new vec3(parseFloat(split[0]), parseFloat(split[1]), parseFloat(split[2]));
+	}
+
+	toString() {
+		return `${this.x} ${this.y} ${this.z}`;
+	}
 }
 
 export class vec2 {

@@ -1,10 +1,10 @@
-import { SharedAttribs, defaultShader, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
-import { drawLine, drawLineScreen, drawPrimitive } from "../../../../src/client/render/render.js";
+import { defaultShader, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
+import { drawBox, drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
-import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
+import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
@@ -28,10 +28,12 @@ export class SelectTool extends Tool {
 	meshButton: HTMLElement | null;
 
 	meshUnderCursor: EditorMesh | null = null;
+	entityUnderCursor: any = null;
 	faceUnderCursor: EditorFace | null = null;
 	vertexUnderCursor: EditorVertex | null = null;
 	edgeUnderCursor: EditorFullEdge | null = null;
 
+	selectedEntities: Set<any> = new Set();
 	selectedMeshes: Set<EditorMesh> = new Set();
 	selectedVertices = new Set<EditorVertex>();
 	selectedEdges = new Set<EditorFullEdge>();
@@ -167,13 +169,16 @@ export class SelectTool extends Tool {
 		}
 
 		// shouldn't be done in 2d viewport for vertex mode
+		let meshDist = 0;
 		if (activeViewport.perspective || (this.mode != SelectMode.Vertex)) {
 			const underCursor = this.getMeshUnderCursor(activeViewport, activeViewport.perspective && this.mode == SelectMode.Vertex);
 			if (underCursor.mesh) {
 				this.meshUnderCursor = underCursor.mesh;
 				this.faceUnderCursor = underCursor.face;
+				meshDist = underCursor.dist;
 			} else {
 				this.faceUnderCursor = null;
+				this.meshUnderCursor = null;
 			}
 		}
 
@@ -188,6 +193,9 @@ export class SelectTool extends Tool {
 				break;
 			case SelectMode.Edge:
 				this.edgeUnderCursor = this.getEdgeUnderCursor(activeViewport);
+				break;
+			case SelectMode.Mesh:
+				this.entityUnderCursor = this.getEntityUnderCursor(activeViewport, meshDist);
 				break;
 		}
 
@@ -262,6 +270,9 @@ export class SelectTool extends Tool {
 				{
 					this.selectedMeshes.forEach(mesh => {
 						mesh.deleteSelf();
+					});
+					this.selectedEntities.forEach(entity => {
+						editor.entities.delete(entity);
 					});
 				}
 				break;
@@ -354,7 +365,17 @@ export class SelectTool extends Tool {
 			this.selectedMeshes.forEach(mesh => {
 				gl.bindVertexArray(mesh.wireFrameData.vao);
 				gl.drawElements(gl.LINES, mesh.wireFrameData.elementCount, gl.UNSIGNED_SHORT, 0);
-			})
+			});
+
+			// draw selected entities
+			this.selectedEntities.forEach(entity => {
+				const min = new vec3(entity.min[0], entity.min[1], entity.min[2]);
+				const max = new vec3(entity.max[0], entity.max[1], entity.max[2]);
+				const origin = vec3.parse(entity.keyvalues.origin);
+				min.add(origin);
+				max.add(origin);
+				drawBox(min, max, [0, 1, 0, 1]);
+			});
 		}
 
 		gl.bindVertexArray(null);
@@ -612,6 +633,7 @@ export class SelectTool extends Tool {
 	getMeshUnderCursor(viewport: Viewport, generous: boolean = false): {
 		mesh: EditorMesh | null,
 		face: EditorFace | null,
+		dist: number
 	} {
 		// drawLine(ray.origin, ray.origin.plus(ray.direction.times(100)), [1, 0, 0, 1], 0);
 		const castRay = (ray: Ray) => {
@@ -744,7 +766,7 @@ export class SelectTool extends Tool {
 			}
 		}
 
-		return { mesh: closest.mesh, face: closest.face };
+		return { mesh: closest.mesh, face: closest.face, dist: closest.dist };
 	}
 
 	override mouse(button: number, pressed: boolean): boolean {
@@ -920,9 +942,15 @@ export class SelectTool extends Tool {
 					}
 					break;
 				case SelectMode.Mesh:
-					const m = this.meshUnderCursor;
-					if (m && !remove)
-						this.selectedMeshes.add(m);
+					if (!this.entityUnderCursor) {
+						const m = this.meshUnderCursor;
+						if (m && !remove)
+							this.selectedMeshes.add(m);
+					} else {
+						const e = this.entityUnderCursor;
+						if (!remove)
+							this.selectedEntities.add(e);
+					}
 					break;
 			}
 
@@ -980,9 +1008,14 @@ export class SelectTool extends Tool {
 					this.selectedMeshes.delete(mesh);
 				});
 			} else {
-				const m = this.meshUnderCursor;
-				if (m)
-					this.selectedMeshes.delete(m);
+				if (!this.entityUnderCursor) {
+					const m = this.meshUnderCursor;
+					if (m)
+						this.selectedMeshes.delete(m);
+				} else {
+					const e = this.entityUnderCursor;
+					this.selectedEntities.delete(e);
+				}
 			}
 		} else {
 			this.clearSelected();
@@ -995,6 +1028,7 @@ export class SelectTool extends Tool {
 		this.selectedEdges.clear();
 		this.selectedFaces.clear();
 		this.selectedMeshes.clear();
+		this.selectedEntities.clear();
 
 		PropertiesPanel.updateProperties();
 	}
@@ -1004,9 +1038,91 @@ export class SelectTool extends Tool {
 		this.vertexUnderCursor = null;
 		this.edgeUnderCursor = null;
 		this.meshUnderCursor = null;
+		this.entityUnderCursor = null;
 
 		if (!dontRefresh)
 			this.mouseMove(0, 0); // ux
+	}
+
+	getEntityUnderCursor(viewport: Viewport, maxDist: number): any {
+		const ray = viewport.mouseRay();
+
+		let bestDist = maxDist;
+		let bestEntity: any = null;
+
+		editor.entities.forEach(entity => {
+			const min = new vec3(entity.min[0], entity.min[1], entity.min[2]);
+			const max = new vec3(entity.max[0], entity.max[1], entity.max[2]);
+			const origin = vec3.parse(entity.keyvalues.origin);
+
+			min.add(origin);
+			max.add(origin);
+
+			// drawBox(min, max, [1, 0, 0, 1]);
+
+			const inner = (normal: vec3): number | undefined => {
+				const dist1 = vec3.dot(min, normal);
+				const dist2 = vec3.dot(max, normal);
+				const dist = Math.max(dist1, dist2);
+
+				let right: vec3;
+				let up: vec3;
+				if (Math.abs(normal.x) == 1) {
+					// side
+					right = new vec3(0, 0, 1);
+					up = new vec3(0, 1, 0);
+				} else if (Math.abs(normal.y) == 1) {
+					// top
+					right = new vec3(1, 0, 0);
+					up = new vec3(0, 0, 1);
+				} else {
+					// front
+					right = new vec3(1, 0, 0);
+					up = new vec3(0, 1, 0);
+				}
+
+				// ignore backs
+				const dot = vec3.dot(ray.direction, normal);
+				if (dot > 0) return;
+
+				// find intersection with plane
+				const dot2 = -vec3.dot(ray.origin, normal) + dist;
+
+				const t = dot2 / dot;
+				const p = ray.origin.plus(ray.direction.times(t));
+
+				// check if p is within the bounds
+				const x = vec3.dot(right, p);
+				const y = vec3.dot(up, p);
+				const maxX = vec3.dot(right, max);
+				const maxY = vec3.dot(up, max);
+				const minX = vec3.dot(right, min);
+				const minY = vec3.dot(up, min);
+
+				if (x > minX && x < maxX && y > minY && y < maxY) {
+					// intersecting
+					return t;
+				}
+			}
+
+			const checkPlanes = () => {
+				let t;
+				t = inner(new vec3(1, 0, 0)); if (t != undefined) return t;
+				t = inner(new vec3(-1, 0, 0)); if (t != undefined) return t;
+				t = inner(new vec3(0, 1, 0)); if (t != undefined) return t;
+				t = inner(new vec3(0, -1, 0)); if (t != undefined) return t;
+				t = inner(new vec3(0, 0, 1)); if (t != undefined) return t;
+				t = inner(new vec3(0, 0, -1)); if (t != undefined) return t;
+			}
+			const t = checkPlanes();
+
+			if (t && t < bestDist) {
+				bestDist = t;
+				bestEntity = entity;
+			}
+		});
+
+		return bestEntity;
 	}
 
 	getEdgeUnderCursor(viewport: Viewport): EditorFullEdge | null {

@@ -16,7 +16,7 @@ export function setLevelServer(filepath: string) {
 	}
 
 	currentLevel.collision = Level.getCollisionData(file, offsets);
-	currentLevel.entities = Level.getEntityData(file, offsets);
+	Level.getEntityData(file, offsets);
 }
 
 export function findSpawn(): PlayerSpawn | null {
