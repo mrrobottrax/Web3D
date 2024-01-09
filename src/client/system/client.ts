@@ -181,7 +181,7 @@ export class Client {
 			this.localPlayer.velocity = vec3.copy(playerSnapshot.velocity);
 
 			for (let i = offset - 1; i > 0; --i) {
-				this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd);
+				this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd, true);
 				this.cmdBuffer.rewind(i).position = vec3.copy(this.localPlayer.position);
 			}
 		}
