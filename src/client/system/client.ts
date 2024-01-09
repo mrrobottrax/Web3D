@@ -17,6 +17,7 @@ import { Input } from "../player/input.js";
 import { players } from "../../common/system/playerList.js";
 import { drawLine } from "../render/debugRender.js";
 import { initRender, lastCamPos, updateInterp, drawFrame } from "../render/render.js";
+import { PlayerUtil } from "../../common/player/playerutil.js";
 
 interface PlayerData {
 	cmd: UserCmd,
@@ -185,6 +186,7 @@ export class Client {
 			// snap to position and resimulate all usercmds
 			playerData.predictedData = SharedPlayer.copyPredictedData(playerSnapshot.data);
 			this.localPlayer.setPredictedData(playerSnapshot.data);
+			PlayerUtil.catagorizePosition(this.localPlayer);
 
 			for (let i = offset - 1; i > 0; --i) {
 				this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd, true);

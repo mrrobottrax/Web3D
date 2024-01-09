@@ -4,6 +4,7 @@ import { SharedPlayer } from "./sharedplayer.js";
 import gMath from "../math/gmath.js";
 import { vec3 } from "../math/vector.js";
 import { castAABB } from "../system/physics.js";
+import { Entity } from "../entitysystem/entity.js";
 
 const minWalkableY = 0.7;
 const hullSize = new vec3(1, 2, 1);
@@ -184,30 +185,25 @@ export class PlayerUtil {
 		return curVel.plus(vec3.copy(wishDir).times(accelSpeed));
 	}
 
-	static catagorizePosition(player: SharedPlayer): { groundEnt: number } {
-		let data = {
-			groundEnt: -1
-		}
-
+	static catagorizePosition(player: SharedPlayer) {
 		// trimping
 		if (player.velocity.y > trimpThreshold) {
-			data.groundEnt = -1;
+			player.groundEnt = null;
 		} else {
 			// cast down
 			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, -0.003, 0));
 			if (cast.normal.y < minWalkableY) {
-				data.groundEnt = -1;
+				// too steep
+				player.groundEnt = null;
 			} else {
-				data.groundEnt = 1;
+				player.groundEnt = cast.entity;
 			}
 
-			if (data.groundEnt != -1) {
+			if (player.groundEnt) {
 				// move down
 				player.position.copy(player.position.plus(cast.dir.times(cast.dist)));
 			}
 		}
-
-		return data;
 	}
 
 	static groundMove(player: SharedPlayer, cmd: UserCmd, delta: number): void {
@@ -262,7 +258,7 @@ export class PlayerUtil {
 		let wish = vec3.copy(cmd.wishDir);
 		wish.y = 0;
 
-		player.groundEnt = this.catagorizePosition(player).groundEnt;
+		this.catagorizePosition(player);
 
 		// duck / unduck
 		if (!player.isDucked) {
@@ -274,7 +270,7 @@ export class PlayerUtil {
 		} else {
 			if (!cmd.buttons[Buttons.duck]) {
 				// check if can unduck
-				if (player.groundEnt != -1) {
+				if (player.isGrounded()) {
 					// cast up
 					const cast = castAABB(hullDuckSize, player.position, new vec3(0, 2 * duckOffset, 0));
 
@@ -316,7 +312,7 @@ export class PlayerUtil {
 		}
 
 		// instant duck / unduck in the air
-		if (player.groundEnt == -1) {
+		if (!player.isGrounded()) {
 			if (player.wishDuck) {
 				player.duckProg = 1;
 			} else {
@@ -333,7 +329,7 @@ export class PlayerUtil {
 
 			if (player.duckProg > 0.95) {
 				if (!player.isDucked) {
-					if (player.groundEnt != -1) {
+					if (player.isGrounded()) {
 						player.position.y -= duckOffset;
 					} else {
 						player.position.y += duckOffset;
@@ -352,19 +348,19 @@ export class PlayerUtil {
 		}
 
 		// jump
-		if (cmd.buttons[Buttons.jump] && player.groundEnt != -1) {
+		if (cmd.buttons[Buttons.jump] && player.isGrounded()) {
 			player.velocity.y += jumpBoost;
-			player.groundEnt = -1;
+			player.groundEnt = null;
 		}
 
 		// move
-		if (player.groundEnt >= 0) {
+		if (player.isGrounded()) {
 			this.groundMove(player, cmd, delta);
 		} else {
 			this.airMove(player, cmd, delta);
 		}
 
-		player.groundEnt = this.catagorizePosition(player).groundEnt;
+		this.catagorizePosition(player);
 
 		player.camPosition = this.getCameraPosition(player);
 	}

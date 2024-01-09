@@ -5,18 +5,19 @@ import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
 import { Time } from "../../common/system/time.js";
 import { drawUi } from "./ui.js";
 import { Client } from "../system/client.js";
-import { DynamicProp, PropBase } from "../mesh/prop.js";
+import { PropBase } from "../mesh/prop.js";
 import { Transform } from "../../common/entitysystem/transform.js";
-import { ClientPlayer } from "../player/clientplayer.js";
-import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
 import { Camera } from "./camera.js";
 import { currentLevel } from "../../common/entities/level.js";
 import { players } from "../../common/system/playerList.js";
-import { lines, screenLines, drawLineScreen, drawLine } from "./debugRender.js";
+import { lines, screenLines, drawLineScreen, drawLine, drawBox } from "./debugRender.js";
+import { PlayerUtil } from "../../common/player/playerutil.js";
 
 export let uiMatrix: mat4;
 
+let drawPlayerHitboxes: boolean = false;
 export async function initRender() {
+	(window as any).drawPlayerHitboxes = (value: boolean) => drawPlayerHitboxes = value;
 }
 
 export function updateUiMaterix() {
@@ -55,7 +56,7 @@ export function drawFrame(client: Client): void {
 		gl.useProgram(skinnedShader.program);
 		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 		// drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
-		drawPlayersDebug(players.values(), client.camera);
+		drawPlayers(client.camera);
 
 		gl.useProgram(null);
 	}
@@ -130,12 +131,16 @@ export function renderDebug(perspectiveMatrix: mat4, viewMatrix: mat4) {
 	gl.useProgram(null);
 }
 
-function drawPlayersDebug(otherPlayers: IterableIterator<ClientPlayer>, camera: Camera) {
-	for (let player of otherPlayers) {
+function drawPlayers(camera: Camera) {
+	for (const player of players.values()) {
 		// const pos = PlayerUtil.getFeet(player);
 		// drawLine(pos, pos.add(new vec3(0, 2, 0)), [1, 1, 0, 1], 0);
 
 		drawPropSkinned(player.nodeTransforms, player.model, player.transform.worldMatrix, skinnedShader, camera);
+
+		if (drawPlayerHitboxes) {
+			drawBox(new vec3(-0.5, 0, -0.5), new vec3(0.5, 2.2, 0.5), PlayerUtil.getFeet(player), [0, 1, 0, 1]);
+		}
 	}
 }
 

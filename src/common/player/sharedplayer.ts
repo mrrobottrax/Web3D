@@ -20,8 +20,6 @@ export interface PredictedData {
 	position: vec3;
 	velocity: vec3;
 
-	groundEnt: number;
-
 	isDucked: boolean;
 	duckProg: number;
 }
@@ -35,7 +33,7 @@ export abstract class SharedPlayer extends Entity {
 	position: vec3;
 	velocity: vec3;
 
-	groundEnt: number = -1;
+	groundEnt: Entity | null = null;
 
 	wishDuck: boolean;
 	isDucked: boolean;
@@ -109,7 +107,6 @@ export abstract class SharedPlayer extends Entity {
 		return {
 			position: vec3.copy(this.position),
 			velocity: vec3.copy(this.velocity),
-			groundEnt: this.groundEnt,
 			isDucked: this.isDucked,
 			duckProg: this.duckProg
 		}
@@ -118,7 +115,6 @@ export abstract class SharedPlayer extends Entity {
 	setPredictedData(data: PredictedData): void {
 		this.position.copy(data.position);
 		this.velocity.copy(data.velocity);
-		this.groundEnt = data.groundEnt;
 		this.isDucked = data.isDucked;
 		this.duckProg = data.duckProg;
 	}
@@ -136,7 +132,6 @@ export abstract class SharedPlayer extends Entity {
 		return {
 			position: vec3.copy(data.position),
 			velocity: vec3.copy(data.velocity),
-			groundEnt: data.groundEnt,
 			isDucked: data.isDucked,
 			duckProg: data.duckProg
 		}
@@ -145,5 +140,9 @@ export abstract class SharedPlayer extends Entity {
 	damage(damage: number) {
 		this.health -= damage;
 		console.log("Health: " + this.health);
+	}
+
+	isGrounded(): boolean {
+		return this.groundEnt != null;
 	}
 }
