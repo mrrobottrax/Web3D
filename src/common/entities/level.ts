@@ -1,16 +1,20 @@
 import { Entity } from "../entitysystem/entity.js";
 import { BinaryReader } from "../file/readtypes.js";
+import { quaternion, vec3 } from "../math/vector.js";
 import { Edge, Face, HalfEdge, HalfEdgeMesh, Vertex } from "../mesh/halfedge.js";
 import { Primitive } from "../mesh/model.js";
+import { PlayerSpawn } from "./playerSpawn.js";
 
 export class Level extends Entity {
 	collision: HalfEdgeMesh = new HalfEdgeMesh();
 	staticMeshes: Primitive[] = [];
+	entities: Entity[] = [];
+	spawns: PlayerSpawn[] = [];
 	textureTable: any;
 
 	static getCollisionData(file: Uint8Array, offsets: any): HalfEdgeMesh {
-		// todo: +1?
-		const subArray = file.subarray(offsets.collision, offsets.lastIndex + 1);
+		const start = offsets.collision + offsets.base;
+		const subArray = file.subarray(start, start + offsets.collisionSize);
 
 		let index = 0;
 
@@ -101,6 +105,54 @@ export class Level extends Entity {
 		return mesh;
 	}
 
+	static getEntityData(file: Uint8Array, offsets: any): Entity[] {
+		const start = offsets.entities + offsets.base;
+		const subArray = file.subarray(start, start + offsets.entitiesSize);
+
+		const decoder = new TextDecoder();
+		const json = JSON.parse(decoder.decode(subArray));
+
+		const entities: Entity[] = [];
+		for (const entityAny of json) {
+			const e = this.createEntity(entityAny);
+			if (e) entities.push(e);
+		}
+
+		return entities;
+	}
+
+	private static createEntity(entityAny: any): Entity | null {
+		const setupTransform = (entity: Entity) => {
+			const originStrings = (entityAny.keyvalues.origin as string).split(" ");
+			const originVec = new vec3(parseFloat(originStrings[0]), parseFloat(originStrings[1]), parseFloat(originStrings[2]));
+
+			entity.transform.translation = originVec;
+
+			const rotationStrings = (entityAny.keyvalues.angles as string).split(" ");
+			const rotation = quaternion.euler(parseFloat(rotationStrings[0]), parseFloat(rotationStrings[1]), parseFloat(rotationStrings[2]));
+
+			entity.transform.rotation = rotation;
+
+			if (entityAny.keyvalues.scale) {
+				const scaleStrings = (entityAny.keyvalues.scale as string).split(" ");
+				const scale = new vec3(parseFloat(scaleStrings[0]), parseFloat(scaleStrings[1]), parseFloat(scaleStrings[2]));
+
+				entity.transform.scale = scale;
+			}
+		}
+
+		switch (entityAny.classname) {
+			case "player_spawn":
+				const spawnEntity = new PlayerSpawn();
+				setupTransform(spawnEntity);
+				currentLevel?.spawns.push(spawnEntity);
+				return spawnEntity;
+			default:
+				console.error("UNKNOWN CLASSNAME: " + entityAny.classname)
+				return null;
+		}
+	}
+
 	static getOffsetsTable(file: Uint8Array): any {
 		// read until null byte
 		let index = 0;
@@ -112,11 +164,12 @@ export class Level extends Entity {
 
 		const decoder = new TextDecoder();
 		let table = JSON.parse(decoder.decode(subArray));
+		table.base = index + 1;
 
-		for (const [key, value] of Object.entries(table)) {
-			if (typeof value == "number")
-				table[key] += index + 1;
-		}
+		// for (const [key, value] of Object.entries(table)) {
+		// 	if (typeof value == "number")
+		// 		table[key] += index + 1;
+		// }
 
 		return table;
 	}

@@ -3,12 +3,13 @@ import { readFileSync } from "fs";
 import { ServerPlayer } from "../entities/serverplayer.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
-import { setLevelServer } from "../entities/level.js";
+import { findSpawn, setLevelServer } from "../entities/level.js";
 import { Time, updateTime } from "../../common/system/time.js";
 import { GameContext, setGameContext } from "../../common/system/context.js";
 import { setPlayerModel } from "../../common/player/sharedplayer.js";
 import { ServerGltfLoader } from "../mesh/gltfloader.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
+import { vec3 } from "../../common/math/vector.js";
 
 export class Server {
 	wss!: WebSocketServer;
@@ -85,7 +86,17 @@ export class Server {
 			return null;
 
 		const id = this.generatePlayerId();
-		this.players.set(id, new ServerPlayer(id, ws));
+		const player = new ServerPlayer(id, ws);
+		this.players.set(id, player);
+
+		// find spawns
+		const spawn = findSpawn();
+		if (!spawn) console.error("FAIELD TO FIND SPAWN!");
+		else {
+			const pos = spawn.transform.translation;
+			player.position = new vec3(pos.x, pos.y, pos.z);
+			// player.yaw = spawn.transform.rotation.; todo:
+		}
 
 		return id;
 	}

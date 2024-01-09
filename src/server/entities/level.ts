@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs'
 import { currentLevel } from '../../client/entities/level.js';
 import { Level, clearCurrentLevel } from '../../common/entities/level.js';
+import { PlayerSpawn } from '../../common/entities/playerSpawn.js';
+import gMath from '../../common/math/gmath.js';
 
 export function setLevelServer(filepath: string) {
 	const file: Uint8Array = readFileSync(filepath + ".glvl");
@@ -14,4 +16,14 @@ export function setLevelServer(filepath: string) {
 	}
 
 	currentLevel.collision = Level.getCollisionData(file, offsets);
+	currentLevel.entities = Level.getEntityData(file, offsets);
+}
+
+export function findSpawn(): PlayerSpawn | null {
+	if (!currentLevel?.spawns) return null;
+	if (currentLevel.spawns.length == 0) return null;
+
+	const length = currentLevel?.spawns.length;
+
+	return currentLevel.spawns[gMath.randomInt(length)];
 }

@@ -23,7 +23,7 @@ export async function setLevelClient(url: string): Promise<void> {
 
 	const file = new Uint8Array(res.response);
 
-	const offsetsTable = Level.getOffsetsTable(file);
+	const offsets = Level.getOffsetsTable(file);
 	clearCurrentLevel();
 
 	if (!currentLevel) {
@@ -31,16 +31,18 @@ export async function setLevelClient(url: string): Promise<void> {
 		return;
 	}
 
-	currentLevel.textureTable = getTextureTable(file, offsetsTable);
+	currentLevel.textureTable = getTextureTable(file, offsets);
 
 	// currentLevel.collision = file.collision;
-	currentLevel.collision = Level.getCollisionData(file, offsetsTable);
-	currentLevel.staticMeshes = getLevelPrimitives(file, offsetsTable);
+	currentLevel.collision = Level.getCollisionData(file, offsets);
+	currentLevel.staticMeshes = getLevelPrimitives(file, offsets);
+	currentLevel.entities = Level.getEntityData(file, offsets);
 }
 
 function getTextureTable(file: Uint8Array, offsets: any): any {
-	const subArray = file.subarray(offsets.textureTable, offsets.glMeshData);
-
+	const start = offsets.textureTable + offsets.base;
+	const subArray = file.subarray(start, start + offsets.textureTableSize);
+	
 	const decoder = new TextDecoder();
 	const table = JSON.parse(decoder.decode(subArray));
 
@@ -50,9 +52,11 @@ function getTextureTable(file: Uint8Array, offsets: any): any {
 function getLevelPrimitives(file: Uint8Array, offsets: any): Primitive[] {
 	let primitives: Primitive[] = [];
 
-	let index: number = offsets.glMeshData;
+	const start = offsets.glMeshData + offsets.base;
+	const end = start + offsets.glMeshDataSize;
+	let index: number = start;
 
-	while (index != offsets.collision) {
+	while (index < end) {
 		const texId = BinaryReader.readUInt16(index, file);
 		index += 2;
 		const vertLength = BinaryReader.readUInt32(index, file);

@@ -63,4 +63,8 @@ export default class gMath {
 			return quaternion.euler(0, 0, -90);
 		}
 	}
+
+	static randomInt(max: number) {
+		return Math.floor(Math.random() * max);
+	}
 }

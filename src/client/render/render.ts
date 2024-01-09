@@ -1,4 +1,4 @@
-import { SharedAttribs, SkinnedShaderBase, UninstancedShaderBase, UninstancedTextureShaderBase, defaultShader, gl, glProperties, lineBuffer, lineVao, skinnedShader, solidShader } from "./gl.js";
+import { SkinnedShaderBase, UninstancedTextureShaderBase, defaultShader, gl, glProperties, lineBuffer, lineVao, skinnedShader, solidShader } from "./gl.js";
 import { vec3 } from "../../common/math/vector.js";
 import { mat4 } from "../../common/math/matrix.js";
 import { HierarchyNode, Model, Primitive } from "../../common/mesh/model.js";
@@ -8,22 +8,13 @@ import { Client } from "../system/client.js";
 import { DynamicProp, PropBase } from "../mesh/prop.js";
 import { Transform } from "../../common/entitysystem/transform.js";
 import { ClientPlayer } from "../player/clientplayer.js";
-import { ClientGltfLoader } from "../mesh/gltfloader.js";
 import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
 import { Camera } from "./camera.js";
 import { currentLevel } from "../../common/entities/level.js";
-import gMath from "../../common/math/gmath.js";
 
 export let uiMatrix: mat4;
 
-let debugModel: DynamicProp;
 export async function initRender() {
-	debugModel = new DynamicProp(await ClientGltfLoader.loadGltfFromWeb("./data/models/sci_player"));
-	debugModel.transform.translation = new vec3(0, 0, -2);
-	const length = debugModel.model.animations.length;
-	const index = Math.floor(Math.random() * length);
-	console.log(index);
-	debugModel.controller.setAnimation(debugModel.model.animations[index]);
 }
 
 export function updateUiMaterix() {
@@ -61,7 +52,7 @@ export function drawFrame(client: Client): void {
 
 		gl.useProgram(skinnedShader.program);
 		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
-		drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
+		// drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
 		drawPlayersDebug(client.otherPlayers.values(), client.camera);
 
 		gl.useProgram(null);

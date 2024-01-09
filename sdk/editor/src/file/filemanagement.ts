@@ -129,9 +129,17 @@ export class FileManagement {
 		// offsets table
 		let offsetsTable: any = {
 			textureTable: 0,
+			textureTableSize: texTableBlob.size,
+
 			glMeshData: texTableBlob.size,
+			glMeshDataSize: glMeshBlob.size,
+
 			collision: texTableBlob.size + glMeshBlob.size,
+			collisionSize: collisionBlob.size,
+
 			entities: texTableBlob.size + glMeshBlob.size + collisionBlob.size,
+			entitiesSize: entityBlob.size,
+			
 			lastIndex: texTableBlob.size + glMeshBlob.size + collisionBlob.size + entityBlob.size,
 		};
 
