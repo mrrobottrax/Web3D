@@ -6,6 +6,7 @@ import { Entity } from "../entitysystem/entity.js";
 import { Transform } from "../entitysystem/transform.js";
 import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "../mesh/model.js";
 import { PlayerAnimController } from "./playeranimcontroller.js";
+import { Buttons } from "../input/buttons.js";
 
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {
@@ -23,7 +24,7 @@ export interface PredictedData {
 	duckProg: number;
 }
 
-export class SharedPlayer extends Entity {
+export abstract class SharedPlayer extends Entity {
 	camPosition: vec3;
 	camRotation: quaternion;
 	pitch: number;
@@ -80,6 +81,10 @@ export class SharedPlayer extends Entity {
 			this.yaw = cmd.yaw;
 		}
 
+		if (this.getButtons()[Buttons.fire1] && !this.getLastButtons()[Buttons.fire1]) {
+			console.log("FIRE!");
+		}
+
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 
 		// todo: firing
@@ -90,6 +95,9 @@ export class SharedPlayer extends Entity {
 
 		super.update();
 	}
+
+	abstract getButtons(): boolean[];
+	abstract getLastButtons(): boolean[];
 
 	createPredictedData(): PredictedData {
 		return {

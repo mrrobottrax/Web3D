@@ -1,6 +1,7 @@
 import { quaternion } from "../../common/math/vector.js";
 import { PlayerUtil } from "../../common/player/playerutil.js";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
+import { client } from "../clientmain.js";
 
 export class ClientPlayer extends SharedPlayer {
 	constructor(id: number) {
@@ -12,5 +13,13 @@ export class ClientPlayer extends SharedPlayer {
 		this.transform.rotation = quaternion.eulerRad(0, this.yaw + Math.PI, 0);
 
 		super.update();
+	}
+
+	getButtons(): boolean[] {
+		return client.buttons;
+	}
+
+	getLastButtons(): boolean[] {
+		return client.lastButtons;
 	}
 }

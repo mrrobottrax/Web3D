@@ -145,6 +145,8 @@ export class Server {
 			console.log("Identity fraud!");
 		}
 
+		player.lastButtons = player.buttons;
+		player.buttons = cmd.buttons;
 		player.processCmd(cmd);
 		player.lastCmd = packet.number;
 	}

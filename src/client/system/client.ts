@@ -7,13 +7,14 @@ import { PredictedData, SharedPlayer } from "../../common/player/sharedplayer.js
 import { Time } from "../../common/system/time.js";
 import { UserCmd } from "../../common/input/usercmd.js";
 import { ClientPlayer } from "../player/clientplayer.js";
-import { createUserCMD, initInput } from "../player/input.js";
 import { glEndFrame, glProperties, initGl, resizeCanvas } from "../render/gl.js";
 import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
 import { drawText, initUi, initUiBuffers } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 import { Camera } from "../render/camera.js";
+import { Buttons } from "../../common/input/buttons.js";
+import { Input } from "../player/input.js";
 
 interface PlayerData {
 	cmd: UserCmd,
@@ -33,6 +34,11 @@ export class Client {
 
 	camera: Camera;
 
+	lastButtons = new Array<boolean>(Buttons.MAX_BUTTONS);
+	buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
+
+	input: Input = new Input();
+
 	public constructor() {
 		setGameContext(GameContext.client);
 		this.ws = null;
@@ -49,10 +55,10 @@ export class Client {
 	}
 
 	setup(playerId: number) {
-		this.localPlayer = new SharedPlayer(playerId);
+		this.localPlayer = new ClientPlayer(playerId);
 		this.otherPlayers = new Map();
 		this.nextCmdNumber = 0;
-		initInput(this.localPlayer);
+		this.input.initInput(this.localPlayer);
 
 		drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
 	}
@@ -97,7 +103,7 @@ export class Client {
 
 		lastCamPos.copy(this.localPlayer.camPosition);
 
-		const cmd = createUserCMD(this.localPlayer);
+		const cmd = this.input.createUserCMD(this.localPlayer);
 		const cmdPacket: UserCmdPacket = {
 			number: this.nextCmdNumber,
 			type: PacketType.userCmd,
@@ -115,6 +121,8 @@ export class Client {
 		});
 
 		tickViewmodel(this.localPlayer);
+
+		this.input.tickButtons();
 		++this.nextCmdNumber;
 	}
 

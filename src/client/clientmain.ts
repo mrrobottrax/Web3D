@@ -5,7 +5,7 @@ import { setPlayerModel } from "../common/player/sharedplayer.js";
 import { ClientGltfLoader } from "./mesh/gltfloader.js";
 
 let running: boolean = false;
-let client: Client;
+export let client: Client;
 
 main();
 
