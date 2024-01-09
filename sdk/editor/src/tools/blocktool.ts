@@ -1,4 +1,4 @@
-import { drawBox, drawLine } from "../../../../src/client/render/render.js";
+import { drawBox, drawLine } from "../../../../src/client/render/debugRender.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
@@ -26,7 +26,7 @@ export class BlockTool extends Tool {
 	drawCurrentBlock() {
 		if (this.drawnThisFrame) return;
 
-		drawBox(this.currentBlock.min, this.currentBlock.max, [1, 1, 0, 1]);
+		drawBox(this.currentBlock.min, this.currentBlock.max, vec3.origin(), [1, 1, 0, 1]);
 
 		this.drawnThisFrame = true;
 	}

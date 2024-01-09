@@ -1,5 +1,6 @@
+import { drawBox } from "../../../../src/client/render/debugRender.js";
 import { defaultShader, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
-import { drawBox, drawPrimitive } from "../../../../src/client/render/render.js";
+import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
@@ -372,9 +373,7 @@ export class SelectTool extends Tool {
 				const min = new vec3(entity.min[0], entity.min[1], entity.min[2]);
 				const max = new vec3(entity.max[0], entity.max[1], entity.max[2]);
 				const origin = vec3.parse(entity.keyvalues.origin);
-				min.add(origin);
-				max.add(origin);
-				drawBox(min, max, [0, 1, 0, 1]);
+				drawBox(min, max, origin, [0, 1, 0, 1]);
 			});
 		}
 
@@ -983,67 +982,7 @@ export class SelectTool extends Tool {
 			const min = new vec3(entity.min[0], entity.min[1], entity.min[2]);
 			const max = new vec3(entity.max[0], entity.max[1], entity.max[2]);
 			const origin = vec3.parse(entity.keyvalues.origin);
-
-			min.add(origin);
-			max.add(origin);
-
-			// drawBox(min, max, [1, 0, 0, 1]);
-
-			const inner = (normal: vec3): number | undefined => {
-				const dist1 = vec3.dot(min, normal);
-				const dist2 = vec3.dot(max, normal);
-				const dist = Math.max(dist1, dist2);
-
-				let right: vec3;
-				let up: vec3;
-				if (Math.abs(normal.x) == 1) {
-					// side
-					right = new vec3(0, 0, 1);
-					up = new vec3(0, 1, 0);
-				} else if (Math.abs(normal.y) == 1) {
-					// top
-					right = new vec3(1, 0, 0);
-					up = new vec3(0, 0, 1);
-				} else {
-					// front
-					right = new vec3(1, 0, 0);
-					up = new vec3(0, 1, 0);
-				}
-
-				// ignore backs
-				const dot = vec3.dot(ray.direction, normal);
-				if (dot > 0) return;
-
-				// find intersection with plane
-				const dot2 = -vec3.dot(ray.origin, normal) + dist;
-
-				const t = dot2 / dot;
-				const p = ray.origin.plus(ray.direction.times(t));
-
-				// check if p is within the bounds
-				const x = vec3.dot(right, p);
-				const y = vec3.dot(up, p);
-				const maxX = vec3.dot(right, max);
-				const maxY = vec3.dot(up, max);
-				const minX = vec3.dot(right, min);
-				const minY = vec3.dot(up, min);
-
-				if (x > minX && x < maxX && y > minY && y < maxY) {
-					// intersecting
-					return t;
-				}
-			}
-
-			const checkPlanes = () => {
-				let t;
-				t = inner(new vec3(1, 0, 0)); if (t != undefined) return t;
-				t = inner(new vec3(-1, 0, 0)); if (t != undefined) return t;
-				t = inner(new vec3(0, 1, 0)); if (t != undefined) return t;
-				t = inner(new vec3(0, -1, 0)); if (t != undefined) return t;
-				t = inner(new vec3(0, 0, 1)); if (t != undefined) return t;
-				t = inner(new vec3(0, 0, -1)); if (t != undefined) return t;
-			}
-			const t = checkPlanes();
+			const t = gMath.clipRayToAABB(ray, min, max, origin);
 
 			if (t && t < bestDist) {
 				bestDist = t;

@@ -1,5 +1,4 @@
-import { SharedAttribs, gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
-import { drawLine } from "../../../../src/client/render/render.js";
+import { gl, lineBuffer, lineVao, solidShader } from "../../../../src/client/render/gl.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";

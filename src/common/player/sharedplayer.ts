@@ -7,6 +7,8 @@ import { Transform } from "../entitysystem/transform.js";
 import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "../mesh/model.js";
 import { PlayerAnimController } from "./playeranimcontroller.js";
 import { Buttons } from "../input/buttons.js";
+import { Weapon } from "../weapons/weapon.js";
+import { Pistol } from "../weapons/pistol.js";
 
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {
@@ -46,6 +48,10 @@ export abstract class SharedPlayer extends Entity {
 
 	model: Model;
 
+	weapon: Weapon = new Pistol();
+
+	health: number = 100;
+
 	constructor(id: number) {
 		super();
 
@@ -81,13 +87,13 @@ export abstract class SharedPlayer extends Entity {
 			this.yaw = cmd.yaw;
 		}
 
+		// todo: fire before or after move?
 		if (this.getButtons()[Buttons.fire1] && !this.getLastButtons()[Buttons.fire1]) {
 			console.log("FIRE!");
+			this.weapon.fire(this);
 		}
 
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
-
-		// todo: firing
 	}
 
 	override update(): void {
@@ -128,11 +134,16 @@ export abstract class SharedPlayer extends Entity {
 
 	static copyPredictedData(data: PredictedData): PredictedData {
 		return {
-			position: data.position,
-			velocity: data.velocity,
+			position: vec3.copy(data.position),
+			velocity: vec3.copy(data.velocity),
 			groundEnt: data.groundEnt,
 			isDucked: data.isDucked,
 			duckProg: data.duckProg
 		}
+	}
+
+	damage(damage: number) {
+		this.health -= damage;
+		console.log("Health: " + this.health);
 	}
 }

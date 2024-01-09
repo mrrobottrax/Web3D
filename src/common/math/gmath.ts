@@ -1,3 +1,6 @@
+import { drawBox } from "../../client/render/debugRender.js";
+import { GameContext, gameContext } from "../system/context.js";
+import { Ray } from "./ray.js";
 import { quaternion, vec2, vec3 } from "./vector.js";
 
 export default class gMath {
@@ -66,5 +69,73 @@ export default class gMath {
 
 	static randomInt(max: number) {
 		return Math.floor(Math.random() * max);
+	}
+
+	static clipRayToAABB(ray: Ray, min: vec3, max: vec3, offset: vec3): number | null {
+		const _min = vec3.copy(min);
+		const _max = vec3.copy(max);
+		_min.add(offset);
+		_max.add(offset);
+
+		// if (gameContext == GameContext.client)
+		// 	drawBox(min, max, offset, [1, 0, 0, 1], 5);
+
+		const inner = (normal: vec3): number | undefined => {
+			const dist1 = vec3.dot(_min, normal);
+			const dist2 = vec3.dot(_max, normal);
+			const dist = Math.max(dist1, dist2);
+
+			let right: vec3;
+			let up: vec3;
+			if (Math.abs(normal.x) == 1) {
+				// side
+				right = new vec3(0, 0, 1);
+				up = new vec3(0, 1, 0);
+			} else if (Math.abs(normal.y) == 1) {
+				// top
+				right = new vec3(1, 0, 0);
+				up = new vec3(0, 0, 1);
+			} else {
+				// front
+				right = new vec3(1, 0, 0);
+				up = new vec3(0, 1, 0);
+			}
+
+			// ignore backs
+			const dot = vec3.dot(ray.direction, normal);
+			if (dot > 0) return;
+
+			// find intersection with plane
+			const dot2 = -vec3.dot(ray.origin, normal) + dist;
+
+			const t = dot2 / dot;
+			const p = ray.origin.plus(ray.direction.times(t));
+
+			// check if p is within the bounds
+			const x = vec3.dot(right, p);
+			const y = vec3.dot(up, p);
+			const maxX = vec3.dot(right, _max);
+			const maxY = vec3.dot(up, _max);
+			const minX = vec3.dot(right, _min);
+			const minY = vec3.dot(up, _min);
+
+			if (x > minX && x < maxX && y > minY && y < maxY) {
+				// intersecting
+				return t;
+			}
+		}
+
+		const checkPlanes = () => {
+			let t;
+			t = inner(new vec3(1, 0, 0)); if (t != undefined) return t;
+			t = inner(new vec3(-1, 0, 0)); if (t != undefined) return t;
+			t = inner(new vec3(0, 1, 0)); if (t != undefined) return t;
+			t = inner(new vec3(0, -1, 0)); if (t != undefined) return t;
+			t = inner(new vec3(0, 0, 1)); if (t != undefined) return t;
+			t = inner(new vec3(0, 0, -1)); if (t != undefined) return t;
+		}
+		const t = checkPlanes();
+
+		return t ? t : null;
 	}
 }

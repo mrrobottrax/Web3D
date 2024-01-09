@@ -11,6 +11,8 @@ import { ClientPlayer } from "../player/clientplayer.js";
 import { HalfEdgeMesh } from "../../common/mesh/halfedge.js";
 import { Camera } from "./camera.js";
 import { currentLevel } from "../../common/entities/level.js";
+import { players } from "../../common/system/playerList.js";
+import { lines, screenLines, drawLineScreen, drawLine } from "./debugRender.js";
 
 export let uiMatrix: mat4;
 
@@ -53,7 +55,7 @@ export function drawFrame(client: Client): void {
 		gl.useProgram(skinnedShader.program);
 		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
 		// drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
-		drawPlayersDebug(client.otherPlayers.values(), client.camera);
+		drawPlayersDebug(players.values(), client.camera);
 
 		gl.useProgram(null);
 	}
@@ -220,70 +222,6 @@ function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix:
 		for (let j = 0; j < node.primitives.length; ++j) {
 			drawPrimitive(node.primitives[j], camera.viewMatrix, shader);
 		}
-	}
-}
-
-interface Line {
-	start: vec3,
-	end: vec3,
-	color: number[],
-	time: number
-}
-let lines: Line[] = [];
-export function drawLine(start: vec3, end: vec3, color: number[], time: number = 0) {
-	lines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
-}
-
-export function drawBox(min: vec3, max: vec3, color: number[], t: number = 0) {
-	let a = new vec3(min.x, min.y, min.z);
-	let b = new vec3(min.x, min.y, max.z);
-	let c = new vec3(min.x, max.y, min.z);
-	let d = new vec3(min.x, max.y, max.z);
-	let e = new vec3(max.x, min.y, min.z);
-	let f = new vec3(max.x, min.y, max.z);
-	let g = new vec3(max.x, max.y, min.z);
-	let h = new vec3(max.x, max.y, max.z);
-
-	drawLine(a, b, color, t);
-	drawLine(a, c, color, t);
-	drawLine(a, e, color, t);
-	drawLine(b, d, color, t);
-	drawLine(b, f, color, t);
-	drawLine(c, d, color, t);
-	drawLine(c, g, color, t);
-	drawLine(d, h, color, t);
-	drawLine(e, g, color, t);
-	drawLine(e, f, color, t);
-	drawLine(h, f, color, t);
-	drawLine(h, g, color, t);
-}
-
-let screenLines: Line[] = [];
-export function drawLineScreen(start: vec3, end: vec3, color: number[], time: number = 0) {
-	screenLines.push({ start: vec3.copy(start), end: vec3.copy(end), color: color, time: time });
-}
-
-export function drawHalfEdgeMesh(mesh: HalfEdgeMesh, color: number[], time: number = 0) {
-	for (let i = 0; i < mesh.edges.length; ++i) {
-		drawLine(
-			mesh.vertices[mesh.halfEdges[mesh.edges[i].halfEdge].vert].position,
-			mesh.vertices[mesh.halfEdges[mesh.halfEdges[mesh.edges[i].halfEdge].next].vert].position,
-			color,
-			time
-		);
-	}
-
-	for (let i = 0; i < mesh.faces.length; ++i) {
-		const f = mesh.faces[i];
-
-		const p = mesh.vertices[mesh.halfEdges[f.halfEdge].vert].position;
-
-		drawLine(
-			p,
-			p.plus(f.normal),
-			color,
-			time
-		);
 	}
 }
 

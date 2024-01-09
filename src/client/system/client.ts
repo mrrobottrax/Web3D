@@ -8,13 +8,15 @@ import { Time } from "../../common/system/time.js";
 import { UserCmd } from "../../common/input/usercmd.js";
 import { ClientPlayer } from "../player/clientplayer.js";
 import { glEndFrame, glProperties, initGl, resizeCanvas } from "../render/gl.js";
-import { drawFrame, drawLine, initRender, lastCamPos, updateInterp } from "../render/render.js";
 import { drawText, initUi, initUiBuffers } from "../render/ui.js";
 import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 import { Camera } from "../render/camera.js";
 import { Buttons } from "../../common/input/buttons.js";
 import { Input } from "../player/input.js";
+import { players } from "../../common/system/playerList.js";
+import { drawLine } from "../render/debugRender.js";
+import { initRender, lastCamPos, updateInterp, drawFrame } from "../render/render.js";
 
 interface PlayerData {
 	cmd: UserCmd,
@@ -29,8 +31,6 @@ export class Client {
 	nextCmdNumber: number = 0;
 
 	cmdBuffer: CircularBuffer<PlayerData>;
-
-	otherPlayers!: Map<number, ClientPlayer>;
 
 	camera: Camera;
 
@@ -56,7 +56,6 @@ export class Client {
 
 	setup(playerId: number) {
 		this.localPlayer = new ClientPlayer(playerId);
-		this.otherPlayers = new Map();
 		this.nextCmdNumber = 0;
 		this.input.initInput(this.localPlayer);
 
@@ -152,11 +151,11 @@ export class Client {
 			if (playerSnapshot.id == this.localPlayer.id) {
 				this.updateLocalPlayer(playerSnapshot, packet);
 			} else {
-				let player = this.otherPlayers.get(playerSnapshot.id);
+				let player = players.get(playerSnapshot.id);
 
 				if (!player) {
 					player = new ClientPlayer(playerSnapshot.id);
-					this.otherPlayers.set(playerSnapshot.id, player);
+					players.set(playerSnapshot.id, player);
 				}
 
 				player.position.copy(playerSnapshot.data.position);

@@ -10,11 +10,10 @@ import { setPlayerModel } from "../../common/player/sharedplayer.js";
 import { ServerGltfLoader } from "../mesh/gltfloader.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 import { vec3 } from "../../common/math/vector.js";
+import { players } from "../../common/system/playerList.js";
 
 export class Server {
 	wss!: WebSocketServer;
-
-	public players: Map<number, ServerPlayer> = new Map();
 
 	playerCount: number = 0;
 	maxPlayerCount: number = 32;
@@ -66,7 +65,7 @@ export class Server {
 
 		// send snapshot of world
 		this.generateSnapshot();
-		for (let player of this.players.values()) {
+		for (const player of (players as Map<number, ServerPlayer>).values()) {
 			const res: SnapshotPacket = {
 				type: PacketType.snapshot,
 				lastCmd: player.lastCmd,
@@ -87,7 +86,7 @@ export class Server {
 
 		const id = this.generatePlayerId();
 		const player = new ServerPlayer(id, ws);
-		this.players.set(id, player);
+		players.set(id, player);
 
 		// find spawns
 		const spawn = findSpawn();
@@ -134,7 +133,7 @@ export class Server {
 
 	handleCmd(packet: UserCmdPacket, ws: WebSocket) {
 		const cmd = packet.cmd;
-		const player = this.players.get(packet.id);
+		const player = players.get(packet.id) as ServerPlayer;
 
 		if (!player) {
 			console.log("ERROR: UserCMD from nonexistant player");
@@ -152,12 +151,12 @@ export class Server {
 	}
 
 	generateSnapshot() {
-		let players: PlayerSnapshot[] = [];
-		players.length = this.players.size;
+		let playerSnaps: PlayerSnapshot[] = [];
+		playerSnaps.length = players.size;
 
 		let i = 0;
-		for (let player of this.players.values()) {
-			players[i] = {
+		for (const player of players.values()) {
+			playerSnaps[i] = {
 				id: player.id,
 				pitch: player.pitch,
 				yaw: player.yaw,
@@ -170,7 +169,7 @@ export class Server {
 		}
 
 		this.snapshot = {
-			players: players
+			players: playerSnaps
 		}
 	}
 }

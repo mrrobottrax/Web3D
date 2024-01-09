@@ -1,18 +1,24 @@
+import { drawBox } from "../../client/render/debugRender.js";
 import { currentLevel } from "../entities/level.js";
+import { Entity } from "../entitysystem/entity.js";
+import gMath from "../math/gmath.js";
 import { vec3 } from "../math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "../mesh/halfedge.js";
+import { PlayerUtil } from "../player/playerutil.js";
+import { players } from "./playerList.js";
 
 export interface CastResult {
 	dist: number;
 	normal: vec3;
 	fract: number;
 	dir: vec3;
+	entity: Entity | null;
 }
 
 export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	let moveDist = move.magnitide();
 	if (moveDist == 0 || !currentLevel) {
-		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin() };
+		return { dist: 0, normal: vec3.origin(), fract: 0, dir: vec3.origin(), entity: null };
 	}
 
 	const moveDir = move.times(1 / moveDist);
@@ -175,17 +181,9 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 					return true;
 				}
 
-				// check both sides of tri face
-				// is this even needed with new algorithm????
-				//for (let i = 0; i < 2; ++i) {
-				for (let i = 0; i < 1; ++i) {
-					let axis = vec3.copy(tri.normal);
-					if (i == 1) {
-						axis = axis.inverse();
-					}
-					if (!checkAxis(axis))
-						return false;
-				}
+				// check tri normal
+				if (!checkAxis(tri.normal))
+					return false;
 
 				// check box faces
 				for (let f = 0; f < box.faces.length; ++f) {
@@ -293,11 +291,10 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 		fract = dist / moveDist;
 	}
 
-	return { dist: dist, normal: normal, fract: fract, dir: moveDir };
+	return { dist: dist, normal: normal, fract: fract, dir: moveDir, entity: currentLevel };
 }
 
-export function castRay(start: vec3, move: vec3): CastResult {
-
+export function castRay(start: vec3, move: vec3, hitPlayers: boolean = false): CastResult {
 	const maxDist = move.magnitide();
 	let dist = maxDist;
 
@@ -306,7 +303,8 @@ export function castRay(start: vec3, move: vec3): CastResult {
 			dist: 0,
 			normal: vec3.origin(),
 			fract: 0,
-			dir: vec3.origin()
+			dir: vec3.origin(),
+			entity: null
 		};
 	}
 
@@ -383,7 +381,29 @@ export function castRay(start: vec3, move: vec3): CastResult {
 		}
 	}
 
-	return { dist: dist, normal: normal, fract: dist / maxDist, dir: dir };
+	if (hitPlayers) {
+		let playerEnt: Entity | null = null;
+		for (const player of players.values()) {
+			// check against players
+			const t = gMath.clipRayToAABB({
+				origin: start,
+				direction: move.normalised() // todo: needed?
+			}, new vec3(-0.5, 0, -0.5), new vec3(0.5, 2.2, 0.5), PlayerUtil.getFeet(player));
+
+			// drawBox(new vec3(-0.5, 0, -0.5), new vec3(0.5, 2.2, 0.5), PlayerUtil.getFeet(player), [0, 1, 0, 1], 3);
+
+			if (t && t < dist) {
+				dist = t;
+				playerEnt = player;
+			}
+		}
+
+		if (playerEnt)
+			return { dist: dist, normal: normal, fract: dist / maxDist, dir: dir, entity: playerEnt };
+	}
+
+	const fract = dist / maxDist;
+	return { dist: dist, normal: normal, fract: fract, dir: dir, entity: fract == 1 ? null : currentLevel };
 }
 
 function createBoxMesh(min: vec3, max: vec3): HalfEdgeMesh {
