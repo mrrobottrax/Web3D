@@ -1,5 +1,5 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
-import { SharedAttribs, gl, lineVao, solidShader } from "../../../../src/client/render/gl.js";
+import { SharedAttribs, gl, solidShader } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
@@ -8,6 +8,7 @@ import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorVertex } from "../mesh/editormesh.js";
 import { getKeyDown } from "../system/input.js";
 import { Viewport } from "../windows/viewport.js";
+import { EntityTool } from "./entitytool.js";
 import { SelectExtension } from "./selectextension.js";
 import { SelectMode } from "./selecttool.js";
 
@@ -212,6 +213,9 @@ export class TranslateTool extends SelectExtension {
 					case SelectMode.Edge:
 						this.extrudeEdges();
 						break;
+					case SelectMode.Mesh:
+						this.duplicateMeshes();
+						break;
 				}
 			}
 
@@ -355,6 +359,30 @@ export class TranslateTool extends SelectExtension {
 		}
 
 		return super.mouseMove(dx, dy);
+	}
+
+	duplicateMeshes() {
+		const select = editor.selectTool;
+		// const newMeshSelection = new Set<EditorMesh>();
+		const newEntitySelection = new Set<any>();
+
+		// select.selectedMeshes.forEach(mesh => {
+		// 	const newMesh = ObjectHelper.deepCopy(mesh);
+		// 	newMeshSelection.add(newMesh);
+		// });
+		select.selectedEntities.forEach(entity => {
+			const newEntity = EntityTool.getNewEntity(entity.className);
+
+			newEntity.keyvalues = JSON.parse(JSON.stringify(entity.keyvalues));
+
+			newEntitySelection.add(newEntity);
+			editor.entities.add(newEntity);
+		});
+
+		// select.selectedMeshes = newMeshSelection;
+
+		// todo: copy meshes
+		select.selectedEntities = newEntitySelection;
 	}
 
 	extrudeEdges() {

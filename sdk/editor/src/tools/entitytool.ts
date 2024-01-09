@@ -1,6 +1,7 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
 import { drawLine } from "../../../../src/client/render/render.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
+import { Model } from "../../../../src/common/mesh/model.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { Viewport } from "../windows/viewport.js";
@@ -97,6 +98,7 @@ export class EntityTool extends Tool {
 				editor.entityModels.set(model, await ClientGltfLoader.loadGltfFromWeb(model));
 			}
 			loadModel(entity.model);
+			editor.entityModels.set(entity.model, new Model());
 		}
 	}
 
