@@ -5,7 +5,7 @@ import { PacketType } from "../../common/network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
 import { findSpawn, setLevelServer } from "../entities/level.js";
 import { Time, updateTime } from "../../common/system/time.js";
-import { GameContext, setGameContext } from "../../common/system/context.js";
+import { Environment, setGameContext } from "../../common/system/context.js";
 import { setPlayerModel } from "../../common/player/sharedplayer.js";
 import { ServerGltfLoader } from "../mesh/gltfloader.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
@@ -21,7 +21,7 @@ export class Server {
 	snapshot!: Snapshot;
 
 	public async init() {
-		setGameContext(GameContext.server);
+		setGameContext(Environment.server);
 
 		this.wss = new WebSocketServer({ port: 80 })
 		this.wss.on('connection', ws => {

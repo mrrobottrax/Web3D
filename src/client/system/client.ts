@@ -1,6 +1,6 @@
 import { CircularBuffer } from "../../common/collections/circularbuffer.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
-import { GameContext, setGameContext } from "../../common/system/context.js";
+import { Environment, setGameContext } from "../../common/system/context.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
 import { PredictedData, SharedPlayer } from "../../common/player/sharedplayer.js";
@@ -41,7 +41,7 @@ export class Client {
 	input: Input = new Input();
 
 	public constructor() {
-		setGameContext(GameContext.client);
+		setGameContext(Environment.client);
 		this.ws = null;
 		(window as any).connect = (url: string) => this.connect(url);
 		this.cmdBuffer = new CircularBuffer(1 / Time.fixedDeltaTime);

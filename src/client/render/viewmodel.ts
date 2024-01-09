@@ -4,10 +4,10 @@ import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Time } from "../../common/system/time.js";
 import { gl, loadTexture, uiShader } from "./gl.js";
 
-let viewModelLocation = new vec3(0.8, -0.65, 0);
-let viewModelScale = new vec3(0.375, 0.375, 1);
+let viewModelLocation = new vec3(0.8, -0.5, 0);
+let viewModelScale = new vec3(0.5, 0.5, 1);
 
-let gunTex: WebGLTexture;
+let gunIdle: WebGLTexture[] = [];
 let gunFire: WebGLTexture[] = [];
 
 let cycle = 0;
@@ -21,19 +21,39 @@ const bobSpeed = 0.5;
 const maxBobSpeed = 30;
 const blendUp = 3;
 
+enum AnimationEnum {
+	idle,
+	fire
+}
+let currentAnimation: AnimationEnum = AnimationEnum.idle;
+let currentFrame: number = 0;
+const frameRate = 30;
+let frameTimer: number = 0;
+
 export function initViewmodel() {
+	// keep aspect ratio
+	viewModelScale.x = 89 / 99 * viewModelScale.y;
+
 	loadTexture("data/textures/fire0.png").then(
 		(value) => {
 			if (value.tex) {
-				gunTex = value.tex;
+				gunIdle.push(value.tex);
 			}
 		}
 	);
-	loadTexture("data/textures/fire2.png").then(
+	loadTexture("data/textures/fire1.png").then(
 		(value) => {
 			if (value.tex) {
 				gunFire.push(value.tex);
 			}
+
+			loadTexture("data/textures/fire2.png").then(
+				(value) => {
+					if (value.tex) {
+						gunFire.push(value.tex);
+					}
+				}
+			);
 		}
 	);
 }
@@ -50,15 +70,13 @@ export function tickViewmodel(player: SharedPlayer) {
 
 	const blendGoal = playerSpeed / 9;
 
-	if (blend < blendGoal)
-	{
+	if (blend < blendGoal) {
 		blend += Time.fixedDeltaTime * blendUp;
 
 		if (blend > blendGoal)
 			blend = blendGoal
 	}
-	else if (blend > blendGoal)
-	{
+	else if (blend > blendGoal) {
 		blend = blendGoal;
 	}
 
@@ -76,6 +94,18 @@ export function tickViewmodel(player: SharedPlayer) {
 
 	nextBobOffset.y = -(Math.cos(cycle * 2) + 1) * bobAmt * blend;
 	nextBobOffset.x = Math.sin(cycle) * bobAmt * 2 * blend;
+
+	if (frameTimer < 0) {
+		frameTimer = 1 / frameRate;
+		currentFrame = (currentFrame + 1) % getCurrentAnimation().length;
+
+		// go back to idle
+		if (currentAnimation == AnimationEnum.fire && currentFrame == 0) {
+			setAnimation(AnimationEnum.idle);
+		}
+	} else {
+		frameTimer -= Time.fixedDeltaTime;
+	}
 }
 
 export function drawViewmodel() {
@@ -84,7 +114,7 @@ export function drawViewmodel() {
 	let mat;
 
 	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, gunTex);
+	gl.bindTexture(gl.TEXTURE_2D, getCurrentFrame());
 
 	mat = mat4.identity();
 
@@ -97,4 +127,27 @@ export function drawViewmodel() {
 	gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
 	gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+export function fireViewmodel() {
+	setAnimation(AnimationEnum.fire);
+}
+
+function setAnimation(animation: AnimationEnum) {
+	currentAnimation = animation;
+	currentFrame = 0;
+	frameTimer = 1 / frameRate;
+}
+
+function getCurrentAnimation(): WebGLTexture[] {
+	switch (currentAnimation) {
+		case AnimationEnum.idle:
+			return gunIdle;
+		case AnimationEnum.fire:
+			return gunFire;
+	}
+}
+
+function getCurrentFrame(): WebGLTexture {
+	return getCurrentAnimation()[currentFrame];
 }

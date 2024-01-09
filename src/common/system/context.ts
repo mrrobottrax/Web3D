@@ -1,12 +1,12 @@
-export enum GameContext {
+export enum Environment {
 	none,
 	client,
 	server,
 	host
 }
 
-export let gameContext: GameContext;
+export let environment: Environment;
 
-export function setGameContext(_context: GameContext) {
-	gameContext = _context;
+export function setGameContext(_environment: Environment) {
+	environment = _environment;
 }

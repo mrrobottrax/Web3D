@@ -1,4 +1,4 @@
-import { GameContext, gameContext } from "../../common/system/context.js";
+import { Environment, environment } from "../../common/system/context.js";
 import { GltfLoader } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
 import { SharedAttribs, gl, solidTex } from "../render/gl.js";
@@ -42,7 +42,7 @@ export class ClientGltfLoader extends GltfLoader {
 	static override genBuffers(data: PrimitiveData[]): Primitive[] {
 		let primitives: Primitive[] = [];
 
-		if (gameContext == GameContext.server) {
+		if (environment == Environment.server) {
 			return primitives;
 		}
 

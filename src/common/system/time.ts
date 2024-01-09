@@ -1,4 +1,4 @@
-import { GameContext, gameContext } from "./context.js";
+import { Environment, environment } from "./context.js";
 
 export let Time =
 {
@@ -36,7 +36,7 @@ export function updateTime(): void {
 	lastTime = time;
 
 	// handle ticks on client
-	if (gameContext != GameContext.server) {
+	if (environment != Environment.server) {
 		if (time >= Time.nextTick) {
 			if (time - Time.nextTick > Time.fixedDeltaTime * 3000) {
 				console.log("more than 3 ticks behind, starting over");

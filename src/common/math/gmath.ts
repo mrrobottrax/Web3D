@@ -1,5 +1,5 @@
 import { drawBox } from "../../client/render/debugRender.js";
-import { GameContext, gameContext } from "../system/context.js";
+import { Environment, environment } from "../system/context.js";
 import { Ray } from "./ray.js";
 import { quaternion, vec2, vec3 } from "./vector.js";
 

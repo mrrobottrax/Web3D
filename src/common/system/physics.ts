@@ -5,6 +5,7 @@ import gMath from "../math/gmath.js";
 import { vec3 } from "../math/vector.js";
 import { Face, HalfEdge, HalfEdgeMesh, Vertex } from "../mesh/halfedge.js";
 import { PlayerUtil } from "../player/playerutil.js";
+import { SharedPlayer } from "../player/sharedplayer.js";
 import { players } from "./playerList.js";
 
 export interface CastResult {
@@ -294,7 +295,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 	return { dist: dist, normal: normal, fract: fract, dir: moveDir, entity: currentLevel };
 }
 
-export function castRay(start: vec3, move: vec3, hitPlayers: boolean = false): CastResult {
+export function castRay(start: vec3, move: vec3, hitPlayers: boolean = false, ignorePlayer: SharedPlayer | null = null): CastResult {
 	const maxDist = move.magnitide();
 	let dist = maxDist;
 
@@ -384,6 +385,10 @@ export function castRay(start: vec3, move: vec3, hitPlayers: boolean = false): C
 	if (hitPlayers) {
 		let playerEnt: Entity | null = null;
 		for (const player of players.values()) {
+			if (player === ignorePlayer) {
+				continue;
+			}
+
 			// check against players
 			const t = gMath.clipRayToAABB({
 				origin: start,
