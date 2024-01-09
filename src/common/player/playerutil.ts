@@ -33,10 +33,6 @@ enum BlockedBits {
 	stepBit = 2,
 }
 
-export interface PositionData {
-	groundEnt: number;
-}
-
 export class PlayerUtil {
 	static getViewOffset(player: SharedPlayer): number {
 		const offset = 0.05;
@@ -188,8 +184,8 @@ export class PlayerUtil {
 		return curVel.plus(vec3.copy(wishDir).times(accelSpeed));
 	}
 
-	static catagorizePosition(player: SharedPlayer): PositionData {
-		let data: PositionData = {
+	static catagorizePosition(player: SharedPlayer): { groundEnt: number } {
+		let data = {
 			groundEnt: -1
 		}
 
@@ -266,7 +262,7 @@ export class PlayerUtil {
 		let wish = vec3.copy(cmd.wishDir);
 		wish.y = 0;
 
-		player.positionData = this.catagorizePosition(player);
+		player.groundEnt = this.catagorizePosition(player).groundEnt;
 
 		// duck / unduck
 		if (!player.isDucked) {
@@ -278,7 +274,7 @@ export class PlayerUtil {
 		} else {
 			if (!cmd.buttons[Buttons.duck]) {
 				// check if can unduck
-				if (player.positionData.groundEnt != -1) {
+				if (player.groundEnt != -1) {
 					// cast up
 					const cast = castAABB(hullDuckSize, player.position, new vec3(0, 2 * duckOffset, 0));
 
@@ -320,7 +316,7 @@ export class PlayerUtil {
 		}
 
 		// instant duck / unduck in the air
-		if (player.positionData.groundEnt == -1) {
+		if (player.groundEnt == -1) {
 			if (player.wishDuck) {
 				player.duckProg = 1;
 			} else {
@@ -337,7 +333,7 @@ export class PlayerUtil {
 
 			if (player.duckProg > 0.95) {
 				if (!player.isDucked) {
-					if (player.positionData.groundEnt != -1) {
+					if (player.groundEnt != -1) {
 						player.position.y -= duckOffset;
 					} else {
 						player.position.y += duckOffset;
@@ -356,19 +352,19 @@ export class PlayerUtil {
 		}
 
 		// jump
-		if (cmd.buttons[Buttons.jump] && player.positionData.groundEnt != -1) {
+		if (cmd.buttons[Buttons.jump] && player.groundEnt != -1) {
 			player.velocity.y += jumpBoost;
-			player.positionData.groundEnt = -1;
+			player.groundEnt = -1;
 		}
 
 		// move
-		if (player.positionData.groundEnt >= 0) {
+		if (player.groundEnt >= 0) {
 			this.groundMove(player, cmd, delta);
 		} else {
 			this.airMove(player, cmd, delta);
 		}
 
-		player.positionData = this.catagorizePosition(player);
+		player.groundEnt = this.catagorizePosition(player).groundEnt;
 
 		player.camPosition = this.getCameraPosition(player);
 	}

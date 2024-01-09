@@ -157,12 +157,11 @@ export class Server {
 		for (let player of this.players.values()) {
 			players[i] = {
 				id: player.id,
-				position: player.position,
-				velocity: player.velocity,
 				pitch: player.pitch,
 				yaw: player.yaw,
 				anim: player.controller.state,
-				time: player.controller.time
+				time: player.controller.time,
+				data: player.createPredictedData()
 			}
 
 			++i;

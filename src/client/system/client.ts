@@ -3,7 +3,7 @@ import { quaternion, vec3 } from "../../common/math/vector.js";
 import { GameContext, setGameContext } from "../../common/system/context.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { Packet, PlayerSnapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
-import { SharedPlayer } from "../../common/player/sharedplayer.js";
+import { PredictedData, SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Time } from "../../common/system/time.js";
 import { UserCmd } from "../../common/input/usercmd.js";
 import { ClientPlayer } from "../player/clientplayer.js";
@@ -16,9 +16,9 @@ import { updateEntities } from "../../common/entitysystem/update.js";
 import { Camera } from "../render/camera.js";
 
 interface PlayerData {
-	position: vec3,
 	cmd: UserCmd,
-	cmdNumber: number
+	cmdNumber: number,
+	predictedData: PredictedData
 }
 
 export class Client {
@@ -109,9 +109,9 @@ export class Client {
 		// predict player
 		this.localPlayer.processCmd(cmd);
 		this.cmdBuffer.push({
-			position: vec3.copy(this.localPlayer.position),
 			cmd: cmd,
-			cmdNumber: this.nextCmdNumber
+			cmdNumber: this.nextCmdNumber,
+			predictedData: this.localPlayer.createPredictedData()
 		});
 
 		tickViewmodel(this.localPlayer);
@@ -151,7 +151,7 @@ export class Client {
 					this.otherPlayers.set(playerSnapshot.id, player);
 				}
 
-				player.position.copy(playerSnapshot.position);
+				player.position.copy(playerSnapshot.data.position);
 				player.yaw = playerSnapshot.yaw;
 				player.pitch = playerSnapshot.pitch;
 				player.controller.setState(playerSnapshot.anim);
@@ -169,20 +169,19 @@ export class Client {
 			return;
 		}
 
-		if (!playerData.position.equals(playerSnapshot.position)) {
-			drawLine(playerSnapshot.position, vec3.copy(playerSnapshot.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 10);
-			drawLine(playerData.position, playerData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 10);
+		if (!SharedPlayer.predictedVarsMatch(playerData.predictedData, playerSnapshot.data)) {
+			drawLine(playerSnapshot.data.position, vec3.copy(playerSnapshot.data.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
+			drawLine(playerData.predictedData.position, playerData.predictedData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
 
-			console.error("Prediction error: " + playerData.position.dist(playerSnapshot.position));
+			console.error("Prediction error: " + playerData.predictedData.position.dist(playerSnapshot.data.position));
 
 			// snap to position and resimulate all usercmds
-			playerData.position = vec3.copy(playerSnapshot.position);
-			this.localPlayer.position = vec3.copy(playerSnapshot.position);
-			this.localPlayer.velocity = vec3.copy(playerSnapshot.velocity);
+			playerData.predictedData = SharedPlayer.copyPredictedData(playerSnapshot.data);
+			this.localPlayer.setPredictedData(playerSnapshot.data);
 
 			for (let i = offset - 1; i > 0; --i) {
 				this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd, true);
-				this.cmdBuffer.rewind(i).position = vec3.copy(this.localPlayer.position);
+				this.cmdBuffer.rewind(i).predictedData = this.localPlayer.createPredictedData();
 			}
 		}
 	}
