@@ -158,6 +158,7 @@ export class Server {
 			players[i] = {
 				id: player.id,
 				position: player.position,
+				velocity: player.velocity,
 				pitch: player.pitch,
 				yaw: player.yaw,
 				anim: player.controller.state,

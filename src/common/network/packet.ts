@@ -30,6 +30,7 @@ export interface Snapshot {
 export interface PlayerSnapshot {
 	id: number,
 	position: vec3
+	velocity: vec3
 	pitch: number,
 	yaw: number,
 	anim: PlayerAnimState,

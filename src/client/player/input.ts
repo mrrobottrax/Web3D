@@ -70,7 +70,7 @@ export function createUserCMD(player: SharedPlayer): UserCmd {
 
 	const cmd: UserCmd = {
 		wishDir: moveVector.rotateYaw(player.yaw).normalised(),
-		buttons: buttons,
+		buttons: buttons.concat(), // copy
 		pitch: player.pitch,
 		yaw: player.yaw
 	}

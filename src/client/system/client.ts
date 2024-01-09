@@ -25,7 +25,7 @@ export class Client {
 	ws: WebSocket | null;
 	isConnected: boolean = false;
 	localPlayer!: SharedPlayer;
-	cmdNumber: number = 0;
+	nextCmdNumber: number = 0;
 
 	cmdBuffer: CircularBuffer<PlayerData>;
 
@@ -51,7 +51,7 @@ export class Client {
 	setup(playerId: number) {
 		this.localPlayer = new SharedPlayer(playerId);
 		this.otherPlayers = new Map();
-		this.cmdNumber = 0;
+		this.nextCmdNumber = 0;
 		initInput(this.localPlayer);
 
 		drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
@@ -99,7 +99,7 @@ export class Client {
 
 		const cmd = createUserCMD(this.localPlayer);
 		const cmdPacket: UserCmdPacket = {
-			number: this.cmdNumber,
+			number: this.nextCmdNumber,
 			type: PacketType.userCmd,
 			cmd: cmd,
 			id: this.localPlayer.id
@@ -111,11 +111,11 @@ export class Client {
 		this.cmdBuffer.push({
 			position: vec3.copy(this.localPlayer.position),
 			cmd: cmd,
-			cmdNumber: this.cmdNumber
+			cmdNumber: this.nextCmdNumber
 		});
 
 		tickViewmodel(this.localPlayer);
-		++this.cmdNumber;
+		++this.nextCmdNumber;
 	}
 
 	public frame(): void {
@@ -161,26 +161,28 @@ export class Client {
 	}
 
 	updateLocalPlayer(playerSnapshot: PlayerSnapshot, snapshot: SnapshotPacket) {
-		const offset = this.cmdNumber - snapshot.lastCmd;
+		const offset = this.nextCmdNumber - snapshot.lastCmd;
 		const playerData = this.cmdBuffer.rewind(offset);
 
-		if (!playerData || playerData.cmdNumber != snapshot.lastCmd) {
+		if (snapshot.lastCmd == -1) {
 			console.error("Record does not exist!");
 			return;
 		}
 
 		if (!playerData.position.equals(playerSnapshot.position)) {
-			drawLine(playerSnapshot.position, vec3.copy(playerSnapshot.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
-			drawLine(playerData.position, playerData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
+			drawLine(playerSnapshot.position, vec3.copy(playerSnapshot.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 10);
+			drawLine(playerData.position, playerData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 10);
 
-			console.error("Prediction Error! " + playerData.position.dist(playerData.position));
+			console.error("Prediction error: " + playerData.position.dist(playerSnapshot.position));
 
-			// snap to position and resimulate all userCmds
+			// snap to position and resimulate all usercmds
+			playerData.position = vec3.copy(playerSnapshot.position);
 			this.localPlayer.position = vec3.copy(playerSnapshot.position);
+			this.localPlayer.velocity = vec3.copy(playerSnapshot.velocity);
 
-			for (let i = offset; i <= 0; --i) {
-				this.localPlayer.processCmd(this.cmdBuffer.rewind(offset).cmd, true);
-				this.cmdBuffer.rewind(offset).position = this.localPlayer.position;
+			for (let i = offset - 1; i > 0; --i) {
+				this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd);
+				this.cmdBuffer.rewind(i).position = vec3.copy(this.localPlayer.position);
 			}
 		}
 	}
