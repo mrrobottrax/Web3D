@@ -1,7 +1,8 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Time } from "../../common/system/time.js";
-import { SharedAttribs, gl, glProperties, loadTexture, uiShader } from "./gl.js";
+import { loadTexture } from "../mesh/textures.js";
+import { SharedAttribs, gl, glProperties, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
 

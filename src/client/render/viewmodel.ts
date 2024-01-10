@@ -2,7 +2,8 @@ import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Time } from "../../common/system/time.js";
-import { gl, loadTexture, uiShader } from "./gl.js";
+import { loadTexture } from "../mesh/textures.js";
+import { gl, uiShader } from "./gl.js";
 
 let viewModelLocation = new vec3(0.8, -0.5, 0);
 let viewModelScale = new vec3(0.5, 0.5, 1);

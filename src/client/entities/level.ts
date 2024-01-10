@@ -1,8 +1,8 @@
 import { Primitive } from "../../common/mesh/model.js";
 import { BinaryReader } from "../../common/file/readtypes.js";
-import { SharedAttribs, gl, solidTex } from "../render/gl.js";
-import { loadPrimitiveTexture } from "../mesh/textures.js";
+import { loadPrimitiveTexture, solidTex } from "../mesh/textures.js";
 import { Level, clearCurrentLevel, currentLevel } from "../../common/entities/level.js";
+import { gl, SharedAttribs } from "../render/gl.js";
 
 export async function setLevelClient(url: string): Promise<void> {
 	const req = new XMLHttpRequest();

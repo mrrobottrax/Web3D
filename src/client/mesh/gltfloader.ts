@@ -1,8 +1,8 @@
 import { Environment, environment } from "../../common/system/context.js";
 import { GltfLoader } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
-import { SharedAttribs, gl, solidTex } from "../render/gl.js";
-import { loadPrimitiveTexture } from "./textures.js";
+import { loadPrimitiveTexture, solidTex } from "./textures.js";
+import { gl, SharedAttribs } from "../render/gl.js";
 
 export class ClientGltfLoader extends GltfLoader {
 	static async loadGltfFromWeb(url: string): Promise<Model> {
@@ -25,21 +25,20 @@ export class ClientGltfLoader extends GltfLoader {
 
 		let model = new Model();
 
+		const res1 = await promise1;
+		const res2 = await promise2;
+
 		// get model from requests
-		await Promise.all([promise1, promise2]).then((results) => {
-			if (results[0].status != 200 || results[1].status != 200) {
-				return model;
-			}
+		if (res1.status != 200 || res2.status != 200) {
+			return model;
+		}
 
-			model = this.loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)], url.substring(0, url.lastIndexOf('/') + 1));
-		});
-
-		// todo: error model
+		model = await this.loadGltf(JSON.parse(res1.responseText), [new Uint8Array(res2.response)], url.substring(0, url.lastIndexOf('/') + 1));
 
 		return model;
 	}
 
-	static override genBuffers(data: PrimitiveData[]): Primitive[] {
+	static override async genBuffers(data: PrimitiveData[]): Promise<Primitive[]> {
 		let primitives: Primitive[] = [];
 
 		if (environment == Environment.server) {
@@ -75,7 +74,7 @@ export class ClientGltfLoader extends GltfLoader {
 				data[i].elements.length,
 				data[i].color
 			);
-			loadPrimitiveTexture(data[i].textureUri, primitives[i]);
+			await loadPrimitiveTexture(data[i].textureUri, primitives[i]);
 
 			let length = data[i].positions.length + data[i].texCoords.length;
 

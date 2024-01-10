@@ -83,7 +83,7 @@ export abstract class GltfLoader {
 	// 	return m;
 	// }
 
-	static loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model {
+	static async loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Promise<Model> {
 		let nodeData: NodeData[] = this.getGltfNodes(json, buffers, texPrefix);
 		let baseNodes: number[] = json.scenes[0].nodes;
 
@@ -95,7 +95,7 @@ export abstract class GltfLoader {
 				translation: nodeData[i].translation,
 				rotation: nodeData[i].rotation,
 				scale: nodeData[i].scale,
-				primitives: this.genBuffers(nodeData[i].primitives),
+				primitives: await this.genBuffers(nodeData[i].primitives),
 				skinned: nodeData[i].skinned
 			}
 
@@ -214,7 +214,7 @@ export abstract class GltfLoader {
 		return model;
 	}
 
-	static genBuffers(primitives: PrimitiveData[]): Primitive[] { return [] };
+	static async genBuffers(primitives: PrimitiveData[]): Promise<Primitive[]> { return [] };
 
 	static getErrorData(): NodeData[] {
 		// todo: return error model
