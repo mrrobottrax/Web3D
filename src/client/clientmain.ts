@@ -12,7 +12,7 @@ main();
 async function main(): Promise<void> {
 	await init();
 
-	await setLevelClient("./data/levels/bigmap_client");
+	await setLevelClient("./data/levels/bigmap");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
 }
