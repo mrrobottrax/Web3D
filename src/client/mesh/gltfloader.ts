@@ -1,11 +1,15 @@
 import { Environment, environment } from "../../common/system/context.js";
-import { GltfLoader } from "../../common/mesh/gltfloader.js";
+import { GltfLoader, loadedModels } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
 import { loadPrimitiveTexture, solidTex } from "./textures.js";
 import { gl, SharedAttribs } from "../render/gl.js";
 
 export class ClientGltfLoader extends GltfLoader {
 	static async loadGltfFromWeb(url: string): Promise<Model> {
+		if (loadedModels.has(url)) {
+			return loadedModels.get(url)!;
+		}
+
 		// send requests
 		const req1 = new XMLHttpRequest();
 		const req2 = new XMLHttpRequest();
@@ -34,6 +38,7 @@ export class ClientGltfLoader extends GltfLoader {
 		}
 
 		model = await this.loadGltf(JSON.parse(res1.responseText), [new Uint8Array(res2.response)], url.substring(0, url.lastIndexOf('/') + 1));
+		loadedModels.set(url, model);
 
 		return model;
 	}

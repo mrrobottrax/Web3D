@@ -28,6 +28,7 @@ const accessorTypes = {
 	MAT4: "MAT4",
 }
 
+export const loadedModels = new Map<string, Model>();
 export abstract class GltfLoader {
 
 	// function loadGlb(file: Uint8Array): Mesh | null {
