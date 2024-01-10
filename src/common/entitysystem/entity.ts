@@ -4,6 +4,7 @@ export let entities = new Set<Entity>()
 
 export class Entity {
 	transform: Transform = new Transform();
+	parent: Entity | null = null;
 
 	update() {}
 	onDestroy() {};

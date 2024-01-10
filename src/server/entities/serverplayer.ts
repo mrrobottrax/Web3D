@@ -1,6 +1,7 @@
 import { WebSocket } from "ws";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Buttons } from "../../common/input/buttons.js";
+import { Pistol } from "../../common/weapons/pistol.js";
 
 export class ServerPlayer extends SharedPlayer {
 	lastCmd: number = -1;
@@ -12,6 +13,7 @@ export class ServerPlayer extends SharedPlayer {
 		super(id);
 
 		this.ws = ws;
+		this.weapon = new Pistol();
 	}
 
 	getButtons(): boolean[] {

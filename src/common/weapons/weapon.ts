@@ -1,4 +1,3 @@
-import { fireViewmodel } from "../../client/render/viewmodel.js";
 import { vec3 } from "../math/vector.js";
 import { SharedPlayer } from "../player/sharedplayer.js";
 import { Environment, environment } from "../system/context.js";
@@ -15,11 +14,9 @@ export abstract class Weapon {
 		}
 
 		if (environment == Environment.client) {
-			this.clientSideEffects();
+			this.clientSideFire();
 		}
 	}
 
-	clientSideEffects() {
-		fireViewmodel();
-	}
+	clientSideFire() {}
 }

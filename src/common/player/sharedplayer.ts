@@ -46,7 +46,7 @@ export abstract class SharedPlayer extends Entity {
 
 	model: Model;
 
-	weapon: Weapon = new Pistol();
+	weapon: Weapon | null = null;
 
 	health: number = 100;
 
@@ -87,8 +87,8 @@ export abstract class SharedPlayer extends Entity {
 
 		// todo: fire before or after move?
 		if (this.getButtons()[Buttons.fire1] && !this.getLastButtons()[Buttons.fire1]) {
-			console.log("FIRE!");
-			this.weapon.fire(this);
+			if (this.weapon)
+				this.weapon.fire(this);
 		}
 
 		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
