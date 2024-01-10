@@ -1,6 +1,5 @@
 import { readFileSync } from 'fs'
-import { currentLevel } from '../../client/entities/level.js';
-import { Level, clearCurrentLevel } from '../../common/entities/level.js';
+import { Level, clearCurrentLevel, currentLevel } from '../../common/entities/level.js';
 import { PlayerSpawn } from '../../common/entities/playerSpawn.js';
 import gMath from '../../common/math/gmath.js';
 

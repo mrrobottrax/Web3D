@@ -4,7 +4,7 @@ import { PlayerUtil } from "./playerutil.js";
 import { Time } from "../system/time.js";
 import { Entity } from "../entitysystem/entity.js";
 import { Transform } from "../entitysystem/transform.js";
-import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "../mesh/model.js";
+import { Model, SetUpNodeTransforms } from "../mesh/model.js";
 import { PlayerAnimController } from "./playeranimcontroller.js";
 import { Buttons } from "../input/buttons.js";
 import { Weapon } from "../weapons/weapon.js";
@@ -70,7 +70,7 @@ export abstract class SharedPlayer extends Entity {
 		this.id = id;
 
 		this.nodeTransforms = [];
-		SetupNodeTransforms(this.nodeTransforms, playerModel);
+		SetUpNodeTransforms(this.nodeTransforms, playerModel);
 		this.controller = new PlayerAnimController(
 			this.nodeTransforms,
 			this,

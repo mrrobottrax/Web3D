@@ -7,6 +7,7 @@ import { Buttons } from "../../common/input/buttons.js";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { UserCmd } from "../../common/input/usercmd.js";
 import { client } from "../clientmain.js";
+import { stopAudio, startAudio } from "../audio/audio.js";
 
 export const quakeSens = (1 / 16384) * 2 * Math.PI;
 export class Input {
@@ -41,9 +42,13 @@ export class Input {
 		document.onpointerlockchange = event => {
 			if (document.pointerLockElement) {
 				this.pointerLocked = true;
+
+				startAudio();
 			} else {
 				this.pointerLocked = false;
 				this.clearButtons();
+
+				stopAudio();
 			}
 		}
 	}
