@@ -31,5 +31,9 @@ export async function loadAudioFromWeb(url: string) {
 
 	if (audioContext) {
 		const buffer = await audioContext.decodeAudioData(req.response);
+		const source = audioContext.createBufferSource();
+		source.buffer = buffer;
+		source.connect(audioContext.destination);
+		source.start();
 	}
 }
