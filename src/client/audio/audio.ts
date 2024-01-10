@@ -1,14 +1,21 @@
+import { client } from "../clientmain.js";
+import { Client } from "../system/client.js";
 import { AudioSource } from "./audiosource.js";
 
 export let audioContext: AudioContext;
 
 const loadedAudioBuffers = new Map<string, AudioBuffer>();
 export let gunAudioSource = new AudioSource();
+export let hurtSound: AudioBuffer;
 
 async function initAudio() {
 	audioContext = new AudioContext();
+
 	const buffer = await loadAudioFromWeb("./data/sounds/pistol.wav");
 	gunAudioSource.setBuffer(buffer);
+	gunAudioSource.is3D = false;
+
+	hurtSound = await loadAudioFromWeb("./data/sounds/hurt.wav");
 }
 
 export function startAudio() {
@@ -53,4 +60,22 @@ export async function loadAudioFromWeb(url: string): Promise<AudioBuffer> {
 		length: 0,
 		sampleRate: 0
 	});
+}
+
+export function updateAudio() {
+	if (!audioContext) return;
+
+	// audioContext.listener.positionX.value = client.localPlayer.camPosition.x;
+	// audioContext.listener.positionY.value = client.localPlayer.camPosition.y;
+	// audioContext.listener.positionZ.value = client.localPlayer.camPosition.z;
+
+	// const forward = new vec3(0, 0, -1).rotate(client.localPlayer.camRotation);
+	// audioContext.listener.forwardX.value = forward.x;
+	// audioContext.listener.forwardY.value = forward.y;
+	// audioContext.listener.forwardZ.value = forward.z;
+
+	// const up = new vec3(0, 1, 0).rotate(client.localPlayer.camRotation);
+	// audioContext.listener.upX.value = up.x;
+	// audioContext.listener.upY.value = up.y;
+	// audioContext.listener.upZ.value = up.z;
 }

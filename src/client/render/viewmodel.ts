@@ -114,7 +114,7 @@ export function drawViewmodel() {
 
 export function fireViewmodel() {
 	setAnimation(AnimationEnum.fire);
-	gunAudioSource.play(true);
+	gunAudioSource.play();
 }
 
 function setAnimation(animation: AnimationEnum) {

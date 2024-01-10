@@ -13,11 +13,13 @@ import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 import { Camera } from "../render/camera.js";
 import { Buttons } from "../../common/input/buttons.js";
-import { Input, input } from "../player/input.js";
+import { input } from "../player/input.js";
 import { players } from "../../common/system/playerList.js";
 import { drawLine } from "../render/debugRender.js";
 import { initRender, lastCamPos, updateInterp, drawFrame } from "../render/render.js";
 import { PlayerUtil } from "../../common/player/playerutil.js";
+import { client } from "../clientmain.js";
+import { updateAudio } from "../audio/audio.js";
 
 interface PlayerData {
 	cmd: UserCmd,
@@ -28,7 +30,7 @@ interface PlayerData {
 export class Client {
 	ws: WebSocket | null;
 	isConnected: boolean = false;
-	localPlayer!: SharedPlayer;
+	localPlayer!: ClientPlayer;
 	nextCmdNumber: number = 0;
 
 	cmdBuffer: CircularBuffer<PlayerData>;
@@ -138,8 +140,9 @@ export class Client {
 			this.camera.calcPerspectiveMatrix(glProperties.width, glProperties.height);
 
 		drawFrame(this);
-
 		glEndFrame();
+		
+		updateAudio();
 	}
 
 	handleSnapshot(packet: SnapshotPacket) {
@@ -162,14 +165,25 @@ export class Client {
 				player.pitch = playerSnapshot.pitch;
 				player.controller.setState(playerSnapshot.anim);
 				player.controller.time = playerSnapshot.time;
+
+				if (player.health > playerSnapshot.health) {
+					// deal damage effect
+				}
+				player.health = playerSnapshot.health;
 			}
 		}
 	}
 
 	updateLocalPlayer(playerSnapshot: PlayerSnapshot, snapshot: SnapshotPacket) {
+		if (client.localPlayer.health > playerSnapshot.health) {
+			// deal damage effect
+			console.log("TOOK DAMAGE!");
+		}
+		client.localPlayer.health = playerSnapshot.health;
+
+		// check if predicted stuff is valid
 		const offset = this.nextCmdNumber - snapshot.lastCmd;
 		const playerData = this.cmdBuffer.rewind(offset);
-
 		if (snapshot.lastCmd == -1) {
 			console.log("Record does not exist");
 			return;

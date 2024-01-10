@@ -144,6 +144,10 @@ export class Server {
 			console.log("Identity fraud!");
 		}
 
+		if (player.isDead()) {
+			return;
+		}
+
 		player.lastButtons = player.buttons;
 		player.buttons = cmd.buttons;
 		player.processCmd(cmd);
@@ -152,20 +156,17 @@ export class Server {
 
 	generateSnapshot() {
 		let playerSnaps: PlayerSnapshot[] = [];
-		playerSnaps.length = players.size;
 
-		let i = 0;
 		for (const player of players.values()) {
-			playerSnaps[i] = {
+			playerSnaps.push({
 				id: player.id,
 				pitch: player.pitch,
 				yaw: player.yaw,
 				anim: player.controller.state,
 				time: player.controller.time,
-				data: player.createPredictedData()
-			}
-
-			++i;
+				data: player.createPredictedData(),
+				health: player.health
+			});
 		}
 
 		this.snapshot = {

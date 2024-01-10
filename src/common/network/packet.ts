@@ -34,7 +34,8 @@ export interface PlayerSnapshot {
 	yaw: number,
 	anim: PlayerAnimState,
 	time: number,
-	data: PredictedData
+	data: PredictedData,
+	health: number
 }
 
 export interface SnapshotPacket extends Packet {

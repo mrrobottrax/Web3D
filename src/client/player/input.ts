@@ -6,8 +6,8 @@ import { advanceGame, pauseGame } from "../../common/system/time.js";
 import { Buttons } from "../../common/input/buttons.js";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { UserCmd } from "../../common/input/usercmd.js";
+import { startAudio } from "../audio/audio.js";
 import { client } from "../clientmain.js";
-import { stopAudio, startAudio } from "../audio/audio.js";
 
 export const quakeSens = (1 / 16384) * 2 * Math.PI;
 export class Input {

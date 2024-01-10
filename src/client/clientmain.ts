@@ -3,9 +3,11 @@ import { setLevelClient } from "./entities/level.js";
 import { Time, startTicking, updateTime } from "../common/system/time.js";
 import { setPlayerModel } from "../common/player/sharedplayer.js";
 import { ClientGltfLoader } from "./mesh/gltfloader.js";
+import { updateAudio } from "./audio/audio.js";
+
+export let client: Client;
 
 let running: boolean = false;
-export let client: Client;
 
 main();
 
@@ -19,7 +21,7 @@ async function main(): Promise<void> {
 
 async function init(): Promise<void> {
 	client = new Client();
-	client.init();
+	await client.init();
 	setPlayerModel(await ClientGltfLoader.loadGltfFromWeb("./data/models/sci_player"));
 
 	startTicking();

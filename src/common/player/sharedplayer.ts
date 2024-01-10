@@ -8,7 +8,7 @@ import { Model, SetUpNodeTransforms } from "../mesh/model.js";
 import { PlayerAnimController } from "./playeranimcontroller.js";
 import { Buttons } from "../input/buttons.js";
 import { Weapon } from "../weapons/weapon.js";
-import { Pistol } from "../weapons/pistol.js";
+import { Environment, environment } from "../system/context.js";
 
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {
@@ -138,11 +138,25 @@ export abstract class SharedPlayer extends Entity {
 	}
 
 	damage(damage: number) {
-		this.health -= damage;
-		console.log("Health: " + this.health);
+		if (environment == Environment.server) {
+			this.health -= damage;
+			console.log("Health: " + this.health);
+			if (this.health <= 0) {
+				this.die();
+			}
+		}
+
+		this.damageEffect();
 	}
+
+	die() {}
+	async damageEffect() {}
 
 	isGrounded(): boolean {
 		return this.groundEnt != null;
+	}
+
+	isDead(): boolean {
+		return this.health <= 0;
 	}
 }
