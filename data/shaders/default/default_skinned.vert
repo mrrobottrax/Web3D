@@ -12,6 +12,7 @@ uniform mat4 uBoneMatrices[MAX_BONES];
 
 varying vec2 vTexCoord;
 varying vec3 vColor;
+varying float vDepth;
 
 void main() {
 	vTexCoord = aTexCoord;
@@ -24,4 +25,6 @@ void main() {
 	vec4 worldPosition = skinMat * aVertexPosition;
 	vec4 cameraPosition = uModelViewMatrix * worldPosition;
 	gl_Position = uProjectionMatrix * cameraPosition;
+
+	vDepth = -cameraPosition.z;
 }

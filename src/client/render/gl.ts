@@ -62,17 +62,26 @@ export let fallbackShader: UninstancedTextureShaderBase = {
 	colorUnif: null
 };
 
-interface DefaultShader extends UninstancedTextureShaderBase {
+interface WorldShader extends UninstancedTextureShaderBase {
+	fogColorUnif: WebGLUniformLocation | null;
+	fogNearUnif: WebGLUniformLocation | null;
+	fogFarUnif: WebGLUniformLocation | null;
+}
+
+interface DefaultShader extends WorldShader {
 }
 export let defaultShader: DefaultShader = {
 	program: null,
 	modelViewMatrixUnif: null,
 	samplerUnif: null,
 	projectionMatrixUnif: null,
-	colorUnif: null
+	colorUnif: null,
+	fogColorUnif: null,
+	fogNearUnif: null,
+	fogFarUnif: null
 };
 
-export interface SkinnedShaderBase extends UninstancedTextureShaderBase {
+export interface SkinnedShaderBase extends WorldShader {
 	boneMatricesUnif: WebGLUniformLocation | null
 }
 export let skinnedShader: SkinnedShaderBase = {
@@ -81,7 +90,10 @@ export let skinnedShader: SkinnedShaderBase = {
 	samplerUnif: null,
 	projectionMatrixUnif: null,
 	colorUnif: null,
-	boneMatricesUnif: null
+	boneMatricesUnif: null,
+	fogColorUnif: null,
+	fogNearUnif: null,
+	fogFarUnif: null
 };
 
 interface UiShader extends UninstancedTextureShaderBase {
@@ -196,6 +208,9 @@ async function initGameShaders() {
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
 	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
 	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+	defaultShader.fogColorUnif = gl.getUniformLocation(defaultShader.program, "uFogColor");
+	defaultShader.fogNearUnif = gl.getUniformLocation(defaultShader.program, "uFogNear");
+	defaultShader.fogFarUnif = gl.getUniformLocation(defaultShader.program, "uFogFar");
 
 	uiShader.modelViewMatrixUnif = gl.getUniformLocation(uiShader.program, "uModelViewMatrix");
 	uiShader.projectionMatrixUnif = gl.getUniformLocation(uiShader.program, "uProjectionMatrix");
@@ -207,6 +222,9 @@ async function initGameShaders() {
 	skinnedShader.samplerUnif = gl.getUniformLocation(skinnedShader.program, "uSampler");
 	skinnedShader.colorUnif = gl.getUniformLocation(skinnedShader.program, "uColor");
 	skinnedShader.boneMatricesUnif = gl.getUniformLocation(skinnedShader.program, "uBoneMatrices");
+	skinnedShader.fogColorUnif = gl.getUniformLocation(skinnedShader.program, "uFogColor");
+	skinnedShader.fogNearUnif = gl.getUniformLocation(skinnedShader.program, "uFogNear");
+	skinnedShader.fogFarUnif = gl.getUniformLocation(skinnedShader.program, "uFogFar");
 }
 
 export function initCanvas() {

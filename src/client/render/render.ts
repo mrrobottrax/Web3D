@@ -51,6 +51,9 @@ export function drawFrame(client: Client): void {
 	if (currentLevel) {
 		gl.useProgram(defaultShader.program);
 		gl.uniformMatrix4fv(defaultShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+		gl.uniform4fv(defaultShader.fogColorUnif, [0.15, 0.15, 0.15, 1]);
+		gl.uniform1f(defaultShader.fogNearUnif, 0);
+		gl.uniform1f(defaultShader.fogFarUnif, 100);
 		// drawProp(currentLevel.prop, defaultShader, client.camera);
 		currentLevel.staticMeshes.forEach((value) => {
 			drawPrimitive(value, client.camera.viewMatrix, defaultShader);
@@ -58,6 +61,9 @@ export function drawFrame(client: Client): void {
 
 		gl.useProgram(skinnedShader.program);
 		gl.uniformMatrix4fv(skinnedShader.projectionMatrixUnif, false, perspectiveMatrix.getData());
+		gl.uniform4fv(skinnedShader.fogColorUnif, [0.15, 0.15, 0.15, 1]);
+		gl.uniform1f(skinnedShader.fogNearUnif, 5);
+		gl.uniform1f(skinnedShader.fogFarUnif, 100);
 		// drawPropSkinned(debugModel.nodeTransforms, debugModel.model, debugModel.transform.worldMatrix, skinnedShader, client.camera);
 		drawPlayers(client.camera);
 
