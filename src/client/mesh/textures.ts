@@ -58,7 +58,13 @@ export function createSolidTexture(): void {
 
 // ~~~~~~~~~~~~~ load a texture from url ~~~~~~~~~~~~~~
 
+const loadedTextures = new Map<string, { tex: WebGLTexture | null, image: HTMLImageElement }>();
+
 export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | null, image: HTMLImageElement }> {
+	if (loadedTextures.has(url)) {
+		return loadedTextures.get(url)!;
+	}
+
 	// create texture
 	const texture = gl.createTexture();
 	if (!texture) {
@@ -89,34 +95,40 @@ export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | nu
 
 	// replace when texture loads
 	const image = new Image();
-	image.onload = () => {
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(
-			gl.TEXTURE_2D,
-			level,
-			internalFormat,
-			srcFormat,
-			srcType,
-			image,
-		);
+	const promise = new Promise<{ tex: WebGLTexture | null, image: HTMLImageElement }>((resolve, reject) => {
+		image.onload = () => {
+			gl.bindTexture(gl.TEXTURE_2D, texture);
+			gl.texImage2D(
+				gl.TEXTURE_2D,
+				level,
+				internalFormat,
+				srcFormat,
+				srcType,
+				image,
+			);
 
-		// power of 2 textures require special treatment
-		if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-			gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		} else {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		}
+			// power of 2 textures require special treatment
+			if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+				gl.generateMipmap(gl.TEXTURE_2D);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			} else {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			}
 
-		gl.bindTexture(gl.TEXTURE_2D, null);
-	};
-	image.src = url;
+			gl.bindTexture(gl.TEXTURE_2D, null);
+			const obj = { tex: texture, image: image };
+			loadedTextures.set(url, obj);
+			resolve(obj);
+		};
+		image.onerror = reject;
+		image.src = url;
+	});
 
-	return { tex: texture, image: image };
+	return await promise;
 }
 
 function isPowerOf2(value: number): boolean {

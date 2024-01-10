@@ -35,7 +35,7 @@ export async function setLevelClient(url: string): Promise<void> {
 
 	// currentLevel.collision = file.collision;
 	currentLevel.collision = Level.getCollisionData(file, offsets);
-	currentLevel.staticMeshes = getLevelPrimitives(file, offsets);
+	currentLevel.staticMeshes = await getLevelPrimitives(file, offsets);
 	Level.getEntityData(file, offsets);
 }
 
@@ -49,7 +49,7 @@ function getTextureTable(file: Uint8Array, offsets: any): any {
 	return table;
 }
 
-function getLevelPrimitives(file: Uint8Array, offsets: any): Primitive[] {
+async function getLevelPrimitives(file: Uint8Array, offsets: any): Promise<Primitive[]> {
 	let primitives: Primitive[] = [];
 
 	const start = offsets.glMeshData + offsets.base;
@@ -64,7 +64,7 @@ function getLevelPrimitives(file: Uint8Array, offsets: any): Primitive[] {
 		const elementLength = BinaryReader.readUInt32(index, file);
 		index += 4;
 
-		const p = createPrimitive(file, index, vertLength, elementLength, texId);
+		const p = await createPrimitive(file, index, vertLength, elementLength, texId);
 		if (p) {
 			primitives.push(p);
 		}
@@ -75,7 +75,7 @@ function getLevelPrimitives(file: Uint8Array, offsets: any): Primitive[] {
 	return primitives;
 }
 
-function createPrimitive(file: Uint8Array, index: number, vertLength: number, elementLength: number, texId: number): Primitive | null {
+async function createPrimitive(file: Uint8Array, index: number, vertLength: number, elementLength: number, texId: number): Promise<Primitive | null> {
 	const vao = gl.createVertexArray();
 
 	const vBuffer: WebGLBuffer | null = gl.createBuffer();
@@ -117,7 +117,7 @@ function createPrimitive(file: Uint8Array, index: number, vertLength: number, el
 
 	let p = new Primitive(vao, vBuffer, eBuffer, solidTex, elements.length / 2, [1, 1, 1, 1]);
 	if (currentLevel)
-		loadPrimitiveTexture(currentLevel.textureTable[texId], p);
+		await loadPrimitiveTexture(currentLevel.textureTable[texId], p);
 
 	return p;
 }
