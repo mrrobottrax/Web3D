@@ -1,6 +1,7 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
 import { drawLine } from "../../../../src/client/render/debugRender.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
+import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
 import { Model } from "../../../../src/common/mesh/model.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
@@ -17,17 +18,17 @@ export class EntityTool extends Tool {
 
 	cleanUpGl(entity: any) {
 		if (entity.model) {
-			const model = editor.entityModels.get(entity.model);
+			const model = loadedModels.get(entity.model);
 			if (model) {
 				model.cleanUp();
 			}
 		}
 	}
 
-	static fromJson(fileEntity: any): any {
+	static async fromJson(fileEntity: any): Promise<any> {
 		const entity = EntityTool.getNewEntity(fileEntity.classname);
 		entity.keyvalues = fileEntity.keyvalues;
-		EntityTool.loadEntityModel(entity);
+		await EntityTool.loadEntityModel(entity);
 		return entity;
 	}
 
@@ -91,14 +92,9 @@ export class EntityTool extends Tool {
 		return newEntity;
 	}
 
-	static loadEntityModel(entity: any) {
-		if (entity.model && !editor.entityModels.has(entity.model)) {
-			// load model
-			const loadModel = async (model: string) => {
-				editor.entityModels.set(model, await ClientGltfLoader.loadGltfFromWeb(model));
-			}
-			loadModel(entity.model);
-			editor.entityModels.set(entity.model, new Model());
+	static async loadEntityModel(entity: any) {
+		if (entity.model) {
+			await ClientGltfLoader.loadGltfFromWeb(entity.model);
 		}
 	}
 

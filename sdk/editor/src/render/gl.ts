@@ -55,6 +55,9 @@ export async function initEditorShaders() {
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
 	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
 	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+	defaultShader.fogColorUnif = gl.getUniformLocation(defaultShader.program, "uFogColor");
+	defaultShader.fogNearUnif = gl.getUniformLocation(defaultShader.program, "uFogNear");
+	defaultShader.fogFarUnif = gl.getUniformLocation(defaultShader.program, "uFogFar");
 
 	uiShader.modelViewMatrixUnif = gl.getUniformLocation(uiShader.program, "uModelViewMatrix");
 	uiShader.projectionMatrixUnif = gl.getUniformLocation(uiShader.program, "uProjectionMatrix");
@@ -66,9 +69,25 @@ export async function initEditorShaders() {
 	skinnedShader.samplerUnif = gl.getUniformLocation(skinnedShader.program, "uSampler");
 	skinnedShader.colorUnif = gl.getUniformLocation(skinnedShader.program, "uColor");
 	skinnedShader.boneMatricesUnif = gl.getUniformLocation(skinnedShader.program, "uBoneMatrices");
+	skinnedShader.fogColorUnif = gl.getUniformLocation(skinnedShader.program, "uFogColor");
+	skinnedShader.fogNearUnif = gl.getUniformLocation(skinnedShader.program, "uFogNear");
+	skinnedShader.fogFarUnif = gl.getUniformLocation(skinnedShader.program, "uFogFar");
 
 	gridShader.fillColorUnif = gl.getUniformLocation(gridShader.program, "uFillColor");
 	gridShader.zeroFillColorUnif = gl.getUniformLocation(gridShader.program, "uZeroFillColor");
 	gridShader.gridSizeUnif = gl.getUniformLocation(gridShader.program, "uGridSize");
 	gridShader.offsetUnif = gl.getUniformLocation(gridShader.program, "uOffset");
+
+	// no fog
+	gl.useProgram(defaultShader.program);
+	gl.uniform4fv(defaultShader.fogColorUnif, [1, 1, 1, 1]);
+	gl.uniform1f(defaultShader.fogNearUnif, 0);
+	gl.uniform1f(defaultShader.fogFarUnif, 10000000000);
+
+	gl.useProgram(skinnedShader.program);
+	gl.uniform4fv(skinnedShader.fogColorUnif, [1, 1, 1, 1]);
+	gl.uniform1f(skinnedShader.fogNearUnif, 0);
+	gl.uniform1f(skinnedShader.fogFarUnif, 10000000000);
+
+	gl.useProgram(null);
 }

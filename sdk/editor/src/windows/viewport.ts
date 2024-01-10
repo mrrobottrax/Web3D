@@ -4,6 +4,7 @@ import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
+import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
 import { ToolEnum } from "../tools/tool.js";
@@ -20,7 +21,7 @@ export abstract class Viewport extends EditorWindow {
 
 		editor.entities.forEach((entity) => {
 			if (entity.model) {
-				const model = editor.entityModels.get(entity.model);
+				const model = loadedModels.get(entity.model);
 				if (model) {
 					const mat = this.camera.viewMatrix.copy();
 					mat.translate(vec3.parse(entity.keyvalues.origin));

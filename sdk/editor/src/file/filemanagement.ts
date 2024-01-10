@@ -180,7 +180,7 @@ export class FileManagement {
 		
 		editor.close();
 		editor.loadMeshesFromJson(json.meshes);
-		editor.loadEntitiesFromJson(json.entities);
+		await editor.loadEntitiesFromJson(json.entities);
 	}
 
 	static closeMap() {

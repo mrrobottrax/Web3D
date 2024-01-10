@@ -7,7 +7,7 @@ import { initEditorInput } from "./input.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
-import { SelectMode, SelectTool } from "../tools/selecttool.js";
+import { SelectTool } from "../tools/selecttool.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
@@ -17,14 +17,12 @@ import { ScaleTool } from "../tools/scale.js";
 import { TranslateTool } from "../tools/translate.js";
 import { EntityTool } from "../tools/entitytool.js";
 import { EntityPanel } from "./entitypanel.js";
-import { Model } from "../../../../src/common/mesh/model.js";
 import { Ray } from "../../../../src/common/math/ray.js";
-import { editor } from "../main.js";
+import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
 	entities: Set<any> = new Set();
-	entityModels = new Map<string, Model>();
 
 	activeToolEnum: ToolEnum = ToolEnum.Select;
 	activeTool: Tool;
@@ -142,7 +140,7 @@ export class Editor {
 		});
 
 		this.entities.clear();
-		this.entityModels.clear();
+		loadedModels.clear();
 	}
 
 	loadMeshesFromJson(meshes: any) {
@@ -153,11 +151,11 @@ export class Editor {
 		});
 	}
 
-	loadEntitiesFromJson(entities: any) {
-		(entities as any[]).forEach(entity => {
-			const m = EntityTool.fromJson(entity);
+	async loadEntitiesFromJson(entities: any) {
+		for (const entity of entities) {
+			const m = await EntityTool.fromJson(entity);
 			this.entities.add(m);
-		});
+		}
 	}
 
 	setTool(tool: ToolEnum) {

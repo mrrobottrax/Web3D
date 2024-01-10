@@ -13,7 +13,7 @@ import { tickViewmodel } from "../render/viewmodel.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
 import { Camera } from "../render/camera.js";
 import { Buttons } from "../../common/input/buttons.js";
-import { Input } from "../player/input.js";
+import { Input, input } from "../player/input.js";
 import { players } from "../../common/system/playerList.js";
 import { drawLine } from "../render/debugRender.js";
 import { initRender, lastCamPos, updateInterp, drawFrame } from "../render/render.js";
@@ -38,8 +38,6 @@ export class Client {
 	lastButtons = new Array<boolean>(Buttons.MAX_BUTTONS);
 	buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
 
-	input: Input = new Input();
-
 	public constructor() {
 		setGameContext(Environment.client);
 		this.ws = null;
@@ -58,7 +56,7 @@ export class Client {
 	setup(playerId: number) {
 		this.localPlayer = new ClientPlayer(playerId);
 		this.nextCmdNumber = 0;
-		this.input.initInput(this.localPlayer);
+		input.initInput(this.localPlayer);
 
 		drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
 	}
@@ -103,7 +101,7 @@ export class Client {
 
 		lastCamPos.copy(this.localPlayer.camPosition);
 
-		const cmd = this.input.createUserCMD(this.localPlayer);
+		const cmd = input.createUserCMD(this.localPlayer);
 		const cmdPacket: UserCmdPacket = {
 			number: this.nextCmdNumber,
 			type: PacketType.userCmd,
@@ -122,7 +120,7 @@ export class Client {
 
 		tickViewmodel(this.localPlayer);
 
-		this.input.tickButtons();
+		input.tickButtons();
 		++this.nextCmdNumber;
 	}
 
