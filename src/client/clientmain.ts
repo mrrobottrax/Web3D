@@ -3,7 +3,6 @@ import { setLevelClient } from "./entities/level.js";
 import { Time, startTicking, updateTime } from "../common/system/time.js";
 import { setPlayerModel } from "../common/player/sharedplayer.js";
 import { ClientGltfLoader } from "./mesh/gltfloader.js";
-import { updateAudio } from "./audio/audio.js";
 
 export let client: Client;
 

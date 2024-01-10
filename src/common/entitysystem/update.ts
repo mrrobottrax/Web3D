@@ -2,9 +2,6 @@ import { entities } from "./entity.js";
 
 export function updateEntities() {
 	for (const entity of entities) {
-		// update scripts
-		entity.update();
-
 		// update positions
 		// we update entities with parents later
 		if (!entity.parent) {
@@ -27,5 +24,8 @@ export function updateEntities() {
 			mat.rotate(trans.rotation);
 			mat.scale(trans.scale);
 		}
+
+		// update all entity scripts
+		entity.update();
 	}
 }
