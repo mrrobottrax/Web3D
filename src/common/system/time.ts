@@ -39,7 +39,7 @@ export function updateTime(): void {
 	if (environment != Environment.server) {
 		if (time >= Time.nextTick) {
 			if (time - Time.nextTick > Time.fixedDeltaTime * 3000) {
-				console.log("more than 3 ticks behind, starting over");
+				// console.log("more than 3 ticks behind, starting over");
 				Time.nextTick = Date.now();
 			}
 			Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
