@@ -1,4 +1,4 @@
-import { createSolidTexture } from "../mesh/textures.js";
+import { createSolidTexture } from "../mesh/texture.js";
 import { debugTimers, updateUiMaterix } from "./render.js";
 
 export let glProperties = {

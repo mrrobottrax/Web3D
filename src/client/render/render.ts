@@ -12,12 +12,15 @@ import { currentLevel } from "../../common/entities/level.js";
 import { players } from "../../common/system/playerList.js";
 import { lines, screenLines, drawLineScreen, drawLine, drawBox } from "./debugRender.js";
 import { PlayerUtil } from "../../common/player/playerutil.js";
+import { solidTex } from "../mesh/texture.js";
 
 export let uiMatrix: mat4;
 
 let drawPlayerHitboxes: boolean = false;
+let drawWhite: boolean = false;
 export async function initRender() {
 	(window as any).drawPlayerHitboxes = (value: boolean) => drawPlayerHitboxes = value;
+	(window as any).drawWhite = (value: boolean) => drawWhite = value;
 }
 
 export function updateUiMaterix() {
@@ -234,7 +237,7 @@ export function drawPrimitive(primitive: Primitive, mat: mat4, shader: Uninstanc
 	gl.bindVertexArray(primitive.vao);
 
 	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, primitive.texture);
+	gl.bindTexture(gl.TEXTURE_2D, drawWhite ? solidTex : primitive.texture);
 
 	if (tint) {
 		gl.uniform4fv(shader.colorUnif, tint);

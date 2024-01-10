@@ -58,9 +58,9 @@ export function createSolidTexture(): void {
 
 // ~~~~~~~~~~~~~ load a texture from url ~~~~~~~~~~~~~~
 
-const loadedTextures = new Map<string, { tex: WebGLTexture | null, image: HTMLImageElement }>();
+const loadedTextures = new Map<string, { tex: WebGLTexture, image: HTMLImageElement }>();
 
-export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | null, image: HTMLImageElement }> {
+export async function loadTexture(url: string): Promise<{ tex: WebGLTexture, image: HTMLImageElement }> {
 	if (loadedTextures.has(url)) {
 		return loadedTextures.get(url)!;
 	}
@@ -69,7 +69,7 @@ export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | nu
 	const texture = gl.createTexture();
 	if (!texture) {
 		console.error("Failed to create texture: " + url);
-		return { tex: null, image: new Image() };
+		return { tex: null!, image: new Image() };
 	}
 
 	// set to fallback texture
@@ -95,7 +95,7 @@ export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | nu
 
 	// replace when texture loads
 	const image = new Image();
-	const promise = new Promise<{ tex: WebGLTexture | null, image: HTMLImageElement }>((resolve, reject) => {
+	const promise = new Promise<{ tex: WebGLTexture, image: HTMLImageElement }>((resolve, reject) => {
 		image.onload = () => {
 			gl.bindTexture(gl.TEXTURE_2D, texture);
 			gl.texImage2D(

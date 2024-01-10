@@ -1,7 +1,7 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Time } from "../../common/system/time.js";
-import { loadTexture } from "../mesh/textures.js";
+import { loadTexture } from "../mesh/texture.js";
 import { SharedAttribs, gl, glProperties, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
@@ -21,29 +21,21 @@ let fontTex: WebGLTexture;
 let crossSizeX = 1;
 let crossSizeY = 1;
 
-export function initUi() {
-	initViewmodel();
+export async function initUi() {
+	await initViewmodel();
 
-	loadTexture("data/textures/cross.png").then((result) => {
-		if (result.tex) {
-			crossTex = result.tex;
-			let oldOnload = result.image.onload;
+	const cross = await loadTexture("data/textures/cross.png");
+	if (cross.tex) {
+		crossTex = cross.tex;
 
-			result.image.onload = function (ev) {
-				if (oldOnload) {
-					oldOnload.call(this, ev);
-				}
-				crossSizeX = result.image.width;
-				crossSizeY = result.image.height;
-			};
-		}
-	});
+		crossSizeX = cross.image.width;
+		crossSizeY = cross.image.height;
+	}
 
-	loadTexture("data/fonts/arial.png").then((result) => {
-		if (result.tex) {
-			fontTex = result.tex;
-		}
-	});
+	const arial = await loadTexture("data/fonts/arial.png");
+	if (arial.tex) {
+		fontTex = arial.tex;
+	}
 }
 
 export function initUiBuffers() {

@@ -1,7 +1,7 @@
 import { Environment, environment } from "../../common/system/context.js";
 import { GltfLoader, loadedModels } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
-import { loadPrimitiveTexture, solidTex } from "./textures.js";
+import { loadPrimitiveTexture, solidTex } from "./texture.js";
 import { gl, SharedAttribs } from "../render/gl.js";
 
 export class ClientGltfLoader extends GltfLoader {

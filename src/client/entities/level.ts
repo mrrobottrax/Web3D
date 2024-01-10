@@ -1,6 +1,6 @@
 import { Primitive } from "../../common/mesh/model.js";
 import { BinaryReader } from "../../common/file/readtypes.js";
-import { loadPrimitiveTexture, solidTex } from "../mesh/textures.js";
+import { loadPrimitiveTexture, solidTex } from "../mesh/texture.js";
 import { Level, clearCurrentLevel, currentLevel } from "../../common/entities/level.js";
 import { gl, SharedAttribs } from "../render/gl.js";
 

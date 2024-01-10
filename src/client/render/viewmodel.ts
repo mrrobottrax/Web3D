@@ -2,7 +2,7 @@ import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Time } from "../../common/system/time.js";
-import { loadTexture } from "../mesh/textures.js";
+import { loadTexture } from "../mesh/texture.js";
 import { gl, uiShader } from "./gl.js";
 
 let viewModelLocation = new vec3(0.8, -0.5, 0);
@@ -31,32 +31,13 @@ let currentFrame: number = 0;
 const frameRate = 30;
 let frameTimer: number = 0;
 
-export function initViewmodel() {
+export async function initViewmodel() {
 	// keep aspect ratio
 	viewModelScale.x = 89 / 99 * viewModelScale.y;
 
-	loadTexture("data/textures/fire0.png").then(
-		(value) => {
-			if (value.tex) {
-				gunIdle.push(value.tex);
-			}
-		}
-	);
-	loadTexture("data/textures/fire1.png").then(
-		(value) => {
-			if (value.tex) {
-				gunFire.push(value.tex);
-			}
-
-			loadTexture("data/textures/fire2.png").then(
-				(value) => {
-					if (value.tex) {
-						gunFire.push(value.tex);
-					}
-				}
-			);
-		}
-	);
+	gunIdle.push((await loadTexture("data/textures/fire0.png")).tex);
+	gunFire.push((await loadTexture("data/textures/fire1.png")).tex);
+	gunFire.push((await loadTexture("data/textures/fire2.png")).tex);
 }
 
 export function tickViewmodel(player: SharedPlayer) {

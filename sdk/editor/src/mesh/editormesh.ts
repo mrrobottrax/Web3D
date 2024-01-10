@@ -1,4 +1,4 @@
-import { loadPrimitiveTexture, solidTex } from "../../../../src/client/mesh/textures.js";
+import { loadPrimitiveTexture, solidTex } from "../../../../src/client/mesh/texture.js";
 import { gl, SharedAttribs } from "../../../../src/client/render/gl.js";
 import gMath from "../../../../src/common/math/gmath.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";

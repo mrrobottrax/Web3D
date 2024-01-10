@@ -51,7 +51,7 @@ export class Client {
 	public async init() {
 		await initGl();
 		initUiBuffers();
-		initUi();
+		await initUi();
 		initRender();
 	}
 
