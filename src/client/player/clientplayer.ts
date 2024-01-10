@@ -33,8 +33,10 @@ export class ClientPlayer extends SharedPlayer {
 	}
 
 	override async damageEffect() {
-		console.log("TEST");
 		this.soundEntity.setBuffer(hurtSound);
+		this.soundEntity.volume = 0.5;
+		this.soundEntity.refDistance = 5;
+		this.soundEntity.rolloffFactor = 0.5;
 		this.soundEntity.play();
 	}
 }

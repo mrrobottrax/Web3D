@@ -19,7 +19,7 @@ import { drawLine } from "../render/debugRender.js";
 import { initRender, lastCamPos, updateInterp, drawFrame } from "../render/render.js";
 import { PlayerUtil } from "../../common/player/playerutil.js";
 import { client } from "../clientmain.js";
-import { updateAudio } from "../audio/audio.js";
+import { audioContext, updateAudio } from "../audio/audio.js";
 
 interface PlayerData {
 	cmd: UserCmd,
@@ -141,8 +141,8 @@ export class Client {
 
 		drawFrame(this);
 		glEndFrame();
-		
-		updateAudio();
+
+		updateAudio(this);
 	}
 
 	handleSnapshot(packet: SnapshotPacket) {

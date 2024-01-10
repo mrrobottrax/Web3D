@@ -1,4 +1,4 @@
-import { client } from "../clientmain.js";
+import { vec3 } from "../../common/math/vector.js";
 import { Client } from "../system/client.js";
 import { AudioSource } from "./audiosource.js";
 
@@ -62,20 +62,21 @@ export async function loadAudioFromWeb(url: string): Promise<AudioBuffer> {
 	});
 }
 
-export function updateAudio() {
+// pass client because using client.ts causing everything to explode
+export function updateAudio(client: Client) {
 	if (!audioContext) return;
 
-	// audioContext.listener.positionX.value = client.localPlayer.camPosition.x;
-	// audioContext.listener.positionY.value = client.localPlayer.camPosition.y;
-	// audioContext.listener.positionZ.value = client.localPlayer.camPosition.z;
+	audioContext.listener.positionX.value = client.localPlayer.camPosition.x;
+	audioContext.listener.positionY.value = client.localPlayer.camPosition.y;
+	audioContext.listener.positionZ.value = client.localPlayer.camPosition.z;
 
-	// const forward = new vec3(0, 0, -1).rotate(client.localPlayer.camRotation);
-	// audioContext.listener.forwardX.value = forward.x;
-	// audioContext.listener.forwardY.value = forward.y;
-	// audioContext.listener.forwardZ.value = forward.z;
+	const forward = new vec3(0, 0, -1).rotate(client.localPlayer.camRotation);
+	audioContext.listener.forwardX.value = forward.x;
+	audioContext.listener.forwardY.value = forward.y;
+	audioContext.listener.forwardZ.value = forward.z;
 
-	// const up = new vec3(0, 1, 0).rotate(client.localPlayer.camRotation);
-	// audioContext.listener.upX.value = up.x;
-	// audioContext.listener.upY.value = up.y;
-	// audioContext.listener.upZ.value = up.z;
+	const up = new vec3(0, 1, 0).rotate(client.localPlayer.camRotation);
+	audioContext.listener.upX.value = up.x;
+	audioContext.listener.upY.value = up.y;
+	audioContext.listener.upZ.value = up.z;
 }

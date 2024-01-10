@@ -5,7 +5,14 @@ export class AudioSource extends Entity {
 	private buffer!: AudioBuffer;
 	private source!: AudioBufferSourceNode;
 	private panner!: PannerNode;
+	private gain!: GainNode;
 	is3D: boolean = true;
+	volume: number = 1;
+	panningModel: PanningModelType = "HRTF";
+	distanceModel: DistanceModelType = "exponential";
+	rolloffFactor: number = 1;
+	refDistance: number = 1;
+	maxDistance: number = 100;
 
 	constructor(buffer?: AudioBuffer) {
 		super();
@@ -26,27 +33,38 @@ export class AudioSource extends Entity {
 		this.source = audioContext.createBufferSource();
 		this.source.buffer = this.buffer;
 
-		this.panner = audioContext.createPanner();
+		this.gain = audioContext.createGain();
+		this.gain.gain.value = this.volume;
+		this.gain.connect(audioContext.destination);
 
 		if (this.is3D) {
-			this.panner.panningModel = "HRTF";
+			this.panner = audioContext.createPanner();
+			this.panner.panningModel = this.panningModel;
+			this.panner.distanceModel = this.distanceModel;
+			this.panner.rolloffFactor = this.rolloffFactor;
+			this.panner.refDistance = this.refDistance;
+			this.panner.maxDistance = this.maxDistance;
+			this.source.connect(this.panner);
+			this.panner.connect(this.gain);
 		}
 		else {
-			this.panner.panningModel = "equalpower";
+			this.panner = null!;
+			this.source.connect(this.gain);
 		}
-
-		this.source.connect(this.panner);
-		this.panner.connect(audioContext.destination);
 
 		// destroy self when ended
 		// consts prevent using a bad reference
 		const source = this.source;
 		const panner = this.panner;
+		const gain = this.gain;
 		source.onended = () => {
 			source.stop();
 			source.disconnect();
+			gain.disconnect();
 
-			panner.disconnect();
+			if (panner) {
+				panner.disconnect();
+			}
 		}
 
 		this.source.start();
@@ -58,9 +76,6 @@ export class AudioSource extends Entity {
 
 		const position = this.transform.getWorldPosition();
 		const forward = this.transform.getWorldForward();
-
-		console.log(position);
-		console.log(this.parent?.transform.translation);
 
 		this.panner.positionX.value = position.x;
 		this.panner.positionY.value = position.y;
@@ -74,9 +89,11 @@ export class AudioSource extends Entity {
 	stop() {
 		if (this.source) {
 			this.source.stop();
-			this.source.disconnect();
+			if (this.source)
+				this.source.disconnect();
 
-			this.panner.disconnect();
+			if (this.panner)
+				this.panner.disconnect();
 		}
 	}
 
