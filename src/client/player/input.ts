@@ -37,18 +37,16 @@ export class Input {
 
 		document.addEventListener("mousemove", event => {
 			this.mouseLook(event.movementX, event.movementY, player)
+
+			startAudio();
 		});
 
 		document.onpointerlockchange = event => {
 			if (document.pointerLockElement) {
 				this.pointerLocked = true;
-
-				startAudio();
 			} else {
 				this.pointerLocked = false;
 				this.clearButtons();
-
-				stopAudio();
 			}
 		}
 	}

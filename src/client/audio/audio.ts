@@ -1,12 +1,22 @@
-let audioContext: AudioContext;
+import { AudioSource } from "./audiosource.js";
+
+export let audioContext: AudioContext;
+
+const loadedAudioBuffers = new Map<string, AudioBuffer>();
+export let gunAudioSource = new AudioSource();
+
+async function initAudio() {
+	audioContext = new AudioContext();
+	const buffer = await loadAudioFromWeb("./data/sounds/pistol.wav");
+	gunAudioSource.setBuffer(buffer);
+}
 
 export function startAudio() {
 	if (!audioContext) {
-		audioContext = new AudioContext();
-		loadAudioFromWeb("./data/sounds/_celerydemo.wav");
+		initAudio();
 	}
 
-	if (audioContext.state === "suspended") {
+	if (audioContext.state == "suspended") {
 		audioContext.resume()
 	}
 }
@@ -15,7 +25,11 @@ export function stopAudio() {
 	audioContext.suspend();
 }
 
-export async function loadAudioFromWeb(url: string) {
+export async function loadAudioFromWeb(url: string): Promise<AudioBuffer> {
+	if (loadedAudioBuffers.has(url)) {
+		return loadedAudioBuffers.get(url)!;
+	}
+
 	// send requests
 	const req = new XMLHttpRequest();
 
@@ -31,9 +45,12 @@ export async function loadAudioFromWeb(url: string) {
 
 	if (audioContext) {
 		const buffer = await audioContext.decodeAudioData(req.response);
-		const source = audioContext.createBufferSource();
-		source.buffer = buffer;
-		source.connect(audioContext.destination);
-		source.start();
+		loadedAudioBuffers.set(url, buffer);
+		return buffer;
 	}
+
+	return new AudioBuffer({
+		length: 0,
+		sampleRate: 0
+	});
 }

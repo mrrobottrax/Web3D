@@ -2,6 +2,7 @@ import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Time } from "../../common/system/time.js";
+import { gunAudioSource } from "../audio/audio.js";
 import { loadTexture } from "../mesh/texture.js";
 import { gl, uiShader } from "./gl.js";
 
@@ -113,6 +114,7 @@ export function drawViewmodel() {
 
 export function fireViewmodel() {
 	setAnimation(AnimationEnum.fire);
+	gunAudioSource.play(true);
 }
 
 function setAnimation(animation: AnimationEnum) {

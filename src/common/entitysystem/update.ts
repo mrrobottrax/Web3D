@@ -1,12 +1,12 @@
-import { entityList } from "./entity.js";
+import { entities } from "./entity.js";
 
 export function updateEntities() {
-	for (let i = 0; i < entityList.length; ++i) {
+	for (const entity of entities) {
 		// update scripts
-		entityList[i].update();
+		entity.update();
 
 		// update positions
-		const trans = entityList[i].transform;
+		const trans = entity.transform;
 		const mat = trans.worldMatrix;
 		mat.setIdentity();
 		mat.translate(trans.translation);
