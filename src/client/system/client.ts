@@ -182,7 +182,6 @@ export class Client {
 		client.localPlayer.health = playerSnapshot.health;
 
 		if (client.localPlayer.isDead()) {
-			console.log("YOU ARE DEAD!");
 			// move to origin
 			client.localPlayer.camPosition = new vec3(0, 1, 0);
 		} else {

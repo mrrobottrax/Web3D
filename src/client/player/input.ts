@@ -8,6 +8,7 @@ import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { UserCmd } from "../../common/input/usercmd.js";
 import { startAudio } from "../audio/audio.js";
 import { client } from "../clientmain.js";
+import gMath from "../../common/math/gmath.js";
 
 export const quakeSens = (1 / 16384) * 2 * Math.PI;
 export class Input {
@@ -95,8 +96,18 @@ export class Input {
 		if (!this.pointerLocked)
 			return;
 
-		player.yaw -= x * quakeSens * config.sensitivity;
 		player.pitch -= y * quakeSens * config.sensitivity;
+
+		// don't flip on ground
+		if (player.isGrounded()) {
+			player.pitch = gMath.clamp(player.pitch, -Math.PI / 2, Math.PI / 2);
+		}
+
+		if (Math.abs(player.pitch) > Math.PI / 2) {
+			player.yaw += x * quakeSens * config.sensitivity; // reverse when looking backwards
+		} else {
+			player.yaw -= x * quakeSens * config.sensitivity;
+		}
 
 		player.yaw %= 2 * Math.PI;
 		player.pitch %= 2 * Math.PI;
