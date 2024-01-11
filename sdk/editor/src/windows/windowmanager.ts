@@ -27,10 +27,10 @@ export class WindowManager {
 	setActiveWindowUnderMouse(): void {
 		if (this.lockActive) return;
 
-		for (const window of this.windows) {
-			const pos = window.getRelativeMousePos();
-			if ((pos.x > 0 && pos.x < window.size.x) && (pos.y > 0 && pos.y < window.size.y)) {
-				this.activeWindow = window;
+		for (const _window of this.windows) {
+			const pos = _window.getRelativeMousePos();
+			if ((pos.x > 0 && pos.x < _window.size.x) && (pos.y > 0 && pos.y < _window.size.y)) {
+				this.activeWindow = _window;
 				return;
 			}
 		}

@@ -30,7 +30,7 @@ export abstract class EditorWindow {
 	};
 
 	getRelativeMousePos(): vec2 {
-		return new vec2(mousePosX - glProperties.offsetX - this.pos.x, mousePosY - glProperties.offsetY - this.pos.y);
+		return new vec2(mousePosX * devicePixelRatio - glProperties.offsetX - this.pos.x, mousePosY * devicePixelRatio - glProperties.offsetY - this.pos.y);
 	}
 
 	getGlMousePos(): vec2 {

@@ -278,7 +278,7 @@ export function resizeCanvas() {
 	glProperties.width = width;
 	glProperties.height = height;
 	glProperties.offsetX = canvas.offsetLeft * ratio;
-	glProperties.offsetY = window.innerHeight - (canvas.offsetTop * ratio + glProperties.height);
+	glProperties.offsetY = ((document.body.offsetHeight * ratio) - (canvas.offsetTop * ratio + glProperties.height));
 
 	canvas.width = canvasContainer.clientWidth * ratio; // apparently using stored vars doesn't work???
 	canvas.height = canvasContainer.clientHeight * ratio;
