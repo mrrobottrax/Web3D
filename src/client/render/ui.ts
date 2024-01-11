@@ -2,6 +2,7 @@ import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Time } from "../../common/system/time.js";
 import { loadTexture } from "../mesh/texture.js";
+import { Client } from "../system/client.js";
 import { SharedAttribs, gl, glProperties, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
@@ -57,7 +58,7 @@ export function initUiBuffers() {
 	gl.bindVertexArray(null);
 }
 
-export function drawUi() {
+export function drawUi(client: Client) {
 	gl.useProgram(uiShader.program);
 	gl.bindVertexArray(rectVao);
 
@@ -67,8 +68,10 @@ export function drawUi() {
 	gl.uniform4f(uiShader.colorUnif, 1, 1, 1, 1);
 	gl.uniform1i(uiShader.samplerUnif, 0);
 
-	drawViewmodel();
-	drawCrosshair();
+	if (!client.localPlayer.isDead()) {
+		drawViewmodel();
+		drawCrosshair();
+	}
 
 	gl.bindVertexArray(null);
 

@@ -176,33 +176,39 @@ export class Client {
 
 	updateLocalPlayer(playerSnapshot: PlayerSnapshot, snapshot: SnapshotPacket) {
 		if (client.localPlayer.health > playerSnapshot.health) {
-			// deal damage effect
+			// took damage effect
 			console.log("TOOK DAMAGE!");
 		}
 		client.localPlayer.health = playerSnapshot.health;
 
-		// check if predicted stuff is valid
-		const offset = this.nextCmdNumber - snapshot.lastCmd;
-		const playerData = this.cmdBuffer.rewind(offset);
-		if (snapshot.lastCmd == -1) {
-			console.log("Record does not exist");
-			return;
-		}
+		if (client.localPlayer.isDead()) {
+			console.log("YOU ARE DEAD!");
+			// move to origin
+			client.localPlayer.camPosition = new vec3(0, 1, 0);
+		} else {
+			// check if predicted stuff is valid
+			const offset = this.nextCmdNumber - snapshot.lastCmd;
+			const playerData = this.cmdBuffer.rewind(offset);
+			if (snapshot.lastCmd == -1) {
+				console.log("Record does not exist");
+				return;
+			}
 
-		if (!SharedPlayer.predictedVarsMatch(playerData.predictedData, playerSnapshot.data)) {
-			drawLine(playerSnapshot.data.position, vec3.copy(playerSnapshot.data.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
-			drawLine(playerData.predictedData.position, playerData.predictedData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
+			if (!SharedPlayer.predictedVarsMatch(playerData.predictedData, playerSnapshot.data)) {
+				drawLine(playerSnapshot.data.position, vec3.copy(playerSnapshot.data.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
+				drawLine(playerData.predictedData.position, playerData.predictedData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
 
-			console.error("Prediction error: " + playerData.predictedData.position.dist(playerSnapshot.data.position));
+				console.error("Prediction error: " + playerData.predictedData.position.dist(playerSnapshot.data.position));
 
-			// snap to position and resimulate all usercmds
-			playerData.predictedData = SharedPlayer.copyPredictedData(playerSnapshot.data);
-			this.localPlayer.setPredictedData(playerSnapshot.data);
-			PlayerUtil.catagorizePosition(this.localPlayer);
+				// snap to position and resimulate all usercmds
+				playerData.predictedData = SharedPlayer.copyPredictedData(playerSnapshot.data);
+				this.localPlayer.setPredictedData(playerSnapshot.data);
+				PlayerUtil.catagorizePosition(this.localPlayer);
 
-			for (let i = offset - 1; i > 0; --i) {
-				this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd, true);
-				this.cmdBuffer.rewind(i).predictedData = this.localPlayer.createPredictedData();
+				for (let i = offset - 1; i > 0; --i) {
+					this.localPlayer.processCmd(this.cmdBuffer.rewind(i).cmd, true);
+					this.cmdBuffer.rewind(i).predictedData = this.localPlayer.createPredictedData();
+				}
 			}
 		}
 	}

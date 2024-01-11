@@ -72,7 +72,7 @@ export function drawFrame(client: Client): void {
 
 	renderDebug(perspectiveMatrix, client.camera.viewMatrix);
 
-	drawUi();
+	drawUi(client);
 }
 
 export function debugTimers() {

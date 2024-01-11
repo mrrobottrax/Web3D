@@ -49,6 +49,7 @@ export abstract class SharedPlayer extends Entity {
 	weapon: Weapon | null = null;
 
 	health: number = 100;
+	respawnTimer: number = 0;
 
 	constructor(id: number) {
 		super();
@@ -80,6 +81,8 @@ export abstract class SharedPlayer extends Entity {
 	}
 
 	processCmd(cmd: UserCmd, positionOnly: boolean = false): void {
+		if (this.isDead()) return;
+
 		if (!positionOnly) {
 			this.pitch = cmd.pitch;
 			this.yaw = cmd.yaw;

@@ -88,14 +88,7 @@ export class Server {
 		const player = new ServerPlayer(id, ws);
 		players.set(id, player);
 
-		// find spawns
-		const spawn = findSpawn();
-		if (!spawn) console.error("FAIELD TO FIND SPAWN!");
-		else {
-			const pos = spawn.transform.translation;
-			player.position = new vec3(pos.x, pos.y, pos.z);
-			// player.yaw = spawn.transform.rotation.; todo:
-		}
+		player.respawn();
 
 		return id;
 	}
