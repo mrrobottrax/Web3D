@@ -213,7 +213,7 @@ function drawPropSkinned(nodeTransforms: Transform[], model: Model, worldMatrix:
 		// bone
 		if (node.primitives.length == 0) {
 			const mat = nodeTransforms[i].worldMatrix;
-			drawLine(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [0, 1, 0, 1], 0);
+			// drawLine(vec3.origin().multMat4(mat), new vec3(0, 1, 0).multMat4(mat), [0, 1, 0, 1], 0);
 			continue;
 		}
 
