@@ -4,6 +4,7 @@ import { SharedPlayer } from "./sharedplayer.js";
 import gMath from "../math/gmath.js";
 import { vec3 } from "../math/vector.js";
 import { castAABB } from "../system/physics.js";
+import { Entity } from "../entitysystem/entity.js";
 
 const minWalkableY = 0.7;
 const hullSize = new vec3(1, 2, 1);
@@ -22,7 +23,7 @@ const airAccel = 200;
 const airSpeed = 1.5;
 const trimpThreshold = 6;
 const gravity = 12;
-const maxStepHeight = 0.51;
+const maxStepHeight = 0.5;
 const duckOffset = (hullSize.y - hullDuckSize.y) / 2;
 const duckGlitch = 0.1;
 const duckSpeed = 8;
@@ -31,10 +32,6 @@ const jumpBoost = 5;
 enum BlockedBits {
 	floorBit = 1,
 	stepBit = 2,
-}
-
-export interface PositionData {
-	groundEnt: number;
 }
 
 export class PlayerUtil {
@@ -56,6 +53,14 @@ export class PlayerUtil {
 			return player.position.minus(new vec3(0, hullDuckSize.y / 2, 0));
 		} else {
 			return player.position.minus(new vec3(0, hullSize.y / 2, 0));
+		}
+	}
+
+	static setFeetPos(player: SharedPlayer, position: vec3) {
+		if (player.isDucked) {
+			player.position = position.plus(new vec3(0, hullDuckSize.y / 2, 0));
+		} else {
+			player.position = position.plus(new vec3(0, hullSize.y / 2, 0));
 		}
 	}
 
@@ -188,30 +193,25 @@ export class PlayerUtil {
 		return curVel.plus(vec3.copy(wishDir).times(accelSpeed));
 	}
 
-	static catagorizePosition(player: SharedPlayer): PositionData {
-		let data: PositionData = {
-			groundEnt: -1
-		}
-
+	static catagorizePosition(player: SharedPlayer) {
 		// trimping
 		if (player.velocity.y > trimpThreshold) {
-			data.groundEnt = -1;
+			player.groundEnt = null;
 		} else {
 			// cast down
 			const cast = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, -0.003, 0));
 			if (cast.normal.y < minWalkableY) {
-				data.groundEnt = -1;
+				// too steep
+				player.groundEnt = null;
 			} else {
-				data.groundEnt = 1;
+				player.groundEnt = cast.entity;
 			}
 
-			if (data.groundEnt != -1) {
+			if (player.groundEnt) {
 				// move down
 				player.position.copy(player.position.plus(cast.dir.times(cast.dist)));
 			}
 		}
-
-		return data;
 	}
 
 	static groundMove(player: SharedPlayer, cmd: UserCmd, delta: number): void {
@@ -227,7 +227,7 @@ export class PlayerUtil {
 		const castUp = castAABB(player.isDucked ? hullDuckSize : hullSize, player.position, new vec3(0, maxStepHeight, 0));
 		// player.velocity.y -= 0.1; // this fixes movement bugs?
 		const stepMove = this.flyMove(player.position.plus(new vec3(0, castUp.dist, 0)), player.velocity, delta, player);
-		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 3, 0));
+		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 2.01, 0));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
 			player.position.copy(move.endPos);
@@ -266,7 +266,7 @@ export class PlayerUtil {
 		let wish = vec3.copy(cmd.wishDir);
 		wish.y = 0;
 
-		player.positionData = this.catagorizePosition(player);
+		this.catagorizePosition(player);
 
 		// duck / unduck
 		if (!player.isDucked) {
@@ -278,7 +278,7 @@ export class PlayerUtil {
 		} else {
 			if (!cmd.buttons[Buttons.duck]) {
 				// check if can unduck
-				if (player.positionData.groundEnt != -1) {
+				if (player.isGrounded()) {
 					// cast up
 					const cast = castAABB(hullDuckSize, player.position, new vec3(0, 2 * duckOffset, 0));
 
@@ -320,7 +320,7 @@ export class PlayerUtil {
 		}
 
 		// instant duck / unduck in the air
-		if (player.positionData.groundEnt == -1) {
+		if (!player.isGrounded()) {
 			if (player.wishDuck) {
 				player.duckProg = 1;
 			} else {
@@ -337,7 +337,7 @@ export class PlayerUtil {
 
 			if (player.duckProg > 0.95) {
 				if (!player.isDucked) {
-					if (player.positionData.groundEnt != -1) {
+					if (player.isGrounded()) {
 						player.position.y -= duckOffset;
 					} else {
 						player.position.y += duckOffset;
@@ -356,19 +356,19 @@ export class PlayerUtil {
 		}
 
 		// jump
-		if (cmd.buttons[Buttons.jump] && player.positionData.groundEnt != -1) {
+		if (cmd.buttons[Buttons.jump] && player.isGrounded()) {
 			player.velocity.y += jumpBoost;
-			player.positionData.groundEnt = -1;
+			player.groundEnt = null;
 		}
 
 		// move
-		if (player.positionData.groundEnt >= 0) {
+		if (player.isGrounded()) {
 			this.groundMove(player, cmd, delta);
 		} else {
 			this.airMove(player, cmd, delta);
 		}
 
-		player.positionData = this.catagorizePosition(player);
+		this.catagorizePosition(player);
 
 		player.camPosition = this.getCameraPosition(player);
 	}

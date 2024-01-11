@@ -4,22 +4,23 @@ import { Time, startTicking, updateTime } from "../common/system/time.js";
 import { setPlayerModel } from "../common/player/sharedplayer.js";
 import { ClientGltfLoader } from "./mesh/gltfloader.js";
 
+export let client: Client;
+
 let running: boolean = false;
-let client: Client;
 
 main();
 
 async function main(): Promise<void> {
 	await init();
 
-	await setLevelClient("./data/levels/styletest");
+	await setLevelClient("./data/levels/bigmap");
 	running = true;
 	window.requestAnimationFrame(gameLoop);
 }
 
 async function init(): Promise<void> {
 	client = new Client();
-	client.init();
+	await client.init();
 	setPlayerModel(await ClientGltfLoader.loadGltfFromWeb("./data/models/sci_player"));
 
 	startTicking();
@@ -31,11 +32,12 @@ function gameLoop(): void {
 
 	window.requestAnimationFrame(gameLoop);
 	updateTime();
-	
+
 	if (Time.canTick) {
 		client.tick();
 	}
-	
-	// drawHalfEdgeMesh(currentLevel.collision, [1, 0, 0, 1]);
+
+	// if (currentLevel)
+	// 	drawHalfEdgeMesh(currentLevel.collision, [1, 0, 0, 1]);
 	client.frame();
 }

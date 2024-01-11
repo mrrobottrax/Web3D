@@ -3,8 +3,8 @@ import { mat4 } from "../../common/math/matrix.js";
 import { quaternion, vec3 } from "../../common/math/vector.js";
 import { glProperties } from "./gl.js";
 
-const nearClip = 0.015;
-const farClip = 1000;
+export const nearClip = 0.015;
+export const farClip = 1000;
 
 export class Camera {
 	position: vec3;

@@ -1,0 +1,27 @@
+{
+	"classes": {
+		"base_class": {
+			"base": null,
+			"description": null,
+			"min": [-0.5, -0.5, -0.5],
+			"max": [0.5, 0.5, 0.5],
+			"keyvalues": {
+				"origin": "0 0 0",
+				"angles": "0 0 0"
+			}
+		},
+		"model_class": {
+			"base": "base_class",
+			"model": null
+		}
+	},
+	"engine": {
+		"player_spawn": {
+			"base": "model_class",
+			"min": [-0.75, 0, -0.75],
+			"max": [0.75, 2.5, 0.75],
+			"description": "A spawn point for players",
+			"model": "./data/models/sci_player"
+		}
+	}
+}

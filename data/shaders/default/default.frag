@@ -1,13 +1,19 @@
 precision mediump float;
 
 varying vec2 vTexCoord;
+varying vec3 vColor;
+varying float vDepth;
 
 uniform sampler2D uSampler;
 uniform vec4 uColor;
 
-void main() {
-  gl_FragColor = uColor * texture2D(uSampler, vTexCoord * 0.99);
+uniform vec4 uFogColor;
+uniform float uFogNear;
+uniform float uFogFar;
 
-  if(gl_FragColor.a < 0.5)
-    discard;
+void main() {
+	vec4 color = uColor * vec4(vColor, 1) * texture2D(uSampler, vTexCoord);
+	float fogAmount = smoothstep(uFogNear, uFogFar, vDepth);
+
+	gl_FragColor = mix(color, uFogColor, fogAmount);
 }

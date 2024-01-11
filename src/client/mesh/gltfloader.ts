@@ -1,11 +1,15 @@
-import { GameContext, gameContext } from "../../common/system/context.js";
-import { GltfLoader } from "../../common/mesh/gltfloader.js";
+import { Environment, environment } from "../../common/system/context.js";
+import { GltfLoader, loadedModels } from "../../common/mesh/gltfloader.js";
 import { Model, Primitive, PrimitiveData } from "../../common/mesh/model.js";
-import { SharedAttribs, gl, loadTexture, solidTex } from "../render/gl.js";
-import { textures } from "./textures.js";
+import { loadPrimitiveTexture, solidTex } from "./texture.js";
+import { gl, SharedAttribs } from "../render/gl.js";
 
 export class ClientGltfLoader extends GltfLoader {
 	static async loadGltfFromWeb(url: string): Promise<Model> {
+		if (loadedModels.has(url)) {
+			return loadedModels.get(url)!;
+		}
+
 		// send requests
 		const req1 = new XMLHttpRequest();
 		const req2 = new XMLHttpRequest();
@@ -25,24 +29,24 @@ export class ClientGltfLoader extends GltfLoader {
 
 		let model = new Model();
 
+		const res1 = await promise1;
+		const res2 = await promise2;
+
 		// get model from requests
-		await Promise.all([promise1, promise2]).then((results) => {
-			if (results[0].status != 200 || results[1].status != 200) {
-				return model;
-			}
+		if (res1.status != 200 || res2.status != 200) {
+			return model;
+		}
 
-			model = this.loadGltf(JSON.parse(results[0].responseText), [new Uint8Array(results[1].response)], url.substring(0, url.lastIndexOf('/') + 1));
-		});
-
-		// todo: error model
+		model = await this.loadGltf(JSON.parse(res1.responseText), [new Uint8Array(res2.response)], url.substring(0, url.lastIndexOf('/') + 1));
+		loadedModels.set(url, model);
 
 		return model;
 	}
 
-	static override genBuffers(data: PrimitiveData[]): Primitive[] {
+	static override async genBuffers(data: PrimitiveData[]): Promise<Primitive[]> {
 		let primitives: Primitive[] = [];
 
-		if (gameContext == GameContext.server) {
+		if (environment == Environment.server) {
 			return primitives;
 		}
 
@@ -75,23 +79,7 @@ export class ClientGltfLoader extends GltfLoader {
 				data[i].elements.length,
 				data[i].color
 			);
-			if (data[i].textureUri) {
-				const url = data[i].textureUri;
-
-				const textureLoaded = textures[url] !== undefined;
-
-				if (textureLoaded) {
-					primitives[i].texture = textures[url];
-				} else {
-					loadTexture(url).then((result) => {
-						textures[url] = result.tex;
-						if (!result.tex) {
-							return;
-						}
-						primitives[i].texture = result.tex;
-					});
-				}
-			}
+			await loadPrimitiveTexture(data[i].textureUri, primitives[i]);
 
 			let length = data[i].positions.length + data[i].texCoords.length;
 
@@ -156,6 +144,7 @@ export class ClientGltfLoader extends GltfLoader {
 			gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 			gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 			gl.bindVertexArray(null);
 		}
 

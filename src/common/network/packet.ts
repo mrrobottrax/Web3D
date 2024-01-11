@@ -2,6 +2,7 @@ import { vec3 } from "../math/vector.js";
 import { UserCmd } from "../input/usercmd.js";
 import { PacketType } from "./netenums.js";
 import { PlayerAnimState } from "../player/playeranimcontroller.js";
+import { PredictedData } from "../player/sharedplayer.js";
 
 export interface Packet {
 	type: PacketType;
@@ -29,11 +30,12 @@ export interface Snapshot {
 
 export interface PlayerSnapshot {
 	id: number,
-	position: vec3
 	pitch: number,
 	yaw: number,
 	anim: PlayerAnimState,
-	time: number
+	time: number,
+	data: PredictedData,
+	health: number
 }
 
 export interface SnapshotPacket extends Packet {

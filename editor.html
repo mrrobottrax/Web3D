@@ -1,4 +1,10 @@
-<html>
+<!DOCTYPE html>
+
+<html lang="en">
+
+<title>
+	Mallet Editor
+</title>
 
 <head>
 	<link rel="stylesheet" href="sdk/toolstyle.css">
@@ -7,25 +13,104 @@
 </head>
 
 <body>
-	<div id="editor">
-		<div id="windows-bar">
-			<div class="windows-bar-button">
-				<button>File</button>
-				<div class="windows-bar-contents">
-					<button class="subtle-button">New</button><br>
-					<button class="subtle-button">Open</button><hr>
-					<button class="subtle-button">Save</button><br>
-					<button class="subtle-button" onclick="exportMap()">Export</button>
+	<div id="editor" style="
+		display: grid;
+		grid-template-rows: 60px auto 25px">
+		<!-- HEADER -->
+		<div style="
+			display: grid;
+			grid-template-rows: 30px 30px;">
+			<div class="bar">
+				<div class="windows-bar-button">
+					<button class="subtle-button tall-button">File</button>
+					<div class="windows-bar-contents">
+						<button class="subtle-button">New</button><br>
+						<button class="subtle-button" onclick="loadMap()">Open</button>
+						<hr>
+						<button class="subtle-button" onclick="saveMap()">Save</button><br>
+						<button class="subtle-button" onclick="closeMap()">Close</button>
+						<hr>
+						<button class="subtle-button" onclick="exportMap()">Export</button>
+					</div>
+				</div>
+			</div>
+			<div class="bar">
+				<p style="display: inline; margin: 5px;">MODE: </p>
+				<button class="tall-button" id="select-vertex">Vertex</button>
+				<button class="tall-button" id="select-edge">Edge</button>
+				<button class="tall-button" id="select-face">Face</button>
+				<button class="tall-button" id="select-mesh">Mesh</button>
+			</div>
+		</div>
+		<!-- MAIN CONTENT -->
+		<div style="
+		display: grid;
+		grid-template-columns: 40px auto 250px 350px;">
+			<!-- TOOLS -->
+			<div class="vertical" style="align-items: center;">
+				<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
+					id="tool-select" alt="select">
+				<input type="image" src="sdk/editor/data/sprites/translate.png" class="pixelated toolbar-button"
+					id="tool-translate" alt="translate">
+				<input type="image" src="sdk/editor/data/sprites/rotate.png" class="pixelated toolbar-button"
+					id="tool-rotate" alt="rotate">
+				<input type="image" src="sdk/editor/data/sprites/scale.png" class="pixelated toolbar-button"
+					id="tool-scale" alt="scale">
+				<hr style="width: 100%;">
+				<input type="image" src="sdk/editor/data/sprites/entity.png" class="pixelated toolbar-button"
+					id="tool-entity" alt="entity">
+				<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
+					id="tool-block" alt="block">
+				<input type="image" src="sdk/editor/data/sprites/cut.png" class="pixelated toolbar-button" id="tool-cut"
+					alt="cut">
+			</div>
+			<div style="display: flex;" id="game-container">
+				<canvas id="game"></canvas>
+			</div>
+			<div class="panel" id="properties-panel">
+				<!-- ADDED BY SCRIPT -->
+			</div>
+			<div id="assets-panel" style="padding: 0; margin: 0; display: grid; grid-template-rows: auto auto;">
+				<!-- TEXTURE PANEL -->
+				<div class="vertical" id="textures-panel">
+					<div class="vertical">
+						<img id="texture-preview" src="data/levels/textures/dev.png"
+							style="align-self: center; width: 128px; height: 128px">
+						<button id="texture-apply">Apply</button>
+						<input id="texture-preview-name" type="text" value="data/levels/textures/dev.png" disabled>
+						<input type="search" placeholder="Search...">
+					</div>
+					<div id="texture-list" style="
+						overflow-y: scroll;
+						display: flex;
+						height: 550px;
+						flex-direction: row;
+						flex-wrap: wrap;
+						justify-content: space-evenly;
+						border: 1px dotted rgb(62, 62, 62);
+					">
+						<!-- ADDED BY SCRIPT -->
+						<!-- <div style="overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;"
+							class="button subtle-button">
+							<img src="data/levels/textures/road_stripe.png"
+								style="align-self: center; width: 128px; height: 128px">
+							<p style="font-size: 0.5em;">data/levels/textures/road_stripe.png</p>
+						</div> -->
+					</div>
+				</div>
+				<!-- ENTITY PANEL -->
+				<div class="vertical" id="entities-panel" spellcheck="false">
+					<input list="entities-list" id="entities-input">
+					<datalist id="entities-list">
+
+					</datalist>
 				</div>
 			</div>
 		</div>
-		<div id="toolbar">
-			<input type="image" src="sdk/editor/data/sprites/cursor.png" class="pixelated toolbar-button"
-				onclick="selectTool()">
-			<input type="image" src="sdk/editor/data/sprites/block.png" class="pixelated toolbar-button"
-				onclick="blockTool()">
+		<!-- FOOTER -->
+		<div class="bar" style="padding: 5px;">
+			<p class="small" id="grid-size">Grid: 2</p>
 		</div>
-		<canvas id="game"></canvas>
 	</div>
 </body>
 

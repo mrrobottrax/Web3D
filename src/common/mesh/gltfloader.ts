@@ -2,6 +2,7 @@ import { AnimationChannel, ChannelTarget, Animation } from "./animation.js";
 import { HierarchyNode, Model, NodeData, Primitive, PrimitiveData } from "./model.js";
 import { mat4 } from "../math/matrix.js";
 import { quaternion, vec3 } from "../math/vector.js";
+import { BinaryReader } from "../file/readtypes.js";
 
 const magicNumber: number = 1179937895;
 const version: number = 2;
@@ -27,6 +28,7 @@ const accessorTypes = {
 	MAT4: "MAT4",
 }
 
+export const loadedModels = new Map<string, Model>();
 export abstract class GltfLoader {
 
 	// function loadGlb(file: Uint8Array): Mesh | null {
@@ -82,7 +84,7 @@ export abstract class GltfLoader {
 	// 	return m;
 	// }
 
-	static loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Model {
+	static async loadGltf(json: any, buffers: Uint8Array[], texPrefix: string): Promise<Model> {
 		let nodeData: NodeData[] = this.getGltfNodes(json, buffers, texPrefix);
 		let baseNodes: number[] = json.scenes[0].nodes;
 
@@ -94,7 +96,7 @@ export abstract class GltfLoader {
 				translation: nodeData[i].translation,
 				rotation: nodeData[i].rotation,
 				scale: nodeData[i].scale,
-				primitives: this.genBuffers(nodeData[i].primitives),
+				primitives: await this.genBuffers(nodeData[i].primitives),
 				skinned: nodeData[i].skinned
 			}
 
@@ -213,7 +215,7 @@ export abstract class GltfLoader {
 		return model;
 	}
 
-	static genBuffers(primitives: PrimitiveData[]): Primitive[] { return [] };
+	static async genBuffers(primitives: PrimitiveData[]): Promise<Primitive[]> { return [] };
 
 	static getErrorData(): NodeData[] {
 		// todo: return error model
@@ -491,21 +493,9 @@ export abstract class GltfLoader {
 
 	static readChunk(position: number, file: Uint8Array) {
 		return {
-			chunkLength: this.readUInt32(position, file),
-			chunkType: this.readUInt32(position + 4, file),
+			chunkLength: BinaryReader.readUInt32(position, file),
+			chunkType: BinaryReader.readUInt32(position + 4, file),
 			dataPos: position + 8,
 		};
 	}
-
-	static readUInt32(position: number, file: Uint8Array): number {
-		let num = new Uint32Array(1);
-
-		for (let i = 3; i >= 0; --i) {
-			num[0] = num[0] << 8;
-			num[0] |= file[position + i];
-		}
-
-		return num[0];
-	}
-
 }

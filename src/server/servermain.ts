@@ -1,4 +1,4 @@
 import { Server } from './system/server.js';
 
-let server: Server = new Server();
+export let server: Server = new Server();
 server.init();

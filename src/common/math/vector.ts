@@ -70,6 +70,10 @@ export class vec3 {
 		return a.dist(b);
 	}
 
+	public static sqrDist(a: vec3, b: vec3): number {
+		return a.sqrDist(b);
+	}
+
 	public rotateYaw(angle: number): vec3 {
 		let v = new vec3(0, this.y, 0);
 
@@ -235,6 +239,19 @@ export class vec3 {
 			a.z + (b.z - a.z) * t
 		);
 	}
+
+	static from2(v: vec2): vec3 {
+		return new vec3(v.x, v.y, 0);
+	}
+
+	static parse(s: string): vec3 {
+		const split = s.split(" ");
+		return new vec3(parseFloat(split[0]), parseFloat(split[1]), parseFloat(split[2]));
+	}
+
+	toString() {
+		return `${this.x} ${this.y} ${this.z}`;
+	}
 }
 
 export class vec2 {
@@ -299,6 +316,10 @@ export class vec2 {
 		return a.dist(b);
 	}
 
+	public static sqrDist(a: vec2, b: vec2): number {
+		return a.sqrDist(b);
+	}
+
 	public rotateYaw(angle: number): vec2 {
 		let v = new vec2(this.x, this.y);
 
@@ -319,7 +340,7 @@ export class vec2 {
 		return Math.sqrt(this.sqrMagnitude());
 	}
 
-	public normalise() {
+	public normalize() {
 		const m = this.magnitide();
 		if (m == 0)
 			return;
@@ -328,7 +349,7 @@ export class vec2 {
 		this.y /= m;
 	}
 
-	public normalised(): vec2 {
+	public normalized(): vec2 {
 		const m = this.magnitide();
 		if (m == 0)
 			return this;
@@ -376,6 +397,10 @@ export class vec2 {
 			a.y + (b.y - a.y) * t
 		);
 	}
+
+	static from3(v: vec3): vec2 {
+		return new vec2(v.x, v.y);
+	}
 }
 
 export class quaternion {
@@ -404,6 +429,7 @@ export class quaternion {
 	}
 
 	public static lerp(a: quaternion, b: quaternion, t: number): quaternion {
+		// todo: fix with signs
 		let result = quaternion.identity();
 
 		result.x = gMath.lerp(a.x, b.x, t);
@@ -411,7 +437,7 @@ export class quaternion {
 		result.z = gMath.lerp(a.z, b.z, t);
 		result.w = gMath.lerp(a.w, b.w, t);
 
-		result.normalise();
+		result.normalize();
 
 		return result;
 	}
@@ -443,7 +469,7 @@ export class quaternion {
 		const theta = theta0 * t;
 
 		const b2 = _b.add(a.mult(-dot));
-		b2.normalise();
+		b2.normalize(); // todo: needed?
 
 		return a.mult(Math.cos(theta)).add(b2.mult(Math.sin(theta)));
 	}
@@ -478,7 +504,7 @@ export class quaternion {
 		return q;
 	}
 
-	public normalise(): void {
+	public normalize(): void {
 		const squared_norm = this.w * this.w + this.x * this.x + this.y * this.y + this.z * this.z;
 		const length = Math.sqrt(squared_norm);
 		this.w /= length;
@@ -491,9 +517,9 @@ export class quaternion {
 		return new quaternion(q.w, q.x, q.y, q.z);
 	}
 
-	public normalised(): quaternion {
+	public normalized(): quaternion {
 		let result = quaternion.copy(this);
-		result.normalise();
+		result.normalize();
 		return result;
 	}
 
@@ -524,5 +550,26 @@ export class quaternion {
 		m.setValue(2, 2, 2 * (q00 + q33) - 1);
 
 		return m;
+	}
+
+	minus(q: quaternion): quaternion {
+		return new quaternion(
+			this.w - q.w,
+			this.x - q.x,
+			this.y - q.y,
+			this.z - q.z
+		);
+	}
+
+	sqrMagnitude(): number {
+		return this.w * this.w +
+			this.x * this.x +
+			this.y * this.y +
+			this.z * this.z;
+	}
+
+	static sqrDist(a: quaternion, b: quaternion): number {
+		const d = b.minus(a);
+		return d.sqrMagnitude();
 	}
 }

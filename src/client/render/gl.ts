@@ -1,3 +1,4 @@
+import { createSolidTexture } from "../mesh/texture.js";
 import { debugTimers, updateUiMaterix } from "./render.js";
 
 export let glProperties = {
@@ -13,7 +14,8 @@ export enum SharedAttribs {
 	positionAttrib,
 	texCoordAttrib,
 	boneIdsAttrib,
-	boneWeightsAttrib
+	boneWeightsAttrib,
+	colorAttrib,
 }
 
 // ~~~~~~~~~~~~~ shaders ~~~~~~~~~~~~~~
@@ -23,6 +25,13 @@ export interface ShaderBase {
 }
 
 export interface UninstancedShaderBase extends ShaderBase {
+	program: WebGLProgram | null;
+	modelViewMatrixUnif: WebGLUniformLocation | null;
+	projectionMatrixUnif: WebGLUniformLocation | null;
+	colorUnif: WebGLUniformLocation | null;
+}
+
+export interface UninstancedTextureShaderBase extends ShaderBase {
 	program: WebGLProgram | null;
 	modelViewMatrixUnif: WebGLUniformLocation | null;
 	projectionMatrixUnif: WebGLUniformLocation | null;
@@ -37,7 +46,7 @@ interface InstancedShaderBase extends ShaderBase {
 	samplerAttrib: number | null;
 }
 
-export let solidShader: UninstancedShaderBase = {
+export let solidShader: UninstancedTextureShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
@@ -45,7 +54,7 @@ export let solidShader: UninstancedShaderBase = {
 	colorUnif: null
 };
 
-export let fallbackShader: UninstancedShaderBase = {
+export let fallbackShader: UninstancedTextureShaderBase = {
 	program: null,
 	modelViewMatrixUnif: null,
 	projectionMatrixUnif: null,
@@ -53,17 +62,26 @@ export let fallbackShader: UninstancedShaderBase = {
 	colorUnif: null
 };
 
-interface DefaultShader extends UninstancedShaderBase {
+interface WorldShader extends UninstancedTextureShaderBase {
+	fogColorUnif: WebGLUniformLocation | null;
+	fogNearUnif: WebGLUniformLocation | null;
+	fogFarUnif: WebGLUniformLocation | null;
+}
+
+interface DefaultShader extends WorldShader {
 }
 export let defaultShader: DefaultShader = {
 	program: null,
 	modelViewMatrixUnif: null,
 	samplerUnif: null,
 	projectionMatrixUnif: null,
-	colorUnif: null
+	colorUnif: null,
+	fogColorUnif: null,
+	fogNearUnif: null,
+	fogFarUnif: null
 };
 
-export interface SkinnedShaderBase extends UninstancedShaderBase {
+export interface SkinnedShaderBase extends WorldShader {
 	boneMatricesUnif: WebGLUniformLocation | null
 }
 export let skinnedShader: SkinnedShaderBase = {
@@ -72,10 +90,13 @@ export let skinnedShader: SkinnedShaderBase = {
 	samplerUnif: null,
 	projectionMatrixUnif: null,
 	colorUnif: null,
-	boneMatricesUnif: null
+	boneMatricesUnif: null,
+	fogColorUnif: null,
+	fogNearUnif: null,
+	fogFarUnif: null
 };
 
-interface UiShader extends UninstancedShaderBase {
+interface UiShader extends UninstancedTextureShaderBase {
 }
 export let uiShader: UiShader = {
 	program: null,
@@ -86,8 +107,6 @@ export let uiShader: UiShader = {
 };
 
 // ~~~~~~~~~~~~~ default / fallbacks ~~~~~~~~~~~~~~
-
-export let solidTex: WebGLTexture;
 
 export const fallBackShaders = {
 	// vertex shader program
@@ -130,8 +149,10 @@ void main() {
 // ~~~~~~~~~~~~~ init ~~~~~~~~~~~~~~
 
 export let canvas: HTMLCanvasElement;
+export let canvasContainer: HTMLElement;
 
 export let lineBuffer: WebGLBuffer | null;
+export let lineVao: WebGLVertexArrayObject | null;
 export async function initGl(): Promise<void> {
 	initCanvas();
 	initializeGl();
@@ -187,6 +208,9 @@ async function initGameShaders() {
 	defaultShader.projectionMatrixUnif = gl.getUniformLocation(defaultShader.program, "uProjectionMatrix");
 	defaultShader.samplerUnif = gl.getUniformLocation(defaultShader.program, "uSampler");
 	defaultShader.colorUnif = gl.getUniformLocation(defaultShader.program, "uColor");
+	defaultShader.fogColorUnif = gl.getUniformLocation(defaultShader.program, "uFogColor");
+	defaultShader.fogNearUnif = gl.getUniformLocation(defaultShader.program, "uFogNear");
+	defaultShader.fogFarUnif = gl.getUniformLocation(defaultShader.program, "uFogFar");
 
 	uiShader.modelViewMatrixUnif = gl.getUniformLocation(uiShader.program, "uModelViewMatrix");
 	uiShader.projectionMatrixUnif = gl.getUniformLocation(uiShader.program, "uProjectionMatrix");
@@ -198,17 +222,22 @@ async function initGameShaders() {
 	skinnedShader.samplerUnif = gl.getUniformLocation(skinnedShader.program, "uSampler");
 	skinnedShader.colorUnif = gl.getUniformLocation(skinnedShader.program, "uColor");
 	skinnedShader.boneMatricesUnif = gl.getUniformLocation(skinnedShader.program, "uBoneMatrices");
+	skinnedShader.fogColorUnif = gl.getUniformLocation(skinnedShader.program, "uFogColor");
+	skinnedShader.fogNearUnif = gl.getUniformLocation(skinnedShader.program, "uFogNear");
+	skinnedShader.fogFarUnif = gl.getUniformLocation(skinnedShader.program, "uFogFar");
 }
 
 export function initCanvas() {
 	const c: HTMLCanvasElement | null = document.querySelector("#game");
+	const cont: HTMLElement | null = document.querySelector("#game-container");
 
-	if (!c) {
+	if (!(c && cont)) {
 		console.error("Could not find canvas");
 		return;
 	}
 
 	canvas = c;
+	canvasContainer = cont;
 }
 
 export function initializeGl() {
@@ -228,23 +257,34 @@ export function initializeGl() {
 
 	gl = _gl;
 
+	// clear
 	gl.clearColor(0.15, 0.15, 0.15, 1.0);
 	gl.clearDepth(1.0);
 
+	// depth
 	gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LEQUAL);
+
+	// cull
 	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.BACK);
+
+	// blend
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+	// defaults
+	gl.vertexAttrib4f(SharedAttribs.boneIdsAttrib, 0, 0, 0, 0);
+	gl.vertexAttrib4f(SharedAttribs.boneWeightsAttrib, 0, 0, 0, 0);
+	gl.vertexAttrib4f(SharedAttribs.colorAttrib, 1, 1, 1, 1);
+	gl.vertexAttrib4f(SharedAttribs.positionAttrib, 0, 0, 0, 1);
+	gl.vertexAttrib2f(SharedAttribs.texCoordAttrib, 0, 0);
 }
 
 export function resizeCanvas() {
-	var computedStyle = getComputedStyle(canvas);
-
 	const ratio = window.devicePixelRatio;
-	const canvasW = canvas.clientWidth;
-	const canvasH = canvas.clientHeight;
-	const cssWidth = canvasW - parseFloat(computedStyle.paddingLeft) - parseFloat(computedStyle.paddingRight);
-	const cssHeight = canvasH - parseFloat(computedStyle.paddingTop) - parseFloat(computedStyle.paddingBottom);
+	const cssWidth = canvasContainer.clientWidth;
+	const cssHeight = canvasContainer.clientHeight;
 	const width = ratio * cssWidth;
 	const height = ratio * cssHeight;
 
@@ -256,8 +296,9 @@ export function resizeCanvas() {
 	glProperties.height = height;
 	glProperties.offsetX = canvas.offsetLeft * ratio;
 	glProperties.offsetY = window.innerHeight - (canvas.offsetTop * ratio + glProperties.height);
-	canvas.width = width;
-	canvas.height = height;
+
+	canvas.width = canvasContainer.clientWidth * ratio; // apparently using stored vars doesn't work???
+	canvas.height = canvasContainer.clientHeight * ratio;
 
 	glProperties.resolutionChanged = true;
 
@@ -335,6 +376,7 @@ export function initShaderProgram(vsSource: string, fsSource: string): WebGLProg
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.texCoordAttrib, "aTexCoord");
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.boneIdsAttrib, "aBoneIds");
 	gl.bindAttribLocation(shaderProgram, SharedAttribs.boneWeightsAttrib, "aBoneWeights");
+	gl.bindAttribLocation(shaderProgram, SharedAttribs.colorAttrib, "aColor");
 
 	gl.linkProgram(shaderProgram);
 
@@ -353,10 +395,18 @@ export function initShaderProgram(vsSource: string, fsSource: string): WebGLProg
 }
 
 export function initLineBuffer() {
+	lineVao = gl.createVertexArray();
+	gl.bindVertexArray(lineVao);
+
 	lineBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, 1, 1, 1]), gl.DYNAMIC_DRAW);
+	gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(0);
+
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	gl.bindVertexArray(null);
 }
 
 // ~~~~~~~~~~~~~ load shader from text ~~~~~~~~~~~~~~
@@ -387,111 +437,4 @@ function loadShader(type: number, source: string): WebGLShader | null {
 	}
 
 	return shader;
-}
-
-// ~~~~~~~~~~~~~ default solid texture ~~~~~~~~~~~~~~
-
-export function createSolidTexture(): void {
-	// create texture
-	const t = gl.createTexture();
-	if (!t) {
-		console.error("Failed to create solid texture")
-		return;
-	}
-
-	solidTex = t;
-
-	// set texture properties
-	gl.bindTexture(gl.TEXTURE_2D, solidTex);
-
-	const level = 0;
-	const internalFormat = gl.RGBA;
-	const width = 1;
-	const height = 1;
-	const border = 0;
-	const srcFormat = gl.RGBA;
-	const srcType = gl.UNSIGNED_BYTE;
-
-	// generate texture
-	const pixel = new Uint8Array([255, 255, 255, 255]); // opaque blue
-	gl.texImage2D(
-		gl.TEXTURE_2D,
-		level,
-		internalFormat,
-		width,
-		height,
-		border,
-		srcFormat,
-		srcType,
-		pixel,
-	);
-
-	gl.bindTexture(gl.TEXTURE_2D, null);
-}
-
-// ~~~~~~~~~~~~~ load a texture from url ~~~~~~~~~~~~~~
-
-export async function loadTexture(url: string): Promise<{ tex: WebGLTexture | null, image: HTMLImageElement }> {
-	// create texture
-	const texture = gl.createTexture();
-	if (!texture) {
-		console.error("Failed to create texture: " + url);
-		return { tex: null, image: new Image() };
-	}
-
-	// set to fallback texture
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-
-	const level = 0;
-	const internalFormat = gl.RGBA;
-	const border = 0;
-	const srcFormat = gl.RGBA;
-	const srcType = gl.UNSIGNED_BYTE;
-	const pixel = new Uint8Array([255, 0, 255, 255]);
-	gl.texImage2D(
-		gl.TEXTURE_2D,
-		level,
-		internalFormat,
-		1,
-		1,
-		border,
-		srcFormat,
-		srcType,
-		pixel,
-	);
-
-	// replace when texture loads
-	const image = new Image();
-	image.onload = () => {
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(
-			gl.TEXTURE_2D,
-			level,
-			internalFormat,
-			srcFormat,
-			srcType,
-			image,
-		);
-
-		// power of 2 textures require special treatment
-		if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-			//gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		} else {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		}
-
-		gl.bindTexture(gl.TEXTURE_2D, null);
-	};
-	image.src = url;
-
-	return { tex: texture, image: image };
-}
-
-function isPowerOf2(value: number): boolean {
-	return (value & (value - 1)) === 0;
 }

@@ -2,6 +2,7 @@ import { mat4 } from "../math/matrix.js";
 import { quaternion, vec3 } from "../math/vector.js";
 import { Transform } from "../entitysystem/transform.js";
 import { Animation } from "./animation.js";
+import { gl } from "../../client/render/gl.js";
 
 export interface HierarchyNode {
 	index: number;
@@ -20,6 +21,14 @@ export class Model {
 		if (!anim) { console.error("Could not find animation: " + name); return new Animation("ERROR"); }
 
 		return anim;
+	}
+
+	cleanUp() {
+		this.nodes.forEach(node => {
+			node.primitives.forEach(prim => {
+				prim.cleanUp();
+			});
+		});
 	}
 }
 
@@ -69,14 +78,24 @@ export class Primitive {
 	elementCount: number;
 	color: number[];
 
-	constructor(vao: WebGLVertexArrayObject, posBuffer: WebGLBuffer, vertBuffer: WebGLBuffer, texture: WebGLTexture, elementCount: number, color: number[]) {
+	constructor(vao: WebGLVertexArrayObject, vertexBuffer: WebGLBuffer, elementBuffer: WebGLBuffer, texture: WebGLTexture, elementCount: number, color: number[]) {
 		this.vao = vao;
-		this.vBuffer = posBuffer;
-		this.eBuffer = vertBuffer;
+		this.vBuffer = vertexBuffer;
+		this.eBuffer = elementBuffer;
 
 		this.texture = texture;
 		this.elementCount = elementCount;
 		this.color = color;
+	}
+
+	cleanUp() {
+		gl.bindVertexArray(null);
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+		gl.deleteVertexArray(this.vao);
+		gl.deleteBuffer(this.vBuffer);
+		gl.deleteBuffer(this.eBuffer);
 	}
 }
 

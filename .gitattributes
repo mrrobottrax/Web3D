@@ -30,6 +30,8 @@
 *.gltf filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
 *.level filter=lfs diff=lfs merge=lfs -text
+*.lvl filter=lfs diff=lfs merge=lfs -text
+*.glvl filter=lfs diff=lfs merge=lfs -text
 
 #ETC
 *.a filter=lfs diff=lfs merge=lfs -text

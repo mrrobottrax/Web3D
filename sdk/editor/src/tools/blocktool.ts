@@ -1,7 +1,8 @@
-import { drawLine } from "../../../../src/client/render/render.js";
+import { drawBox, drawLine } from "../../../../src/client/render/debugRender.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
+import { TexturePanel } from "../system/texturepanel.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
 
@@ -21,31 +22,17 @@ export class BlockTool extends Tool {
 
 	dragging: boolean = false;
 
+	drawnThisFrame: boolean = false;
 	drawCurrentBlock() {
-		let a = new vec3(this.currentBlock.min.x, this.currentBlock.min.y, this.currentBlock.min.z);
-		let b = new vec3(this.currentBlock.min.x, this.currentBlock.min.y, this.currentBlock.max.z);
-		let c = new vec3(this.currentBlock.min.x, this.currentBlock.max.y, this.currentBlock.min.z);
-		let d = new vec3(this.currentBlock.min.x, this.currentBlock.max.y, this.currentBlock.max.z);
-		let e = new vec3(this.currentBlock.max.x, this.currentBlock.min.y, this.currentBlock.min.z);
-		let f = new vec3(this.currentBlock.max.x, this.currentBlock.min.y, this.currentBlock.max.z);
-		let g = new vec3(this.currentBlock.max.x, this.currentBlock.max.y, this.currentBlock.min.z);
-		let h = new vec3(this.currentBlock.max.x, this.currentBlock.max.y, this.currentBlock.max.z);
+		if (this.drawnThisFrame) return;
 
-		const color = [1, 1, 0, 1];
-		const t = 0;
+		drawBox(this.currentBlock.min, this.currentBlock.max, vec3.origin(), [1, 1, 0, 1]);
 
-		drawLine(a, b, color, t);
-		drawLine(a, c, color, t);
-		drawLine(a, e, color, t);
-		drawLine(b, d, color, t);
-		drawLine(b, f, color, t);
-		drawLine(c, d, color, t);
-		drawLine(c, g, color, t);
-		drawLine(d, h, color, t);
-		drawLine(e, g, color, t);
-		drawLine(e, f, color, t);
-		drawLine(h, f, color, t);
-		drawLine(h, g, color, t);
+		this.drawnThisFrame = true;
+	}
+
+	resetDraw() {
+		this.drawnThisFrame = false;
 	}
 
 	startDrag(position: vec3, mask: vec3) {
@@ -161,9 +148,17 @@ export class BlockTool extends Tool {
 		let createFace = (a: EditorVertex, b: EditorVertex, c: EditorVertex, d: EditorVertex): EditorFace => {
 			let face: EditorFace = {
 				halfEdge: null,
-				texture: "./data/levels/textures/brick.png",
+				texture: TexturePanel.activeTexture,
 				u: new vec3(1, 0, 0),
-				v: new vec3(0, 1, 0)
+				v: new vec3(0, 1, 0),
+				elementCount: 0,
+				elementOffset: 0,
+				primitive: null,
+				color: [1, 1, 1, 1],
+				mesh: null,
+				offset: new vec2(0, 0),
+				rotation: 0,
+				scale: vec2.one(),
 			}
 
 			let ab: EditorHalfEdge = {
@@ -285,16 +280,22 @@ export class BlockTool extends Tool {
 		connectEdges(nz, 2, px, 2);
 		connectEdges(nz, 4, nx, 4);
 
-		// dont need to others since they are implicitly connected
+		// dont need to connect others since they are implicitly connected
 
 		const mesh = new EditorMesh(edgesSet, facesSet, halfEdgesSet, vertsSet);
 
-		// todo: remove later
-		if (!this.verifyMesh(mesh)) {
-			console.error("BLOCK MESH ERROR");
-		}
+		// if (!this.verifyMesh(mesh)) {
+		// 	console.error("BLOCK MESH ERROR");
+		// }
 
-		editor.meshes.push(mesh);
+		px.mesh = mesh;
+		py.mesh = mesh;
+		pz.mesh = mesh;
+		nx.mesh = mesh;
+		ny.mesh = mesh;
+		nz.mesh = mesh;
+
+		editor.meshes.add(mesh);
 
 		return true;
 	}

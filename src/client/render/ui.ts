@@ -1,7 +1,9 @@
 import { mat4 } from "../../common/math/matrix.js";
 import { vec3 } from "../../common/math/vector.js";
 import { Time } from "../../common/system/time.js";
-import { SharedAttribs, gl, glProperties, loadTexture, uiShader } from "./gl.js";
+import { loadTexture } from "../mesh/texture.js";
+import { Client } from "../system/client.js";
+import { SharedAttribs, gl, glProperties, uiShader } from "./gl.js";
 import { uiMatrix } from "./render.js";
 import { drawViewmodel, initViewmodel } from "./viewmodel.js";
 
@@ -9,10 +11,10 @@ export let rectVao: WebGLVertexArrayObject | null;
 let squareVertsBuffer: WebGLBuffer | null;
 
 const squareVerts: number[] = [
-	-1, -1, 1, 0, 1,
-	1, -1, 1, 1, 1,
-	1, 1, 1, 1, 0,
-	-1, 1, 1, 0, 0,
+	-1, -1, 0.01, 0, 1,
+	1, -1, 0.01, 1, 1,
+	1, 1, 0.01, 1, 0,
+	-1, 1, 0.01, 0, 0,
 ];
 
 let crossTex: WebGLTexture;
@@ -20,29 +22,21 @@ let fontTex: WebGLTexture;
 let crossSizeX = 1;
 let crossSizeY = 1;
 
-export function initUi() {
-	initViewmodel();
+export async function initUi() {
+	await initViewmodel();
 
-	loadTexture("data/textures/cross.png").then((result) => {
-		if (result.tex) {
-			crossTex = result.tex;
-			let oldOnload = result.image.onload;
+	const cross = await loadTexture("data/textures/cross.png");
+	if (cross.tex) {
+		crossTex = cross.tex;
 
-			result.image.onload = function (ev) {
-				if (oldOnload) {
-					oldOnload.call(this, ev);
-				}
-				crossSizeX = result.image.width;
-				crossSizeY = result.image.height;
-			};
-		}
-	});
+		crossSizeX = cross.image.width;
+		crossSizeY = cross.image.height;
+	}
 
-	loadTexture("data/fonts/arial.png").then((result) => {
-		if (result.tex) {
-			fontTex = result.tex;
-		}
-	});
+	const arial = await loadTexture("data/fonts/arial.png");
+	if (arial.tex) {
+		fontTex = arial.tex;
+	}
 }
 
 export function initUiBuffers() {
@@ -60,10 +54,11 @@ export function initUiBuffers() {
 	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 }
 
-export function drawUi() {
+export function drawUi(client: Client) {
 	gl.useProgram(uiShader.program);
 	gl.bindVertexArray(rectVao);
 
@@ -73,8 +68,10 @@ export function drawUi() {
 	gl.uniform4f(uiShader.colorUnif, 1, 1, 1, 1);
 	gl.uniform1i(uiShader.samplerUnif, 0);
 
-	drawViewmodel();
-	drawCrosshair();
+	if (!client.localPlayer.isDead()) {
+		drawViewmodel();
+		drawCrosshair();
+	}
 
 	gl.bindVertexArray(null);
 
@@ -178,6 +175,7 @@ export function drawText(position: vec3, text: string,
 	gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 	gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindVertexArray(null);
 
 	screenTexts.push({

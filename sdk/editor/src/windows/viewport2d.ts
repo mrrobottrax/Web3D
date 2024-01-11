@@ -1,12 +1,13 @@
 import { Camera } from "../../../../src/client/render/camera.js";
 import { gl, glProperties } from "../../../../src/client/render/gl.js";
+import { renderDebug } from "../../../../src/client/render/render.js";
 import { rectVao } from "../../../../src/client/render/ui.js";
 import gMath from "../../../../src/common/math/gmath.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
 import { mousePosX, mousePosY } from "../system/input.js";
-import { ToolEnum } from "../tools/tool.js";
 import { Viewport } from "./viewport.js";
 
 export enum Viewport2DAngle {
@@ -19,6 +20,7 @@ export class Viewport2D extends Viewport {
 	constructor(posX: number, posY: number, sizeX: number, sizeY: number, angle: Viewport2DAngle) {
 		super(posX, posY, sizeX, sizeY);
 		this.looking = false;
+		this.perspective = false;
 
 		let orientation: quaternion;
 
@@ -38,10 +40,12 @@ export class Viewport2D extends Viewport {
 	}
 
 	override frame(): void {
+		this.drawSetup();
+
 		this.drawFrame();
 	}
 
-	drawFrame() {
+	drawSetup() {
 		if (glProperties.resolutionChanged) {
 			this.camera.calcOrthographicMatrix(this.size.x, this.size.y);
 		}
@@ -52,15 +56,27 @@ export class Viewport2D extends Viewport {
 		this.camera.position = startPos;
 
 		gl.viewport(this.pos.x, this.pos.y, this.size.x, this.size.y);
+	}
 
-		// grid background
+	drawFrame() {
+		this.drawGrid();
+
+		this.drawMeshesWire();
+
+		this.drawTool();
+		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
+
+		this.drawBorder();
+	}
+
+	// grid background
+	drawGrid() {
 		gl.useProgram(gridShader.program);
 		gl.bindVertexArray(rectVao);
 
 		const ppu = this.getPixelsPerUnit();
 
 		gl.uniform3f(gridShader.fillColorUnif, 0.15, 0.15, 0.15);
-		gl.uniform3f(gridShader.bigFillColorUnif, 0.25, 0.25, 0.25);
 		gl.uniform3f(gridShader.zeroFillColorUnif, 0.35, 0.15, 0);
 		gl.uniform1f(gridShader.gridSizeUnif, ppu * editor.gridSize);
 		gl.uniform2f(gridShader.offsetUnif,
@@ -72,9 +88,6 @@ export class Viewport2D extends Viewport {
 
 		gl.bindVertexArray(null);
 		gl.useProgram(null);
-
-		this.drawMeshesWire(this.camera.perspectiveMatrix, this.camera.viewMatrix);
-		this.drawBorder();
 	}
 
 	override mouse(button: number, pressed: boolean): void {
@@ -113,10 +126,12 @@ export class Viewport2D extends Viewport {
 
 	startLook() {
 		this.looking = true;
+		editor.windowManager.lockActive = true;
 	}
 
 	stopLook() {
 		this.looking = false;
+		editor.windowManager.lockActive = false;
 	}
 
 	mouseMove(dx: number, dy: number): void {
@@ -140,7 +155,21 @@ export class Viewport2D extends Viewport {
 	}
 
 	override screenToGrid(v: vec2): vec2 {
-		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(this.camera.position);
+		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(new vec2(this.camera.position.x, this.camera.position.y));
+	}
+
+	override screenRay(): Ray {
+		if (!this.pos)
+			return { origin: vec3.origin(), direction: vec3.origin() };
+
+		const direction = new vec3(0, 0, -1).rotate(this.camera.rotation);
+		const dist = 100000;
+
+		const mouse = this.mouseToGrid();
+		const mouse3 = new vec3(mouse.x, mouse.y, 0);
+		const origin = new vec3(0, 0, dist).plus(mouse3).rotate(this.camera.rotation);
+
+		return { origin: origin, direction: direction };
 	}
 
 	override gridToWorld(v: vec2): vec3 {
@@ -148,9 +177,7 @@ export class Viewport2D extends Viewport {
 		a = a.rotate(this.camera.rotation);
 
 		// Snap
-		a.x = Math.round(a.x / editor.gridSize) * editor.gridSize;
-		a.y = Math.round(a.y / editor.gridSize) * editor.gridSize;
-		a.z = Math.round(a.z / editor.gridSize) * editor.gridSize;
+		editor.snapToGrid(a);
 
 		return a;
 	}

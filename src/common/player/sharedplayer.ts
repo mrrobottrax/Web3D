@@ -1,11 +1,14 @@
 import { UserCmd } from "../input/usercmd.js";
 import { quaternion, vec3 } from "../math/vector.js";
-import { PlayerUtil, PositionData } from "./playerutil.js";
+import { PlayerUtil } from "./playerutil.js";
 import { Time } from "../system/time.js";
 import { Entity } from "../entitysystem/entity.js";
 import { Transform } from "../entitysystem/transform.js";
-import { Model, SetUpNodeTransforms as SetupNodeTransforms } from "../mesh/model.js";
+import { Model, SetUpNodeTransforms } from "../mesh/model.js";
 import { PlayerAnimController } from "./playeranimcontroller.js";
+import { Buttons } from "../input/buttons.js";
+import { Weapon } from "../weapons/weapon.js";
+import { Environment, environment } from "../system/context.js";
 
 export let playerModel: Model;
 export function setPlayerModel(model: Model) {
@@ -13,7 +16,15 @@ export function setPlayerModel(model: Model) {
 	// console.log(playerModel.animations);
 }
 
-export class SharedPlayer extends Entity {
+export interface PredictedData {
+	position: vec3;
+	velocity: vec3;
+
+	isDucked: boolean;
+	duckProg: number;
+}
+
+export abstract class SharedPlayer extends Entity {
 	camPosition: vec3;
 	camRotation: quaternion;
 	pitch: number;
@@ -22,7 +33,7 @@ export class SharedPlayer extends Entity {
 	position: vec3;
 	velocity: vec3;
 
-	positionData: PositionData;
+	groundEnt: Entity | null = null;
 
 	wishDuck: boolean;
 	isDucked: boolean;
@@ -34,6 +45,11 @@ export class SharedPlayer extends Entity {
 	nodeTransforms: Transform[];
 
 	model: Model;
+
+	weapon: Weapon | null = null;
+
+	health: number = 100;
+	respawnTimer: number = 0;
 
 	constructor(id: number) {
 		super();
@@ -47,10 +63,6 @@ export class SharedPlayer extends Entity {
 		this.camRotation = quaternion.identity();
 		this.velocity = vec3.origin();
 
-		this.positionData = {
-			groundEnt: -1,
-		};
-
 		this.camPosition = this.position;
 		this.isDucked = false;
 		this.wishDuck = false;
@@ -59,7 +71,7 @@ export class SharedPlayer extends Entity {
 		this.id = id;
 
 		this.nodeTransforms = [];
-		SetupNodeTransforms(this.nodeTransforms, playerModel);
+		SetUpNodeTransforms(this.nodeTransforms, playerModel);
 		this.controller = new PlayerAnimController(
 			this.nodeTransforms,
 			this,
@@ -69,19 +81,85 @@ export class SharedPlayer extends Entity {
 	}
 
 	processCmd(cmd: UserCmd, positionOnly: boolean = false): void {
+		if (this.isDead()) return;
+
 		if (!positionOnly) {
 			this.pitch = cmd.pitch;
 			this.yaw = cmd.yaw;
 		}
 
-		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
+		// todo: fire before or after move?
+		if (this.getButtons()[Buttons.fire1] && !this.getLastButtons()[Buttons.fire1]) {
+			if (this.weapon)
+				this.weapon.fire(this);
+		}
 
-		// todo: firing
+		PlayerUtil.move(this, cmd, Time.fixedDeltaTime);
 	}
 
 	override update(): void {
 		this.controller.frame();
 
 		super.update();
+	}
+
+	abstract getButtons(): boolean[];
+	abstract getLastButtons(): boolean[];
+
+	createPredictedData(): PredictedData {
+		return {
+			position: vec3.copy(this.position),
+			velocity: vec3.copy(this.velocity),
+			isDucked: this.isDucked,
+			duckProg: this.duckProg
+		}
+	}
+
+	setPredictedData(data: PredictedData): void {
+		this.position.copy(data.position);
+		this.velocity.copy(data.velocity);
+		this.isDucked = data.isDucked;
+		this.duckProg = data.duckProg;
+	}
+
+	static predictedVarsMatch(a: PredictedData, b: PredictedData): boolean {
+		if (!a.position.equals(b.position)) return false;
+		if (!a.velocity.equals(b.velocity)) return false;
+		if (a.isDucked != b.isDucked) return false;
+		if (a.duckProg != b.duckProg) return false;
+
+		return true;
+	}
+
+	static copyPredictedData(data: PredictedData): PredictedData {
+		return {
+			position: vec3.copy(data.position),
+			velocity: vec3.copy(data.velocity),
+			isDucked: data.isDucked,
+			duckProg: data.duckProg
+		}
+	}
+
+	damage(damage: number) {
+		if (environment == Environment.server) {
+			this.health -= damage;
+			console.log("Health: " + this.health);
+			if (this.health <= 0) {
+				this.die();
+			}
+		}
+
+		this.damageEffect();
+	}
+
+	die() {}
+	async damageEffect() {}
+
+	isGrounded(): boolean {
+		return this.groundEnt != null;
+	}
+
+	isDead(): boolean {
+		return this.health <= 0;
 	}
 }

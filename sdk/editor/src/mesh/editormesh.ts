@@ -1,13 +1,25 @@
-import { textures } from "../../../../src/client/mesh/textures.js";
-import { SharedAttribs, gl, loadTexture, solidTex } from "../../../../src/client/render/gl.js";
+import { loadPrimitiveTexture, solidTex } from "../../../../src/client/mesh/texture.js";
+import { gl, SharedAttribs } from "../../../../src/client/render/gl.js";
+import gMath from "../../../../src/common/math/gmath.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Primitive } from "../../../../src/common/mesh/model.js";
+import { editor } from "../main.js";
 
 export interface EditorFace {
 	halfEdge: EditorHalfEdge | null;
 	texture: string;
 	u: vec3;
 	v: vec3;
+	offset: vec2;
+	rotation: number;
+	scale: vec2;
+
+	color: number[];
+
+	mesh: EditorMesh | null;
+	elementOffset: number;
+	elementCount: number;
+	primitive: Primitive | null;
 }
 
 export interface EditorHalfEdge {
@@ -29,7 +41,7 @@ export interface EditorFullEdge {
 
 export interface EditorVertex {
 	position: vec3;
-	edges: Set<EditorHalfEdge>;
+	edges: Set<EditorHalfEdge>; // todo: this can probably be done with
 }
 
 interface Submesh {
@@ -43,13 +55,22 @@ interface SubVertex {
 	edge: EditorHalfEdge;
 }
 
+export interface CollisionTri {
+	edge1: EditorHalfEdge;
+	edge2: EditorHalfEdge;
+	edge3: EditorHalfEdge;
+
+	normal: vec3;
+	dist: number;
+}
+
 export class EditorMesh {
 	edges: Set<EditorFullEdge>;
 	faces: Set<EditorFace>;
 	halfEdges: Set<EditorHalfEdge>;
 	verts: Set<EditorVertex>;
+	collisionTris: CollisionTri[];
 	primitives: Primitive[] = [];
-	color: number[] = [1, 1, 1, 1];
 	wireFrameData: {
 		vao: WebGLVertexArrayObject | null
 		vBuffer: WebGLBuffer | null
@@ -66,25 +87,254 @@ export class EditorMesh {
 
 		this.primitives = this.getPrimitives();
 		this.wireFrameData = this.getWireframeData();
+		this.collisionTris = this.getCollisionTris();
 	}
 
-	updateVisuals() {
+	toJSON() {
+		// assign index for each
+		const edgeIndices = new Map<EditorFullEdge, number>();
+		const faceIndices = new Map<EditorFace, number>();
+		const halfEdgeIndices = new Map<EditorHalfEdge, number>();
+		const vertIndices = new Map<EditorVertex, number>();
+
+		{
+			let counter: number;
+
+			counter = 0;
+			this.edges.forEach(value => {
+				edgeIndices.set(value, counter++);
+			});
+
+			counter = 0;
+			this.faces.forEach(value => {
+				faceIndices.set(value, counter++);
+			});
+
+			counter = 0;
+			this.halfEdges.forEach(value => {
+				halfEdgeIndices.set(value, counter++);
+			});
+
+			counter = 0;
+			this.verts.forEach(value => {
+				vertIndices.set(value, counter++);
+			});
+		}
+
+		// create arrays
+		let edgeArray: any[] = [];
+		this.edges.forEach(edge => {
+			const a = edge.halfA ? halfEdgeIndices.get(edge.halfA) : -1;
+			const b = edge.halfB ? halfEdgeIndices.get(edge.halfB) : -1;
+
+			edgeArray.push({
+				halfA: a,
+				halfB: b,
+			});
+		});
+
+		let faceArray: any[] = [];
+		this.faces.forEach(face => {
+			if (!(face.halfEdge))
+				return;
+
+			faceArray.push({
+				halfEdge: halfEdgeIndices.get(face.halfEdge),
+				texture: face.texture,
+				u: [face.u.x, face.u.y, face.u.z],
+				v: [face.v.x, face.v.y, face.v.z],
+				color: face.color,
+				scale: [face.scale.x, face.scale.y],
+				offset: [face.offset.x, face.offset.y],
+				rotation: face.rotation
+			});
+		});
+
+		let halfEdgeArray: any[] = [];
+		this.halfEdges.forEach(halfEdge => {
+			if (!(halfEdge.face && halfEdge.full && halfEdge.next
+				&& halfEdge.prev && halfEdge.tail))
+				return;
+
+			halfEdgeArray.push({
+				face: faceIndices.get(halfEdge.face),
+				full: edgeIndices.get(halfEdge.full),
+				next: halfEdgeIndices.get(halfEdge.next),
+				prev: halfEdgeIndices.get(halfEdge.prev),
+				twin: halfEdge.twin ? halfEdgeIndices.get(halfEdge.twin) : -1,
+				tail: vertIndices.get(halfEdge.tail)
+			});
+		});
+
+		let vertArray: any[] = [];
+		this.verts.forEach(vert => {
+			if (!(vert.edges))
+				return;
+
+			const edgeIndexArray: number[] = [];
+
+			vert.edges.forEach(edge => {
+				const num = halfEdgeIndices.get(edge);
+				if (num != undefined) edgeIndexArray.push(num); else console.error("PROBLEM?");
+			})
+
+			vertArray.push({
+				edges: edgeIndexArray,
+				position: [vert.position.x, vert.position.y, vert.position.z]
+			});
+		});
+
+		return {
+			edges: edgeArray,
+			faces: faceArray,
+			halfEdges: halfEdgeArray,
+			verts: vertArray,
+		}
+	}
+
+	static fromJson(json: any): EditorMesh | null {
+		const edgesArray: any[] = json.edges;
+		const facesArray: any[] = json.faces;
+		const halfEdgesArray: any[] = json.halfEdges;
+		const vertsArray: any[] = json.verts;
+
+		let edges: EditorFullEdge[] = [];
+		let faces: EditorFace[] = [];
+		let halfEdges: EditorHalfEdge[] = [];
+		let verts: EditorVertex[] = [];
+
+		if (facesArray.length == 0) return null;
+
+		// allocate memory
+		edgesArray.forEach(() => {
+			edges.push({
+				halfA: null,
+				halfB: null
+			});
+		});
+
+		facesArray.forEach((face) => {
+			faces.push({
+				halfEdge: null,
+				texture: face.texture,
+				u: new vec3(face.u[0], face.u[1], face.u[2]),
+				v: new vec3(face.v[0], face.v[1], face.v[2]),
+				elementCount: 0,
+				elementOffset: 0,
+				primitive: null,
+				color: face.color ? face.color : [1, 1, 1],
+				mesh: null,
+				offset: face.offset ? new vec2(face.offset[0], face.offset[1]) : vec2.origin(),
+				rotation: face.rotation ? face.rotation : 0,
+				scale: face.scale ? new vec2(face.scale[0], face.scale[1]) : vec2.one()
+			});
+		});
+
+		halfEdgesArray.forEach(() => {
+			halfEdges.push({
+				prev: null,
+				next: null,
+				twin: null,
+				face: null,
+				full: null,
+				tail: null
+			});
+		});
+
+		vertsArray.forEach((vert) => {
+			verts.push({
+				position: new vec3(vert.position[0], vert.position[1], vert.position[2]),
+				edges: new Set()
+			});
+		});
+
+		// set up references
+		edges.forEach((edge, index) => {
+			let a = halfEdges[edgesArray[index].halfA];
+			let b = halfEdges[edgesArray[index].halfB];
+
+			edge.halfA = a ? a : null;
+			edge.halfB = b ? b : null;
+		});
+
+		faces.forEach((face, index) => {
+			face.halfEdge = halfEdges[facesArray[index].halfEdge];
+		});
+
+		halfEdges.forEach((half, index) => {
+			const ref = halfEdgesArray[index];
+
+			const twin = halfEdges[ref.twin];
+
+			half.face = faces[ref.face];
+			half.full = edges[ref.full];
+			half.next = halfEdges[ref.next];
+			half.prev = halfEdges[ref.prev];
+			half.twin = twin ? twin : null;
+			half.tail = verts[ref.tail];
+		});
+
+		verts.forEach((vert, index) => {
+			const ref: number[] = vertsArray[index].edges;
+
+			ref.forEach(num => {
+				vert.edges.add(halfEdges[num]);
+			});
+		});
+
+		// add to sets
+		let edgeSet = new Set<EditorFullEdge>();
+		let halfEdgeSet = new Set<EditorHalfEdge>();
+		let faceSet = new Set<EditorFace>();
+		let vertSet = new Set<EditorVertex>();
+
+		edges.forEach(v => {
+			edgeSet.add(v);
+		});
+
+		faces.forEach(v => {
+			faceSet.add(v);
+		});
+
+		halfEdges.forEach(v => {
+			halfEdgeSet.add(v);
+		});
+
+		verts.forEach(v => {
+			vertSet.add(v);
+		});
+
+		const m = new EditorMesh(edgeSet, faceSet, halfEdgeSet, vertSet);
+
+		faceSet.forEach(face => {
+			face.mesh = m;
+		});
+
+		return m;
+	}
+
+	cleanUpGl() {
 		gl.bindVertexArray(null);
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-		this.primitives.forEach((value) => {
-			gl.deleteVertexArray(value.vao);
-			gl.deleteBuffer(value.vBuffer);
-			gl.deleteBuffer(value.eBuffer);
+		this.primitives.forEach(prim => {
+			prim.cleanUp();
 		});
+
+		this.primitives = [];
 
 		gl.deleteVertexArray(this.wireFrameData.vao);
 		gl.deleteBuffer(this.wireFrameData.vBuffer);
 		gl.deleteBuffer(this.wireFrameData.eBuffer);
+	}
+
+	updateShape() {
+		this.cleanUpGl();
 
 		this.primitives = this.getPrimitives();
 		this.wireFrameData = this.getWireframeData();
+		this.collisionTris = this.getCollisionTris();
 	}
 
 	getWireframeData(): {
@@ -176,10 +426,11 @@ export class EditorMesh {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 12, 0);
+		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
 
 		gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
 
 		return {
@@ -188,6 +439,34 @@ export class EditorMesh {
 			eBuffer: eBuffer,
 			elementCount: indices.length
 		};
+	}
+
+	getCollisionTris(): CollisionTri[] {
+		let tris: CollisionTri[] = []
+
+		this.faces.forEach(face => {
+			const edges = this.triangulateFaceFullVertex(face);
+
+			for (let i = 0; i < edges.length; i += 3) {
+				const dir1 = edges[i + 1].tail!.position.minus(edges[i].tail!.position);
+				const dir2 = edges[i + 2].tail!.position.minus(edges[i].tail!.position);
+
+				let normal = vec3.cross(dir1, dir2);
+				normal.normalise();
+
+				tris.push({
+					edge1: edges[i],
+					edge2: edges[i + 1],
+					edge3: edges[i + 2],
+					normal: normal,
+					dist: vec3.dot(normal, edges[i].tail!.position)
+				});
+			}
+
+			tris = tris.concat();
+		})
+
+		return tris;
 	}
 
 	getPrimitives(): Primitive[] {
@@ -267,27 +546,14 @@ export class EditorMesh {
 		return subMeshes;
 	}
 
-	submeshToPrimitive(submesh: Submesh): Primitive | null {
-		const vao = gl.createVertexArray();
-
-		const vBuffer: WebGLBuffer | null = gl.createBuffer();
-		const eBuffer: WebGLBuffer | null = gl.createBuffer();
-
-		if (!vBuffer || !eBuffer || !vao) {
-			console.error("Error creating buffer");
-
-			gl.deleteVertexArray(vao);
-			gl.deleteBuffer(vBuffer);
-			gl.deleteBuffer(eBuffer);
-
-			return null;
-		}
-
-		gl.bindVertexArray(vao);
-
+	getVertData(submesh: Submesh): {
+		verts: Float32Array,
+		elements: Uint16Array
+	} {
 		// add extra vertices when connected faces don't share uvs
 		// or are sharp
 		// TODO: Currently just makes everything not share verts
+		// should use same vert when smoothing
 		let subVertMap: Map<EditorHalfEdge, SubVertex> = new Map();
 		{
 			const it = submesh.verts.values();
@@ -303,7 +569,10 @@ export class EditorMesh {
 
 					if (!e1.tail?.position) {
 						console.error("VERT WITHOUT POSITION!");
-						return null;
+						return {
+							verts: new Float32Array(),
+							elements: new Uint16Array()
+						};
 					}
 
 					subVertMap.set(e1, {
@@ -328,7 +597,15 @@ export class EditorMesh {
 			const it = submesh.faces.values();
 			let i = it.next();
 			while (!i.done) {
-				tris = tris.concat(this.triangulateFace(i.value, subVertMap));
+				const face = i.value;
+
+				const triangulatedArray = this.triangulateFaceSubVertex(face, subVertMap);
+
+				face.elementOffset = tris.length;
+				face.elementCount = triangulatedArray.length;
+
+				tris = tris.concat(triangulatedArray);
+
 				i = it.next();
 			}
 		}
@@ -348,7 +625,7 @@ export class EditorMesh {
 		}
 
 		// put data into array
-		const vertSize = (3 + 2);
+		const vertSize = (3 + 2 + 3);
 		let verts = new Float32Array(vertCount * vertSize);
 		{
 			let index = 0;
@@ -367,17 +644,19 @@ export class EditorMesh {
 				verts[index + 1] = v.position.y;
 				verts[index + 2] = v.position.z;
 
-				// TODO: Generate UV data
-
 				if (!(v.edge.face)) {
 					console.error("NO FACE!");
 					continue;
 				}
 
 				const f: EditorFace = v.edge.face;
-				const uv = this.calcVertexUv(v.position, f.u, f.v);
+				const uv = this.calcVertexUv(v.position, f);
 				verts[index + 3] = uv.x;
 				verts[index + 4] = uv.y;
+
+				verts[index + 5] = f.color[0];
+				verts[index + 6] = f.color[1];
+				verts[index + 7] = f.color[2];
 
 				index += vertSize;
 			}
@@ -390,52 +669,61 @@ export class EditorMesh {
 			if (n) elements[i] = n;
 		}
 
+		return {
+			verts: verts,
+			elements: elements
+		}
+	}
+
+	submeshToPrimitive(submesh: Submesh): Primitive | null {
+		const vao = gl.createVertexArray();
+
+		const vBuffer: WebGLBuffer | null = gl.createBuffer();
+		const eBuffer: WebGLBuffer | null = gl.createBuffer();
+
+		if (!vBuffer || !eBuffer || !vao) {
+			console.error("Error creating buffer");
+
+			gl.deleteVertexArray(vao);
+			gl.deleteBuffer(vBuffer);
+			gl.deleteBuffer(eBuffer);
+
+			return null;
+		}
+
+		gl.bindVertexArray(vao);
+
+		const data = this.getVertData(submesh);
+
 		gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+		gl.bufferData(gl.ARRAY_BUFFER, data?.verts, gl.STATIC_DRAW);
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, elements, gl.STATIC_DRAW);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data?.elements, gl.STATIC_DRAW);
 
-		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 20, 0);
-		gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 20, 12);
+		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 32, 0);
+		gl.vertexAttribPointer(SharedAttribs.texCoordAttrib, 2, gl.FLOAT, false, 32, 12);
+		gl.vertexAttribPointer(SharedAttribs.colorAttrib, 3, gl.FLOAT, false, 32, 20);
 
 		gl.enableVertexAttribArray(SharedAttribs.positionAttrib);
 		gl.enableVertexAttribArray(SharedAttribs.texCoordAttrib);
+		gl.enableVertexAttribArray(SharedAttribs.colorAttrib);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
 
-		let p: Primitive = {
-			vao: vao,
-			texture: solidTex,
-			elementCount: elements.length,
-			color: [1, 1, 1, 1],
-			vBuffer: vBuffer,
-			eBuffer: eBuffer
-		}
-		if (submesh.texture) {
-			const url = submesh.texture;
+		let p = new Primitive(vao, vBuffer, eBuffer, solidTex, data.elements.length, [1, 1, 1, 1]);
+		loadPrimitiveTexture(submesh.texture, p);
 
-			const textureLoaded = textures[url] !== undefined;
-
-			if (textureLoaded) {
-				p.texture = textures[url];
-			} else {
-				loadTexture(url).then((result) => {
-					textures[url] = result.tex;
-					if (!result.tex) {
-						return;
-					}
-					p.texture = result.tex;
-				});
-			}
-		} else {
-			p.texture = solidTex;
-		}
+		// add primitive to each face
+		submesh.faces.forEach(face => {
+			face.primitive = p;
+		})
 
 		return p;
 	}
 
-	triangulateFace(face: EditorFace, subVerts: Map<EditorHalfEdge, SubVertex>): SubVertex[] {
+	triangulateFaceSubVertex(face: EditorFace, subVerts: Map<EditorHalfEdge, SubVertex>): SubVertex[] {
 		if (!(face.halfEdge?.tail && face.halfEdge.next)) {
 			console.error("BAD FACE!");
 			return [];
@@ -473,8 +761,51 @@ export class EditorMesh {
 		return tris;
 	}
 
-	calcVertexUv(position: vec3, u: vec3, v: vec3): vec2 {
-		return new vec2(vec3.dot(position, u), vec3.dot(position, v));
+	triangulateFaceFullVertex(face: EditorFace): EditorHalfEdge[] {
+		if (!(face.halfEdge?.tail && face.halfEdge.next)) {
+			console.error("BAD FACE!");
+			return [];
+		}
+
+		// TODO: THIS IS BAD
+		// only works with convex polygons
+
+		let tris: EditorHalfEdge[] = [];
+		const addTrisRecursive = (start: EditorHalfEdge, next: EditorHalfEdge) => {
+			if (!(start.tail && next.tail && next.next?.tail)) {
+				console.error("BAD FACE!");
+				return;
+			}
+
+			const a = start;
+			const b = next;
+			const c = next.next;
+
+			if (!(a && b && c)) {
+				console.error("COULD NOT TRIANGULATE FACE!");
+				return;
+			}
+
+			tris.push(a);
+			tris.push(b);
+			tris.push(c);
+
+			if (next.next.next != start)
+				addTrisRecursive(start, next.next);
+		}
+
+		addTrisRecursive(face.halfEdge, face.halfEdge.next)
+
+		return tris;
+	}
+
+	calcVertexUv(position: vec3, face: EditorFace): vec2 {
+		let p = new vec2(vec3.dot(position, face.u), vec3.dot(position, face.v));
+		p.x *= face.scale.x;
+		p.y *= face.scale.y;
+		p = p.rotateYaw(gMath.deg2Rad(face.rotation));
+		p.add(face.offset);
+		return p;
 	}
 
 	static getBoxUvForFace(face: EditorFace): {
@@ -503,21 +834,278 @@ export class EditorMesh {
 
 		const max = Math.max(x, y, z);
 
+		const scaleU = 1;
+		const scaleV = 1;
+
 		if (max == x) {
 			return {
-				u: new vec3(0, 0, -1),
-				v: new vec3(0, 1, 0)
+				u: new vec3(0, 0, -scaleU),
+				v: new vec3(0, scaleV, 0)
 			}
 		} else if (max == y) {
 			return {
-				u: new vec3(1, 0, 0),
-				v: new vec3(0, 0, -1)
+				u: new vec3(scaleU, 0, 0),
+				v: new vec3(0, 0, -scaleV)
 			}
 		} else {
 			return {
-				u: new vec3(1, 0, 0),
-				v: new vec3(0, 1, 0)
+				u: new vec3(scaleU, 0, 0),
+				v: new vec3(0, scaleV, 0)
 			}
 		}
+	}
+
+	validate(): boolean {
+		// validate half edges
+		this.halfEdges.forEach(edge => {
+			if (edge.twin) {
+				const twin = edge.twin;
+				if (twin.twin != edge) return false;
+				if (!this.halfEdges.has(twin)) return false;
+			}
+		});
+
+		let invalid = false;
+
+		// remove extra verts
+		this.verts.forEach(vert => {
+			if (vert.edges.size == 0) {
+				this.verts.delete(vert);
+				invalid = true;
+				return;
+			}
+
+			const it = vert.edges.values();
+			let i = it.next();
+			while (!i.done) {
+				const edge: EditorHalfEdge = i.value;
+
+				if (!this.halfEdges.has(edge) || edge.tail != vert) {
+					vert.edges.delete(edge);
+					invalid = true;
+				}
+
+				i = it.next();
+			}
+		});
+
+		this.halfEdges.forEach(edge => {
+			if (!edge.full || !this.faces.has(edge.face!)) {
+				this.halfEdges.delete(edge);
+				invalid = true;
+				return;
+			}
+		});
+
+		this.edges.forEach(edge => {
+			if (!(edge.halfA && this.halfEdges.has(edge.halfA)) && !(edge.halfB && this.halfEdges.has(edge.halfB))) {
+				this.edges.delete(edge);
+				invalid = true;
+				return;
+			}
+		});
+
+		this.faces.forEach(face => {
+			let loops = true;
+			let allLeadBack = true;
+			let allExist = true;
+			let numEdge = 0;
+
+			const start = face.halfEdge;
+			let edge = start;
+			do {
+				if (edge?.face != face) {
+					allLeadBack = false;
+					break;
+				}
+
+				if (!this.halfEdges.has(edge)) {
+					allExist = false;
+					break;
+				}
+
+				if (edge?.next) {
+					edge = edge.next;
+				} else {
+					loops = false;
+					break;
+				}
+				++numEdge;
+			} while (edge != start);
+
+			if (!allLeadBack || !loops || !allExist) {
+				this.faces.delete(face);
+				invalid = true;
+				return;
+			}
+		});
+
+		return !invalid;
+	}
+
+	deleteFace(face: EditorFace) {
+		this.faces.delete(face);
+
+		// remove all connected half edges
+		const startEdge = face.halfEdge!;
+		let edge = startEdge;
+		do {
+			// remove half edges
+			this.halfEdges.delete(edge);
+
+			// remove half edges from vertices
+			edge.tail?.edges.delete(edge);
+			if (edge.tail?.edges.size == 0) this.verts.delete(edge.tail);
+
+			// remove half edges from full edges
+			if (edge.full?.halfA == edge) edge.full.halfA = null;
+			if (edge.full?.halfB == edge) edge.full.halfB = null;
+			if (!edge.full?.halfA && !edge.full?.halfB) this.edges.delete(edge.full!);
+
+			// remove half edges from twins
+			if (edge.twin) edge.twin.twin = null;
+
+			if (edge?.next)
+				edge = edge.next;
+			else
+				break;
+		} while (edge != startEdge);
+
+		// I'm useless now
+		if (this.faces.size == 0) {
+			this.deleteSelf();
+		}
+	}
+
+	dissolveEdge(edge: EditorFullEdge) {
+		// only dissolve when a and b both exist
+		if (!edge.halfA || !edge.halfB) return;
+
+		this.edges.delete(edge);
+		const a = edge.halfA;
+		const b = edge.halfB;
+		this.halfEdges.delete(edge.halfA);
+		this.halfEdges.delete(edge.halfB);
+
+		// get important edges
+		const c = a.prev!;
+		const d = b.next!;
+		const e = a.next!;
+		const f = b.prev!;
+
+		// re-link edges
+		c.next = d;
+		d.prev = c;
+		f.next = e;
+		e.prev = f;
+
+		// remove from vertex edge lists
+		const vertA = a.tail!;
+		const vertB = b.tail!;
+		vertA.edges.delete(a);
+		vertB.edges.delete(b);
+
+		// merge faces
+		this.faces.delete(b.face!);
+		const face = a.face!;
+		face.halfEdge = c;
+		{
+			const start = face.halfEdge;
+			let edge = start;
+			do {
+				edge.face = face;
+
+				edge = edge.next!;
+			} while (edge != start)
+		}
+
+		// dissolve vertices
+		this.dissolveVertex(vertA);
+		this.dissolveVertex(vertB);
+	}
+
+	dissolveVertex(vert: EditorVertex) {
+		// only dissolve when vertex has one edge or two edges
+		if (vert.edges.size > 2) return;
+
+		// only dissolve when both edges are parallel
+		if (vert.edges.size == 2) {
+			const it = vert.edges.values();
+			const a: EditorHalfEdge = it.next().value;
+			const b: EditorHalfEdge = it.next().value;
+
+			if (a.next?.tail != b.prev?.tail || b.next?.tail != a.prev?.tail) {
+				return;
+			}
+		}
+
+		this.verts.delete(vert);
+
+		// link edges around vert
+		const linkEdges = (e: EditorHalfEdge) => {
+			const a = e.prev!;
+			const b = e.next!;
+
+			a.next = b;
+			b.prev = a;
+
+			// make sure faces don't point to removed edges
+			e.face!.halfEdge = a;
+		}
+
+		const it = vert.edges.values();
+		const edge: EditorHalfEdge = it.next().value;
+		linkEdges(edge);
+
+		this.edges.delete(edge.full!);
+
+		const a = edge.prev!
+
+		const full = a.full!;
+		full.halfA = a;
+		full.halfB = null;
+		a.twin = null;
+
+		const next: EditorHalfEdge = it.next().value;
+		this.halfEdges.delete(edge);
+		if (next) {
+			this.halfEdges.delete(next);
+
+			linkEdges(next);
+
+			const b = next.prev!;
+			a.twin = b;
+			b.twin = a;
+			full.halfB = next.prev;
+			b.full = full;
+		}
+	}
+
+	deleteSelf() {
+		this.cleanUpGl();
+		editor.meshes.delete(this);
+	}
+
+	deleteEdge(edge: EditorFullEdge) {
+		if (edge.halfA?.face) {
+			this.deleteFace(edge.halfA.face);
+		}
+		if (edge.halfB?.face) {
+			this.deleteFace(edge.halfB.face);
+		}
+	}
+
+	unsafeDeleteEdge(edge: EditorFullEdge) {
+		if (edge.halfA) {
+			this.unsafeDeleteHalfEdge(edge.halfA);
+		}
+		if (edge.halfB) {
+			this.unsafeDeleteHalfEdge(edge.halfB);
+		}
+	}
+
+	unsafeDeleteHalfEdge(edge: EditorHalfEdge) {
+		this.halfEdges.delete(edge);
+		edge.tail?.edges.delete(edge);
 	}
 }

@@ -1,21 +1,19 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { readFileSync } from "fs";
-import { LevelFile } from "../../common/system/levelfile.js";
 import { ServerPlayer } from "../entities/serverplayer.js";
 import { PacketType } from "../../common/network/netenums.js";
 import { JoinResponsePacket, PlayerSnapshot, Snapshot, SnapshotPacket, UserCmdPacket } from "../../common/network/packet.js";
-import { setLevelServer } from "../entities/level.js";
+import { findSpawn, setLevelServer } from "../entities/level.js";
 import { Time, updateTime } from "../../common/system/time.js";
-import { GameContext, setGameContext } from "../../common/system/context.js";
+import { Environment, setGameContext } from "../../common/system/context.js";
 import { setPlayerModel } from "../../common/player/sharedplayer.js";
 import { ServerGltfLoader } from "../mesh/gltfloader.js";
 import { updateEntities } from "../../common/entitysystem/update.js";
+import { vec3 } from "../../common/math/vector.js";
+import { players } from "../../common/system/playerList.js";
 
 export class Server {
 	wss!: WebSocketServer;
-
-	public currentMap: LevelFile | null = null;
-	public players: Map<number, ServerPlayer> = new Map();
 
 	playerCount: number = 0;
 	maxPlayerCount: number = 32;
@@ -23,7 +21,7 @@ export class Server {
 	snapshot!: Snapshot;
 
 	public async init() {
-		setGameContext(GameContext.server);
+		setGameContext(Environment.server);
 
 		this.wss = new WebSocketServer({ port: 80 })
 		this.wss.on('connection', ws => {
@@ -47,7 +45,7 @@ export class Server {
 		});
 
 		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
-		setLevelServer("./data/levels/styletest");
+		setLevelServer("./data/levels/bigmap");
 		setPlayerModel(await ServerGltfLoader.loadGltfFromDisk("./data/models/sci_player"));
 
 		console.log("SERVER OPENED");
@@ -67,7 +65,7 @@ export class Server {
 
 		// send snapshot of world
 		this.generateSnapshot();
-		for (let player of this.players.values()) {
+		for (const player of (players as Map<number, ServerPlayer>).values()) {
 			const res: SnapshotPacket = {
 				type: PacketType.snapshot,
 				lastCmd: player.lastCmd,
@@ -87,7 +85,10 @@ export class Server {
 			return null;
 
 		const id = this.generatePlayerId();
-		this.players.set(id, new ServerPlayer(id, ws));
+		const player = new ServerPlayer(id, ws);
+		players.set(id, player);
+
+		player.respawn();
 
 		return id;
 	}
@@ -125,7 +126,7 @@ export class Server {
 
 	handleCmd(packet: UserCmdPacket, ws: WebSocket) {
 		const cmd = packet.cmd;
-		const player = this.players.get(packet.id);
+		const player = players.get(packet.id) as ServerPlayer;
 
 		if (!player) {
 			console.log("ERROR: UserCMD from nonexistant player");
@@ -136,30 +137,33 @@ export class Server {
 			console.log("Identity fraud!");
 		}
 
+		if (player.isDead()) {
+			return;
+		}
+
+		player.lastButtons = player.buttons;
+		player.buttons = cmd.buttons;
 		player.processCmd(cmd);
 		player.lastCmd = packet.number;
 	}
 
 	generateSnapshot() {
-		let players: PlayerSnapshot[] = [];
-		players.length = this.players.size;
+		let playerSnaps: PlayerSnapshot[] = [];
 
-		let i = 0;
-		for (let player of this.players.values()) {
-			players[i] = {
+		for (const player of players.values()) {
+			playerSnaps.push({
 				id: player.id,
-				position: player.position,
 				pitch: player.pitch,
 				yaw: player.yaw,
 				anim: player.controller.state,
-				time: player.controller.time
-			}
-
-			++i;
+				time: player.controller.time,
+				data: player.createPredictedData(),
+				health: player.health
+			});
 		}
 
 		this.snapshot = {
-			players: players
+			players: playerSnaps
 		}
 	}
 }

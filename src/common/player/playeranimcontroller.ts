@@ -1,6 +1,6 @@
 import { Transform } from "../entitysystem/transform.js";
 import { AnimationController, Animation } from "../mesh/animation.js";
-import { GameContext, gameContext } from "../system/context.js";
+import { Environment, environment } from "../system/context.js";
 import { SharedPlayer, playerModel } from "./sharedplayer.js";
 
 export enum PlayerAnimState {
@@ -32,7 +32,7 @@ export class PlayerAnimController extends AnimationController {
 
 	override frame() {
 		// the server creates states
-		if (gameContext != GameContext.client) {
+		if (environment != Environment.client) {
 			this.calcState();
 		}
 

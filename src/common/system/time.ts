@@ -1,4 +1,4 @@
-import { GameContext, gameContext } from "./context.js";
+import { Environment, environment } from "./context.js";
 
 export let Time =
 {
@@ -30,26 +30,29 @@ export function advanceGame() {
 export function updateTime(): void {
 	const time = Date.now();
 
+	if (environment == Environment.server) {
+		Time.deltaTime = Time.fixedDeltaTime;
+		return;
+	}
+
 	Time.deltaTime = (time - lastTime) / 1000;
 	Time.elapsed += Time.deltaTime;
 
 	lastTime = time;
 
 	// handle ticks on client
-	if (gameContext != GameContext.server) {
-		if (time >= Time.nextTick) {
-			if (time - Time.nextTick > Time.fixedDeltaTime * 3000) {
-				console.log("more than 3 ticks behind, starting over");
-				Time.nextTick = Date.now();
-			}
-			Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
-			if (!pause || advance) {
-				Time.canTick = true;
-				advance = false;
-			}
-		} else {
-			Time.canTick = false;
+	if (time >= Time.nextTick) {
+		if (time - Time.nextTick > Time.fixedDeltaTime * 3000) {
+			// console.log("more than 3 ticks behind, starting over");
+			Time.nextTick = Date.now();
 		}
+		Time.nextTick = Time.nextTick + Time.fixedDeltaTime * 1000;
+		if (!pause || advance) {
+			Time.canTick = true;
+			advance = false;
+		}
+	} else {
+		Time.canTick = false;
 	}
 
 	if (!pause) {

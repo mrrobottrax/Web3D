@@ -1,13 +1,20 @@
 import { Transform } from "./transform.js";
 
-export let entityList: Entity[] = [];
+export let entities = new Set<Entity>()
 
 export class Entity {
 	transform: Transform = new Transform();
+	parent: Entity | null = null;
 
 	update() {}
+	onDestroy() {};
 
 	constructor() {
-		entityList.push(this);
+		entities.add(this);
 	}
+}
+
+export function DestroyEntity(entity: Entity) {
+	entity.onDestroy();
+	entities.delete(entity);
 }

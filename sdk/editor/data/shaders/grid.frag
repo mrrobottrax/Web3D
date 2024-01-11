@@ -1,7 +1,6 @@
 precision mediump float;
 
 uniform vec3 uFillColor;
-uniform vec3 uBigFillColor;
 uniform vec3 uZeroFillColor;
 uniform float uGridSize;
 uniform vec2 uOffset;
@@ -30,13 +29,15 @@ void main() {
 	vec2 fragCoord = vec2(gl_FragCoord.x, gl_FragCoord.y);
 
 	float zeroGrid = zeroGrid(fragCoord);
-	float bigGrid = grid(fragCoord, uGridSize * 16.0);
-	float smallGrid = grid(fragCoord, uGridSize);
+	float totalGrid = grid(fragCoord, uGridSize)
+		+ grid(fragCoord, uGridSize * 2.0) * 0.3
+		+ grid(fragCoord, uGridSize * 4.0) * 0.3
+		+ grid(fragCoord, uGridSize * 8.0) * 0.3
+		+ grid(fragCoord, uGridSize * 16.0) * 0.3;
 
-	bigGrid *= 1.0 - zeroGrid;
-	smallGrid *= (1.0 - bigGrid) * (1.0 - zeroGrid);
+	totalGrid *= 1.0 - zeroGrid;
 
-	vec3 color = uFillColor * smallGrid + uBigFillColor * bigGrid + uZeroFillColor * zeroGrid;
+	vec3 color = uFillColor * totalGrid + uZeroFillColor * zeroGrid;
 
 	gl_FragColor = vec4(color, 1);
 }

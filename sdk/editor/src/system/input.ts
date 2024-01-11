@@ -1,7 +1,7 @@
-import { glProperties } from "../../../../src/client/render/gl.js";
 import { FileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
-import { ToolEnum, setTool } from "../tools/tool.js";
+import { SelectMode } from "../tools/selecttool.js";
+import { ToolEnum } from "../tools/tool.js";
 
 export let mousePosX: number;
 export let mousePosY: number;
@@ -10,30 +10,44 @@ let keys: any = {};
 
 export function initEditorInput() {
 	document.addEventListener('keydown', event => {
-		event.preventDefault();
 		keys[event.code] = true;
 
-		if (tryShortcut(event.code)) return;
+		if (tryHighShortcuts(event.code)) { event.preventDefault(); return; };
+
+		if (document.activeElement?.tagName != "BODY") return;
+
+		event.preventDefault();
+
+		if (tryLowShortcuts(event.code)) return;
+
 		if (editor.activeTool.key(event.code, true)) return;
 		editor.windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
-		event.preventDefault();
 		keys[event.code] = false;
+
+		if (document.activeElement?.tagName != "BODY") return;
+
+		event.preventDefault();
 
 		if (editor.activeTool.key(event.code, false)) return;
 		editor.windowManager.activeWindow?.key(event.code, false);
 	});
 
 	document.addEventListener("mousedown", event => {
+		if (!editor.windowManager.activeWindow) return;
+
 		event.preventDefault();
-		editor.windowManager.setActiveWindowUnderMouse();
+
+		(document.activeElement as HTMLElement).blur();
 
 		if (editor.activeTool.mouse(event.button, true)) return;
 		editor.windowManager.activeWindow?.mouse(event.button, true);
 	});
 
 	document.addEventListener("mouseup", event => {
+		if (document.activeElement?.tagName != "BODY") return;
+
 		event.preventDefault();
 
 		if (editor.activeTool.mouse(event.button, false)) return;
@@ -41,16 +55,17 @@ export function initEditorInput() {
 	});
 
 	document.addEventListener("mousemove", event => {
-		event.preventDefault();
+		// event.preventDefault();
+
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl
 
+		editor.windowManager.setActiveWindowUnderMouse();
 		if (editor.activeTool.mouseMove(event.movementX, event.movementY)) return;
 		editor.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
 	});
 
 	document.addEventListener("wheel", event => {
-		editor.windowManager.setActiveWindowUnderMouse();
 		editor.windowManager.activeWindow?.wheel(event.deltaY);
 	});
 
@@ -69,9 +84,22 @@ export function initEditorInput() {
 	// buttons
 	// windows menu
 	(window as any).exportMap = () => FileManagement.exportMap();
-	// tools
-	(window as any).selectTool = () => setTool(ToolEnum.Select);
-	(window as any).blockTool = () => setTool(ToolEnum.Block);
+	(window as any).saveMap = () => FileManagement.saveMap();
+	(window as any).closeMap = () => FileManagement.closeMap();
+	(window as any).loadMap = () => {
+		const fileInput = document.createElement("input");
+		fileInput.type = "file";
+		fileInput.accept = ".level";
+
+		fileInput.addEventListener("input", () => {
+			if (fileInput && fileInput.files) {
+				FileManagement.loadMap(fileInput.files[0]);
+			}
+		});
+
+		fileInput.click();
+		fileInput.remove();
+	};
 }
 
 export function getKeyDown(code: string): boolean {
@@ -79,33 +107,113 @@ export function getKeyDown(code: string): boolean {
 }
 
 interface Shortcut {
-	keyCode: string;
+	keyCodes: string[];
 	function: Function;
 }
-let shortcuts: Shortcut[] = [
+let lowPriorityShortcuts: Shortcut[] = [
 	{
-		keyCode: "BracketLeft",
-		function: () => editor.gridSize /= 2
+		keyCodes: ["BracketLeft"],
+		function: () => editor.decreaseGrid()
 	},
 	{
-		keyCode: "BracketRight",
-		function: () => editor.gridSize *= 2
+		keyCodes: ["BracketRight"],
+		function: () => editor.increaseGrid()
 	},
 	{
-		keyCode: "KeyQ",
-		function: () => setTool(ToolEnum.Select)
+		keyCodes: ["Digit1"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Vertex)
 	},
 	{
-		keyCode: "KeyB",
-		function: () => setTool(ToolEnum.Block)
-	}
+		keyCodes: ["Digit2"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Edge)
+	},
+	{
+		keyCodes: ["Digit3"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Face)
+	},
+	{
+		keyCodes: ["Digit4"],
+		function: () => editor.selectTool.setSelectMode(SelectMode.Mesh)
+	},
+	{
+		keyCodes: ["KeyQ"],
+		function: () => editor.setTool(ToolEnum.Select)
+	},
+	{
+		keyCodes: ["KeyB"],
+		function: () => editor.setTool(ToolEnum.Block)
+	},
+	{
+		keyCodes: ["KeyC"],
+		function: () => editor.setTool(ToolEnum.Cut)
+	},
+	{
+		keyCodes: ["KeyE"],
+		function: () => editor.setTool(ToolEnum.Scale)
+	},
+	{
+		keyCodes: ["KeyR"],
+		function: () => editor.setTool(ToolEnum.Rotate)
+	},
+	{
+		keyCodes: ["KeyT"],
+		function: () => editor.setTool(ToolEnum.Translate)
+	},
+	{
+		keyCodes: ["ControlLeft", "KeyA"],
+		function: () => { if (editor.activeToolEnum == ToolEnum.Select) editor.selectTool.selectAll() }
+	},
 ];
-function tryShortcut(code: string): boolean {
-	shortcuts.forEach(shortcut => {
-		if (code == shortcut.keyCode) {
-			shortcut.function();
+
+let highPriorityShortcuts: Shortcut[] = [
+	{
+		keyCodes: ["ShiftLeft", "KeyE"],
+		function: () => editor.setTool(ToolEnum.Entity)
+	},
+]
+
+function tryShortCut(shortcut: Shortcut, code: string) {
+	// check if all keys in shortcut are down
+	let failedShortcut = false;
+	let firstFrame = false; // only do it once
+	for (let i = 0; i < shortcut.keyCodes.length; ++i) {
+		const key = shortcut.keyCodes[i];
+		firstFrame ||= key == code;
+
+		if (!keys[key]) {
+			failedShortcut = true;
+			break;
 		}
-	});
+	}
+
+	if (!failedShortcut && firstFrame) {
+		shortcut.function();
+		return true;
+	}
+
+	return false;
+}
+
+function tryLowShortcuts(code: string): boolean {
+	for (let i = 0; i < lowPriorityShortcuts.length; ++i) {
+		const shortcut = lowPriorityShortcuts[i];
+
+		if (tryShortCut(shortcut, code)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function tryHighShortcuts(code: string): boolean {
+	for (let i = 0; i < highPriorityShortcuts.length; ++i) {
+		const shortcut = highPriorityShortcuts[i];
+
+		if (tryShortCut(shortcut, code)) {
+			return true;
+		}
+	}
 
 	return false;
 }
