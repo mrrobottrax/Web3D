@@ -1,10 +1,11 @@
 import { WebSocket } from "ws";
-import { SharedPlayer } from "../../common/player/sharedplayer.js";
+import { SharedPlayer, playerModel } from "../../common/player/sharedplayer.js";
 import { Buttons } from "../../common/input/buttons.js";
 import { Pistol } from "../../common/weapons/pistol.js";
 import { Time } from "../../common/system/time.js";
 import { findSpawn } from "./level.js";
 import { vec3 } from "../../common/math/vector.js";
+import { PlayerUtil } from "../../common/player/playerutil.js";
 
 export class ServerPlayer extends SharedPlayer {
 	lastCmd: number = -1;
@@ -50,8 +51,9 @@ export class ServerPlayer extends SharedPlayer {
 		if (!spawn) console.error("FAIELD TO FIND SPAWN!");
 		else {
 			const pos = spawn.transform.translation;
-			this.position = new vec3(pos.x, pos.y, pos.z);
+			PlayerUtil.setFeetPos(this, pos);
 			this.health = 100;
+			this.pitch = 0;
 			// player.yaw = spawn.transform.rotation.; todo:
 		}
 	}

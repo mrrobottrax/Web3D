@@ -56,6 +56,14 @@ export class PlayerUtil {
 		}
 	}
 
+	static setFeetPos(player: SharedPlayer, position: vec3) {
+		if (player.isDucked) {
+			player.position = position.plus(new vec3(0, hullDuckSize.y / 2, 0));
+		} else {
+			player.position = position.plus(new vec3(0, hullSize.y / 2, 0));
+		}
+	}
+
 	static flyMove(start: vec3, velocity: vec3, delta: number, player: SharedPlayer): {
 		endPos: vec3,
 		blocked: number,
