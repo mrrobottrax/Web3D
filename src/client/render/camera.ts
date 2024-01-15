@@ -22,6 +22,7 @@ export class Camera {
 
 		this.perspectiveMatrix = new mat4(0);
 		this.viewMatrix = mat4.identity();
+		this.updateViewMatrix();
 	}
 
 	updateViewMatrix() {

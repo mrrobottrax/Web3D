@@ -138,4 +138,8 @@ export default class gMath {
 
 		return t ? t : null;
 	}
+
+	static isPowerOf2(value: number): boolean {
+		return (value & (value - 1)) === 0;
+	}
 }

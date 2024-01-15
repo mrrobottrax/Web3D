@@ -1,9 +1,10 @@
+import { getFileNameWithoutType } from "../../../../src/common/file/fileFunctions.js";
 import { HalfEdgeMesh } from "../../../../src/common/mesh/halfedge.js";
 import { editor } from "../main.js";
 
 const blobSettings = { type: 'application/text' };
 
-export class FileManagement {
+export class EditorFileManagement {
 	static filename: string = "untitled";
 
 	static texturesList: string[] = [];
@@ -173,8 +174,7 @@ export class FileManagement {
 	static async loadMap(file: File) {
 		console.log("Opening map...");
 
-		const name = file.name.substring(0, file.name.lastIndexOf("."));
-		this.filename = name;
+		this.filename = getFileNameWithoutType(file.name);
 
 		const json = JSON.parse(await file.text());
 		

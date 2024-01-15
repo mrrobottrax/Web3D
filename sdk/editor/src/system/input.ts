@@ -1,4 +1,4 @@
-import { FileManagement } from "../file/filemanagement.js";
+import { EditorFileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { SelectMode } from "../tools/selecttool.js";
 import { ToolEnum } from "../tools/tool.js";
@@ -83,9 +83,9 @@ export function initEditorInput() {
 
 	// buttons
 	// windows menu
-	(window as any).exportMap = () => FileManagement.exportMap();
-	(window as any).saveMap = () => FileManagement.saveMap();
-	(window as any).closeMap = () => FileManagement.closeMap();
+	(window as any).exportMap = () => EditorFileManagement.exportMap();
+	(window as any).saveMap = () => EditorFileManagement.saveMap();
+	(window as any).closeMap = () => EditorFileManagement.closeMap();
 	(window as any).loadMap = () => {
 		const fileInput = document.createElement("input");
 		fileInput.type = "file";
@@ -93,7 +93,7 @@ export function initEditorInput() {
 
 		fileInput.addEventListener("input", () => {
 			if (fileInput && fileInput.files) {
-				FileManagement.loadMap(fileInput.files[0]);
+				EditorFileManagement.loadMap(fileInput.files[0]);
 			}
 		});
 

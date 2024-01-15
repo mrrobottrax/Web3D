@@ -1,4 +1,4 @@
-import { FileManagement } from "../file/filemanagement.js";
+import { EditorFileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 
 export class EntityPanel {
@@ -11,12 +11,12 @@ export class EntityPanel {
 			return;
 		}
 
-		FileManagement.engineEntities.forEach((value, key) => {
+		EditorFileManagement.engineEntities.forEach((value, key) => {
 			list.innerHTML += `<option value="${key}"></option>`
 		});
 
 		input.oninput = () => {
-			const entity = FileManagement.engineEntities.get(input.value);
+			const entity = EditorFileManagement.engineEntities.get(input.value);
 
 			if (entity) {
 				editor.entityTool.currentEntityName = input.value;

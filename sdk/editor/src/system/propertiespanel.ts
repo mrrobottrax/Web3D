@@ -1,5 +1,5 @@
 import { vec3 } from "../../../../src/common/math/vector.js";
-import { FileManagement } from "../file/filemanagement.js";
+import { EditorFileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { SelectMode } from "../tools/selecttool.js";

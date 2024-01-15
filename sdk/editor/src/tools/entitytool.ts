@@ -3,7 +3,7 @@ import { drawLine } from "../../../../src/client/render/debugRender.js";
 import { vec3 } from "../../../../src/common/math/vector.js";
 import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
 import { Model } from "../../../../src/common/mesh/model.js";
-import { FileManagement } from "../file/filemanagement.js";
+import { EditorFileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool } from "./tool.js";
@@ -58,11 +58,11 @@ export class EntityTool extends Tool {
 
 	static getNewEntity(name: string): any {
 		// add properties from base classes
-		const entity = FileManagement.engineEntities.get(name);
+		const entity = EditorFileManagement.engineEntities.get(name);
 		let newEntity: any = {};
 		let base = entity;
 		while (base) {
-			const base2 = FileManagement.baseClasses.get(base.base);
+			const base2 = EditorFileManagement.baseClasses.get(base.base);
 
 			if (base2) {
 				base = base2;

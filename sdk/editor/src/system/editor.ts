@@ -8,7 +8,7 @@ import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.j
 import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
 import { SelectTool } from "../tools/selecttool.js";
-import { FileManagement } from "../file/filemanagement.js";
+import { EditorFileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
@@ -53,8 +53,8 @@ export class Editor {
 
 		this.activeTool = this.selectTool;
 
-		FileManagement.getAssetList();
-		FileManagement.getEntityList();
+		EditorFileManagement.getAssetList();
+		EditorFileManagement.getEntityList();
 
 		this.updateGridText();
 	}

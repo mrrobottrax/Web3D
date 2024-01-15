@@ -1,54 +1,33 @@
-import { ShaderBase, UninstancedShaderBase, defaultShader, gl, initCanvas, initDefaultShaders, initLineBuffer, initProgramFromWeb, initializeGl, resizeCanvas, skinnedShader, uiShader } from "../../../../src/client/render/gl.js";
+import { defaultShader, gl, initCanvas, initDefaultShaders, initLineBuffer, initProgramFromWeb, initializeGl, resizeCanvas, skinnedShader, uiShader } from "../../../../src/client/render/gl.js";
 import { initUiBuffers } from "../../../../src/client/render/ui.js";
 
-interface GridShader extends ShaderBase {
-	fillColorUnif: WebGLUniformLocation | null
-	zeroFillColorUnif: WebGLUniformLocation | null
-	gridSizeUnif: WebGLUniformLocation | null
-	offsetUnif: WebGLUniformLocation | null
-}
-export let gridShader: GridShader = {
-	program: null,
-	fillColorUnif: null,
-	zeroFillColorUnif: null,
-	gridSizeUnif: null,
-	offsetUnif: null
-};
-
-export let borderShader: ShaderBase = {
-	program: null
-};
-
-export async function initEditorGl(): Promise<void> {
+export async function initModelViewerGl(): Promise<void> {
 	initCanvas();
 	initializeGl();
 	initDefaultShaders();
-	await initEditorShaders();
+	await initModelViewerShaders();
 
 	initLineBuffer();
 	initUiBuffers();
 
 	resizeCanvas();
+
+	gl.clearColor(0.1, 0.1, 0.1, 1.0);
 }
 
-async function initEditorShaders() {
+async function initModelViewerShaders() {
 	// create remaining shader programs
 	await Promise.all<WebGLProgram>([
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
 		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
-		initProgramFromWeb("sdk/editor/data/shaders/grid.vert", "sdk/editor/data/shaders/grid.frag"),
-		initProgramFromWeb("sdk/editor/data/shaders/border.vert", "sdk/editor/data/shaders/border.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
 		uiShader.program = results[1];
 		skinnedShader.program = results[2];
-		gridShader.program = results[3];
-		borderShader.program = results[4];
 	});
 
-	if (!defaultShader.program || !uiShader.program || !skinnedShader.program || !gridShader.program
-		|| !borderShader.program)
+	if (!defaultShader.program || !uiShader.program || !skinnedShader.program)
 		return;
 
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
@@ -72,11 +51,6 @@ async function initEditorShaders() {
 	skinnedShader.fogColorUnif = gl.getUniformLocation(skinnedShader.program, "uFogColor");
 	skinnedShader.fogNearUnif = gl.getUniformLocation(skinnedShader.program, "uFogNear");
 	skinnedShader.fogFarUnif = gl.getUniformLocation(skinnedShader.program, "uFogFar");
-
-	gridShader.fillColorUnif = gl.getUniformLocation(gridShader.program, "uFillColor");
-	gridShader.zeroFillColorUnif = gl.getUniformLocation(gridShader.program, "uZeroFillColor");
-	gridShader.gridSizeUnif = gl.getUniformLocation(gridShader.program, "uGridSize");
-	gridShader.offsetUnif = gl.getUniformLocation(gridShader.program, "uOffset");
 
 	// no fog
 	gl.useProgram(defaultShader.program);

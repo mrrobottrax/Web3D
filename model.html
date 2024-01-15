@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<title>
+	Mallet Editor
+</title>
+
+<head>
+	<link rel="stylesheet" href="sdk/toolstyle.css">
+	<link rel="stylesheet" href="sdk/editorstyle.css">
+	<script type="module" src="out/sdk/modelviewer/src/main.js"></script>
+</head>
+
+<body>
+	<div id="editor" style="
+		display: grid;
+		grid-template-rows: 30px auto 25px">
+		<!-- HEADER -->
+		<div style="
+			display: grid;
+			grid-template-rows: 30px;">
+			<div class="bar">
+				<div class="windows-bar-button">
+					<button class="subtle-button tall-button" onclick="openModelDialog()">Open</button>
+					<button class="subtle-button tall-button" onclick="closeModelFile()">Close</button>
+					<button class="subtle-button tall-button" onclick="loadModelTexture()">Load Textures</button>
+				</div>
+			</div>
+		</div>
+		<!-- MAIN CONTENT -->
+		<div style="
+		display: grid;
+		grid-template-columns: auto 500px;">
+		<!-- VIEW -->
+			<div style="display: flex;" id="game-container">
+				<canvas id="game"></canvas>
+			</div>
+			<div class="panel" id="properties-panel">
+				<!-- ADDED BY SCRIPT -->
+			</div>
+		</div>
+		<!-- FOOTER -->
+		<div class="bar" style="padding: 5px;">
+			<p id="current-model" class="small"></p>
+		</div>
+	</div>
+</body>
+
+</html>

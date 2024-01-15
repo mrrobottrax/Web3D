@@ -1,4 +1,4 @@
-import { FileManagement } from "../file/filemanagement.js";
+import { EditorFileManagement } from "../file/filemanagement.js";
 import { editor } from "../main.js";
 import { SelectMode } from "../tools/selecttool.js";
 
@@ -19,7 +19,7 @@ export class TexturePanel {
 
 		this.texturePreview.src = this.activeTexture;
 
-		FileManagement.texturesList.forEach(texture => {
+		EditorFileManagement.texturesList.forEach(texture => {
 			const div = document.createElement("div");
 			div.style.cssText = "overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;";
 			div.classList.add("button");
