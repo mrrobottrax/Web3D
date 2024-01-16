@@ -10,6 +10,8 @@ const gltfFormatString = ".gltf";
 const binFormatString = ".bin";
 const modelFormatString = ".gmdl";
 
+let tryingToLoadModel: boolean = false;
+
 let currentModelName: string = "";
 
 let hasGltfFile: boolean = false;
@@ -63,6 +65,7 @@ function setGltf(file: File) {
 	file.text().then(result => {
 		const json = JSON.parse(result);
 		hasGltfFile = true;
+		tryingToLoadModel = true;
 
 		if (!hasBinFile) {
 			setCurrentModelText("Add .bin file.");
@@ -82,6 +85,7 @@ function setBin(file: File) {
 		const array = new Uint8Array(result);
 
 		hasBinFile = true;
+		tryingToLoadModel = true;
 
 		if (!hasGltfFile) {
 			setCurrentModelText("Add .gltf file.");
@@ -116,7 +120,10 @@ export function closeModelFile() {
 	gltfJson = null;
 	binBuffer = null;
 
+	tryingToLoadModel = false;
+
 	setCurrentModelText("NO MODEL LOADED. Load a model by opening either a .gmdl file or a .gltf and a .bin file. Textures must be added after.")
+	setModel(null!);
 
 	// todo:
 }
@@ -176,7 +183,7 @@ export async function waitForUserToAddTexture(name: string, primitive: Primitive
 	const shortName = getFileWithoutDirectory(name);
 
 	// wait until user has loaded the texture
-	while (!loadedModelTextures.has(shortName)) {
+	while (!(loadedModelTextures.has(shortName) || !tryingToLoadModel)) {
 		setCurrentModelText("Please load texture: " + name);
 		await new Promise(r => setTimeout(r, 1000));
 	}
