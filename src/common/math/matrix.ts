@@ -1,4 +1,5 @@
-import { quaternion, vec3 } from "./vector";
+import gMath from "./gmath.js";
+import { quaternion, vec3 } from "./vector.js";
 
 export class mat4 {
 	private values: Float32Array;
@@ -65,6 +66,28 @@ export class mat4 {
 
 	rotate(q: quaternion) {
 		this.values = this.multiply(q.toMatrix()).values;
+	}
+
+	rotateX(angle: number) {
+		const mat = mat4.identity();
+		const theta = gMath.deg2Rad(angle);
+		mat.setValue(1, 1, Math.cos(theta));
+		mat.setValue(2, 1, -Math.sin(theta));
+		mat.setValue(1, 2, Math.sin(theta));
+		mat.setValue(2, 2, Math.cos(theta));
+
+		this.values = this.multiply(mat).values;
+	}
+
+	rotateY(angle: number) {
+		const mat = mat4.identity();
+		const theta = gMath.deg2Rad(angle);
+		mat.setValue(0, 0, Math.cos(theta));
+		mat.setValue(2, 0, Math.sin(theta));
+		mat.setValue(0, 2, -Math.sin(theta));
+		mat.setValue(2, 2, Math.cos(theta));
+
+		this.values = this.multiply(mat).values;
 	}
 
 	scale(s: vec3) {
