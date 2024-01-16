@@ -45,7 +45,7 @@ function drawViewedModel() {
 			mat.translate(new vec3(0, 0, -5));
 			mat.translate(pan);
 			mat.rotateX(-orbitRotation.x);
-			mat.rotateY(-orbitRotation.y);
+			mat.rotateY(orbitRotation.y);
 			drawPrimitive(prim, mat, defaultShader);
 		});
 	});
