@@ -40,20 +40,21 @@ export abstract class SdkWindow {
 		return cursor;
 	}
 
-	key(code: string, pressed: boolean): void {
+	key(code: string, pressed: boolean): boolean {
 		// console.log(code);
+		return false;
 	}
 
-	mouse(button: number, pressed: boolean): void {
-
+	mouse(button: number, pressed: boolean): boolean {
+		return false;
 	}
 
-	wheel(dy: number): void {
-
+	wheel(dy: number): boolean {
+		return false;
 	}
 
-	mouseMove(dx: number, dy: number): void {
-
+	mouseMove(dx: number, dy: number): boolean {
+		return false;
 	}
 
 	mouseUnlock() {

@@ -3,7 +3,7 @@ import { initEditorGl } from "../render/gl.js";
 import { SdkWindowManager } from "../../../common/sdkwindowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
-import { addHighPriorityShortcuts, addLowPriorityShortcuts, initSdkInput, setKeyDownFunc, setKeyUpFunc, setMouseDownFunc, setMouseMoveFunc, setMouseUpFunc, setPointerLockFunc, setWheelFunc } from "../../../common/sdkinput.js";
+import { addHighPriorityShortcuts, addLowPriorityShortcuts, initSdkInput } from "../../../common/sdkinput.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
@@ -84,7 +84,7 @@ export class Editor {
 
 	async init() {
 		await initEditorGl();
-		initSdkInput();
+		initSdkInput(this.windowManager);
 		this.initEditorInput();
 		initEditorUi();
 		initToolButtons();
@@ -106,44 +106,6 @@ export class Editor {
 	}
 
 	initEditorInput() {
-		setKeyDownFunc((event: KeyboardEvent) => {
-			if (this.activeTool.key(event.code, true)) return;
-			this.windowManager.activeWindow?.key(event.code, true);
-		});
-		setKeyUpFunc((event: KeyboardEvent) => {
-			if (this.activeTool.key(event.code, false)) return;
-			this.windowManager.activeWindow?.key(event.code, false);
-		});
-		setMouseDownFunc((event: MouseEvent) => {
-			if (!this.windowManager.activeWindow) return;
-
-			event.preventDefault();
-
-			(document.activeElement as HTMLElement).blur();
-
-			if (this.activeTool.mouse(event.button, true)) return;
-			this.windowManager.activeWindow?.mouse(event.button, true);
-		});
-		setMouseUpFunc((event: MouseEvent) => {
-			if (this.activeTool.mouse(event.button, false)) return;
-			this.windowManager.activeWindow?.mouse(event.button, false);
-		});
-		setMouseMoveFunc((event: MouseEvent) => {
-			this.windowManager.setActiveWindowUnderMouse();
-			if (this.activeTool.mouseMove(event.movementX, event.movementY)) return;
-			this.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
-		});
-		setWheelFunc((event: WheelEvent) => {
-			this.windowManager.activeWindow?.wheel(event.deltaY);
-		});
-		setPointerLockFunc(() => {
-			if (document.pointerLockElement) {
-
-			} else {
-				this.windowManager.activeWindow?.mouseUnlock();
-			}
-		});
-
 		addLowPriorityShortcuts([{
 			keyCodes: ["BracketLeft"],
 			function: () => this.decreaseGrid()

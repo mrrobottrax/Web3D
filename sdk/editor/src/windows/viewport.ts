@@ -131,4 +131,16 @@ export abstract class Viewport extends SdkWindow {
 	getMouseWorldRounded(): vec3 {
 		return this.gridToWorld(this.mouseToGrid());
 	}
+
+	override key(code: string, pressed: boolean): boolean {
+		return editor.activeTool.key(code, pressed);
+	}
+
+	override mouse(button: number, pressed: boolean): boolean {
+		return editor.activeTool.mouse(button, pressed);
+	}
+
+	override mouseMove(dx: number, dy: number): boolean {
+		return editor.activeTool.mouseMove(dx, dy);
+	}
 }

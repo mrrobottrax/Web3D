@@ -1,6 +1,5 @@
-import { vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
-import { initSdkInput, setMouseDownFunc, setMouseMoveFunc, setMouseUpFunc } from "../../../common/sdkinput.js";
+import { initSdkInput} from "../../../common/sdkinput.js";
 import { SdkWindowManager } from "../../../common/sdkwindowmanager.js";
 import { closeModelFile } from "../file/modelLoader.js";
 import { initModelViewerGl } from "../render/gl.js";
@@ -21,23 +20,7 @@ export class ModelViewer {
 	async init() {
 		await initModelViewerGl();
 
-		initSdkInput();
-		setMouseDownFunc((event: MouseEvent) => {
-			if (!this.windowManager.activeWindow) return;
-
-			event.preventDefault();
-
-			(document.activeElement as HTMLElement).blur();
-
-			this.windowManager.activeWindow?.mouse(event.button, true);
-		});
-		setMouseUpFunc((event: MouseEvent) => {
-			this.windowManager.activeWindow?.mouse(event.button, false);
-		});
-		setMouseMoveFunc((event: MouseEvent) => {
-			this.windowManager.setActiveWindowUnderMouse();
-			this.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
-		});
+		initSdkInput(this.windowManager);
 
 		initModelViewerHeader();
 		initModelViewerFooter();

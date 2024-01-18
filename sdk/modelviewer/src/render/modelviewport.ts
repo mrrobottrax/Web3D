@@ -61,7 +61,7 @@ export class ModelViewPort extends SdkWindow {
 		this.modelViewerRenderFrame();
 	}
 
-	override mouse(button: number, pressed: boolean): void {
+	override mouse(button: number, pressed: boolean): boolean {
 		switch (button) {
 			case 0:
 				this.orbiting = pressed;
@@ -70,14 +70,18 @@ export class ModelViewPort extends SdkWindow {
 				this.panning = pressed;
 				break;
 		}
+
+		return true;
 	}
 
-	override mouseMove(dx: number, dy: number): void {
+	override mouseMove(dx: number, dy: number): boolean {
 		if (this.orbiting) {
 			this.addOrbitRotation(new vec3(-dy, dx, 0));
 		}
 		if (this.panning) {
 			this.addPan(new vec3(dx * 0.01, -dy * 0.01, 0));
 		}
+
+		return true;
 	}
 }

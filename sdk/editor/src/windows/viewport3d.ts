@@ -77,7 +77,9 @@ export class Viewport3D extends Viewport {
 		gl.viewport(this.pos.x, this.pos.y, this.size.x, this.size.y);
 	}
 
-	override mouse(button: number, pressed: boolean): void {
+	override mouse(button: number, pressed: boolean): boolean {
+		if (super.mouse(button, pressed)) return true;
+
 		switch (button) {
 			// move
 			case 2:
@@ -87,6 +89,8 @@ export class Viewport3D extends Viewport {
 					this.stopLook();
 				break;
 		}
+
+		return true;
 	}
 
 	startLook() {
@@ -99,13 +103,16 @@ export class Viewport3D extends Viewport {
 		this.looking = false;
 	}
 
-	mouseMove(dx: number, dy: number): void {
-		if (!this.looking) return;
+	mouseMove(dx: number, dy: number): boolean {
+		if (super.mouseMove(dx, dy)) return true;
+		if (!this.looking) return false;
 
 		this.pitch -= dy * editorConfig.sensitivity * quakeSens;
 		this.yaw -= dx * editorConfig.sensitivity * quakeSens;
 
 		this.camera.rotation = quaternion.eulerRad(this.pitch, this.yaw, 0);
+
+		return true;
 	}
 
 	override mouseUnlock(): void {

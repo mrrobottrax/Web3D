@@ -1,40 +1,11 @@
+import { SdkWindowManager } from "./sdkwindowmanager";
+
 export let mousePosX: number;
 export let mousePosY: number;
 
 let keys: any = {};
 
-let keyDownFunc: Function = () => { };
-export function setKeyDownFunc(func: Function) {
-	keyDownFunc = func;
-}
-let keyUpFunc: Function = () => { };
-export function setKeyUpFunc(func: Function) {
-	keyUpFunc = func;
-}
-
-let mouseDownFunc: Function = () => { };
-export function setMouseDownFunc(func: Function) {
-	mouseDownFunc = func;
-}
-let mouseUpFunc: Function = () => { };
-export function setMouseUpFunc(func: Function) {
-	mouseUpFunc = func;
-}
-let mouseMoveFunc: Function = () => { };
-export function setMouseMoveFunc(func: Function) {
-	mouseMoveFunc = func;
-}
-let wheelFunc: Function = () => { };
-export function setWheelFunc(func: Function) {
-	wheelFunc = func;
-}
-
-let pointerLockFunc: Function = () => { };
-export function setPointerLockFunc(func: Function) {
-	pointerLockFunc = func;
-}
-
-export function initSdkInput() {
+export function initSdkInput(windowManager: SdkWindowManager) {
 	document.addEventListener('keydown', event => {
 		keys[event.code] = true;
 
@@ -46,7 +17,7 @@ export function initSdkInput() {
 
 		if (tryLowShortcuts(event.code)) return;
 
-		keyDownFunc(event);
+		windowManager.activeWindow?.key(event.code, true);
 	});
 	document.addEventListener('keyup', event => {
 		keys[event.code] = false;
@@ -55,11 +26,17 @@ export function initSdkInput() {
 
 		event.preventDefault();
 
-		keyUpFunc(event);
+		windowManager.activeWindow?.key(event.code, false);
 	});
 
 	document.addEventListener("mousedown", event => {
-		mouseDownFunc(event);
+		if (!windowManager.activeWindow) return;
+
+		event.preventDefault();
+
+		(document.activeElement as HTMLElement).blur();
+
+		windowManager.activeWindow?.mouse(event.button, true);
 	});
 
 	document.addEventListener("mouseup", event => {
@@ -67,7 +44,7 @@ export function initSdkInput() {
 
 		event.preventDefault();
 
-		mouseUpFunc(event);
+		windowManager.activeWindow?.mouse(event.button, false);
 	});
 
 	document.addEventListener("mousemove", event => {
@@ -76,11 +53,13 @@ export function initSdkInput() {
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl
 
-		mouseMoveFunc(event);
+		windowManager.setActiveWindowUnderMouse();
+
+		windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
 	});
 
 	document.addEventListener("wheel", event => {
-		wheelFunc(event);
+		windowManager.activeWindow?.wheel(event.deltaY);
 	});
 
 	document.oncontextmenu = event => {
@@ -88,7 +67,7 @@ export function initSdkInput() {
 	}
 
 	document.onpointerlockchange = () => {
-		pointerLockFunc();
+		windowManager.activeWindow?.mouseUnlock();
 	}
 }
 

@@ -90,7 +90,9 @@ export class Viewport2D extends Viewport {
 		gl.useProgram(null);
 	}
 
-	override mouse(button: number, pressed: boolean): void {
+	override mouse(button: number, pressed: boolean): boolean {
+		if (super.mouse(button, pressed)) return true;
+
 		switch (button) {
 			// pan
 			case 2:
@@ -100,9 +102,13 @@ export class Viewport2D extends Viewport {
 					this.stopLook();
 				break;
 		}
+
+		return true;
 	}
 
-	override wheel(dy: number): void {
+	override wheel(dy: number): boolean {
+		if (super.wheel(dy)) return true;
+
 		const scrollAmt = 1.1;
 
 		const vpMouse = new vec3(mousePosX - glProperties.offsetX - this.pos.x - this.size.x * 0.5, mousePosY - glProperties.offsetY - this.pos.y - this.size.y * 0.5, 0);
@@ -122,6 +128,8 @@ export class Viewport2D extends Viewport {
 		this.camera.position.add(delta);
 
 		this.camera.calcOrthographicMatrix(this.size.x, this.size.y);
+
+		return true;
 	}
 
 	startLook() {
@@ -134,12 +142,15 @@ export class Viewport2D extends Viewport {
 		editor.windowManager.lockActive = false;
 	}
 
-	mouseMove(dx: number, dy: number): void {
-		if (!this.looking) return;
+	mouseMove(dx: number, dy: number): boolean {
+		if (super.mouseMove(dx, dy)) return true;
+		if (!this.looking) return false;
 
 		let add = new vec3(-dx, dy, 0);
 		add = add.times(1 / this.getPixelsPerUnit());
 		this.camera.position.add(add);
+
+		return true;
 	}
 
 	override mouseUnlock(): void {
