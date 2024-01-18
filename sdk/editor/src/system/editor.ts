@@ -3,11 +3,11 @@ import { initEditorGl } from "../render/gl.js";
 import { WindowManager } from "../windows/windowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
-import { initEditorInput } from "./input.js";
+import { addHighPriorityShortcuts, addLowPriorityShortcuts, initSdkInput, setKeyDownFunc, setKeyUpFunc, setMouseDownFunc, setMouseMoveFunc, setMouseUpFunc, setPointerLockFunc, setWheelFunc } from "./input.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
-import { SelectTool } from "../tools/selecttool.js";
+import { SelectMode, SelectTool } from "../tools/selecttool.js";
 import { EditorFileManagement } from "../file/filemanagement.js";
 import { TexturePanel } from "./texturepanel.js";
 import { CutTool } from "../tools/cuttool.js";
@@ -19,6 +19,7 @@ import { EntityTool } from "../tools/entitytool.js";
 import { EntityPanel } from "./entitypanel.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
+import { initEditorUi } from "./ui.js";
 
 export class Editor {
 	meshes: Set<EditorMesh> = new Set();
@@ -83,7 +84,9 @@ export class Editor {
 
 	async init() {
 		await initEditorGl();
-		initEditorInput();
+		initSdkInput();
+		this.initEditorInput();
+		initEditorUi();
 		initToolButtons();
 		TexturePanel.initTexturePanel();
 		EntityPanel.initEntityPanel();
@@ -100,6 +103,103 @@ export class Editor {
 		// drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1], Infinity);
 
 		this.translateTool.init();
+	}
+
+	initEditorInput() {
+		setKeyDownFunc((event: KeyboardEvent) => {
+			if (this.activeTool.key(event.code, true)) return;
+			this.windowManager.activeWindow?.key(event.code, true);
+		});
+		setKeyUpFunc((event: KeyboardEvent) => {
+			if (this.activeTool.key(event.code, false)) return;
+			this.windowManager.activeWindow?.key(event.code, false);
+		});
+		setMouseDownFunc((event: MouseEvent) => {
+			if (!this.windowManager.activeWindow) return;
+
+			event.preventDefault();
+
+			(document.activeElement as HTMLElement).blur();
+
+			if (this.activeTool.mouse(event.button, true)) return;
+			this.windowManager.activeWindow?.mouse(event.button, true);
+		});
+		setMouseUpFunc((event: MouseEvent) => {
+			if (this.activeTool.mouse(event.button, false)) return;
+			this.windowManager.activeWindow?.mouse(event.button, false);
+		});
+		setMouseMoveFunc((event: MouseEvent) => {
+			this.windowManager.setActiveWindowUnderMouse();
+			if (this.activeTool.mouseMove(event.movementX, event.movementY)) return;
+			this.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
+		});
+		setWheelFunc((event: WheelEvent) => {
+			this.windowManager.activeWindow?.wheel(event.deltaY);
+		});
+		setPointerLockFunc(() => {
+			if (document.pointerLockElement) {
+
+			} else {
+				this.windowManager.activeWindow?.mouseUnlock();
+			}
+		});
+
+		addLowPriorityShortcuts([{
+			keyCodes: ["BracketLeft"],
+			function: () => this.decreaseGrid()
+		},
+		{
+			keyCodes: ["BracketRight"],
+			function: () => this.increaseGrid()
+		},
+		{
+			keyCodes: ["Digit1"],
+			function: () => this.selectTool.setSelectMode(SelectMode.Vertex)
+		},
+		{
+			keyCodes: ["Digit2"],
+			function: () => this.selectTool.setSelectMode(SelectMode.Edge)
+		},
+		{
+			keyCodes: ["Digit3"],
+			function: () => this.selectTool.setSelectMode(SelectMode.Face)
+		},
+		{
+			keyCodes: ["Digit4"],
+			function: () => this.selectTool.setSelectMode(SelectMode.Mesh)
+		},
+		{
+			keyCodes: ["KeyQ"],
+			function: () => this.setTool(ToolEnum.Select)
+		},
+		{
+			keyCodes: ["KeyB"],
+			function: () => this.setTool(ToolEnum.Block)
+		},
+		{
+			keyCodes: ["KeyC"],
+			function: () => this.setTool(ToolEnum.Cut)
+		},
+		{
+			keyCodes: ["KeyE"],
+			function: () => this.setTool(ToolEnum.Scale)
+		},
+		{
+			keyCodes: ["KeyR"],
+			function: () => this.setTool(ToolEnum.Rotate)
+		},
+		{
+			keyCodes: ["KeyT"],
+			function: () => this.setTool(ToolEnum.Translate)
+		},
+		{
+			keyCodes: ["ControlLeft", "KeyA"],
+			function: () => { if (this.activeToolEnum == ToolEnum.Select) this.selectTool.selectAll() }
+		}]);
+		addHighPriorityShortcuts([{
+			keyCodes: ["ShiftLeft", "KeyE"],
+			function: () => this.setTool(ToolEnum.Entity)
+		}]);
 	}
 
 	frame() {

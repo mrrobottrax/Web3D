@@ -2,7 +2,7 @@ import { setImageGlSettings } from "../../../../src/client/mesh/texture.js";
 import { gl } from "../../../../src/client/render/gl.js";
 import { getFileType, getFileWithoutDirectory } from "../../../../src/common/file/fileFunctions.js";
 import { Primitive } from "../../../../src/common/mesh/model.js";
-import { setModel } from "../render/render.js";
+import { modelViewer } from "../main.js";
 import { setCurrentModelText } from "../ui/footer.js";
 import { ModelViewerGltfLoader } from "./modelViewGltfLoader.js";
 
@@ -101,7 +101,7 @@ async function tryOpenGltf() {
 		if (binBuffer) {
 			const mdl = await ModelViewerGltfLoader.loadGltf(gltfJson, [binBuffer], "");
 
-			setModel(mdl);
+			modelViewer.setModel(mdl);
 		}
 	}
 }
@@ -123,7 +123,7 @@ export function closeModelFile() {
 	tryingToLoadModel = false;
 
 	setCurrentModelText("NO MODEL LOADED. Load a model by opening either a .gmdl file or a .gltf and a .bin file. Textures must be added after.")
-	setModel(null!);
+	modelViewer.setModel(null!);
 
 	// todo:
 }

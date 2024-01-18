@@ -19,7 +19,6 @@ export abstract class EditorWindow {
 	}
 
 	abstract frame(): void;
-	tick(): void { };
 
 	recalculateSize(): void {
 		this.pos.x = glProperties.width * this.ratioPos.x;

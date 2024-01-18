@@ -1,14 +1,40 @@
-import { EditorFileManagement } from "../file/filemanagement.js";
-import { editor } from "../main.js";
-import { SelectMode } from "../tools/selecttool.js";
-import { ToolEnum } from "../tools/tool.js";
-
 export let mousePosX: number;
 export let mousePosY: number;
 
 let keys: any = {};
 
-export function initEditorInput() {
+let keyDownFunc: Function = () => { };
+export function setKeyDownFunc(func: Function) {
+	keyDownFunc = func;
+}
+let keyUpFunc: Function = () => { };
+export function setKeyUpFunc(func: Function) {
+	keyUpFunc = func;
+}
+
+let mouseDownFunc: Function = () => { };
+export function setMouseDownFunc(func: Function) {
+	mouseDownFunc = func;
+}
+let mouseUpFunc: Function = () => { };
+export function setMouseUpFunc(func: Function) {
+	mouseUpFunc = func;
+}
+let mouseMoveFunc: Function = () => { };
+export function setMouseMoveFunc(func: Function) {
+	mouseMoveFunc = func;
+}
+let wheelFunc: Function = () => { };
+export function setWheelFunc(func: Function) {
+	wheelFunc = func;
+}
+
+let pointerLockFunc: Function = () => { };
+export function setPointerLockFunc(func: Function) {
+	pointerLockFunc = func;
+}
+
+export function initSdkInput() {
 	document.addEventListener('keydown', event => {
 		keys[event.code] = true;
 
@@ -20,8 +46,7 @@ export function initEditorInput() {
 
 		if (tryLowShortcuts(event.code)) return;
 
-		if (editor.activeTool.key(event.code, true)) return;
-		editor.windowManager.activeWindow?.key(event.code, true);
+		keyDownFunc(event);
 	});
 	document.addEventListener('keyup', event => {
 		keys[event.code] = false;
@@ -30,19 +55,11 @@ export function initEditorInput() {
 
 		event.preventDefault();
 
-		if (editor.activeTool.key(event.code, false)) return;
-		editor.windowManager.activeWindow?.key(event.code, false);
+		keyUpFunc(event);
 	});
 
 	document.addEventListener("mousedown", event => {
-		if (!editor.windowManager.activeWindow) return;
-
-		event.preventDefault();
-
-		(document.activeElement as HTMLElement).blur();
-
-		if (editor.activeTool.mouse(event.button, true)) return;
-		editor.windowManager.activeWindow?.mouse(event.button, true);
+		mouseDownFunc(event);
 	});
 
 	document.addEventListener("mouseup", event => {
@@ -50,8 +67,7 @@ export function initEditorInput() {
 
 		event.preventDefault();
 
-		if (editor.activeTool.mouse(event.button, false)) return;
-		editor.windowManager.activeWindow?.mouse(event.button, false);
+		mouseUpFunc(event);
 	});
 
 	document.addEventListener("mousemove", event => {
@@ -60,46 +76,20 @@ export function initEditorInput() {
 		mousePosX = event.pageX;
 		mousePosY = window.innerHeight - event.pageY; // match webgl
 
-		editor.windowManager.setActiveWindowUnderMouse();
-		if (editor.activeTool.mouseMove(event.movementX, event.movementY)) return;
-		editor.windowManager.activeWindow?.mouseMove(event.movementX, event.movementY);
+		mouseMoveFunc(event);
 	});
 
 	document.addEventListener("wheel", event => {
-		editor.windowManager.activeWindow?.wheel(event.deltaY);
+		wheelFunc(event);
 	});
 
 	document.oncontextmenu = event => {
 		event.preventDefault();
 	}
 
-	document.onpointerlockchange = event => {
-		if (document.pointerLockElement) {
-
-		} else {
-			editor.windowManager.activeWindow?.mouseUnlock();
-		}
+	document.onpointerlockchange = () => {
+		pointerLockFunc();
 	}
-
-	// buttons
-	// windows menu
-	(window as any).exportMap = () => EditorFileManagement.exportMap();
-	(window as any).saveMap = () => EditorFileManagement.saveMap();
-	(window as any).closeMap = () => EditorFileManagement.closeMap();
-	(window as any).loadMap = () => {
-		const fileInput = document.createElement("input");
-		fileInput.type = "file";
-		fileInput.accept = ".level";
-
-		fileInput.addEventListener("input", () => {
-			if (fileInput && fileInput.files) {
-				EditorFileManagement.loadMap(fileInput.files[0]);
-			}
-		});
-
-		fileInput.click();
-		fileInput.remove();
-	};
 }
 
 export function getKeyDown(code: string): boolean {
@@ -110,67 +100,15 @@ interface Shortcut {
 	keyCodes: string[];
 	function: Function;
 }
-let lowPriorityShortcuts: Shortcut[] = [
-	{
-		keyCodes: ["BracketLeft"],
-		function: () => editor.decreaseGrid()
-	},
-	{
-		keyCodes: ["BracketRight"],
-		function: () => editor.increaseGrid()
-	},
-	{
-		keyCodes: ["Digit1"],
-		function: () => editor.selectTool.setSelectMode(SelectMode.Vertex)
-	},
-	{
-		keyCodes: ["Digit2"],
-		function: () => editor.selectTool.setSelectMode(SelectMode.Edge)
-	},
-	{
-		keyCodes: ["Digit3"],
-		function: () => editor.selectTool.setSelectMode(SelectMode.Face)
-	},
-	{
-		keyCodes: ["Digit4"],
-		function: () => editor.selectTool.setSelectMode(SelectMode.Mesh)
-	},
-	{
-		keyCodes: ["KeyQ"],
-		function: () => editor.setTool(ToolEnum.Select)
-	},
-	{
-		keyCodes: ["KeyB"],
-		function: () => editor.setTool(ToolEnum.Block)
-	},
-	{
-		keyCodes: ["KeyC"],
-		function: () => editor.setTool(ToolEnum.Cut)
-	},
-	{
-		keyCodes: ["KeyE"],
-		function: () => editor.setTool(ToolEnum.Scale)
-	},
-	{
-		keyCodes: ["KeyR"],
-		function: () => editor.setTool(ToolEnum.Rotate)
-	},
-	{
-		keyCodes: ["KeyT"],
-		function: () => editor.setTool(ToolEnum.Translate)
-	},
-	{
-		keyCodes: ["ControlLeft", "KeyA"],
-		function: () => { if (editor.activeToolEnum == ToolEnum.Select) editor.selectTool.selectAll() }
-	},
-];
+let lowPriorityShortcuts: Shortcut[] = [];
+export function addLowPriorityShortcuts(shortcuts: Shortcut[]) {
+	lowPriorityShortcuts = lowPriorityShortcuts.concat(shortcuts);
+}
 
-let highPriorityShortcuts: Shortcut[] = [
-	{
-		keyCodes: ["ShiftLeft", "KeyE"],
-		function: () => editor.setTool(ToolEnum.Entity)
-	},
-]
+let highPriorityShortcuts: Shortcut[] = [];
+export function addHighPriorityShortcuts(shortcuts: Shortcut[]) {
+	highPriorityShortcuts = highPriorityShortcuts.concat(shortcuts);
+}
 
 function tryShortCut(shortcut: Shortcut, code: string) {
 	// check if all keys in shortcut are down
