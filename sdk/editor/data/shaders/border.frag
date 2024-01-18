@@ -1,25 +1,24 @@
 precision mediump float;
 
-varying vec2 position;
+uniform vec2 uResolution;
 
-const float margin = 0.015;
-const float thickness = 0.005;
+varying vec2 vPosition;
+
+const float margin = 10.0;
+const float thickness = 2.0;
 
 void main() {
-	float a = step(abs(position.x), 1.0 - margin);
-	float b = step(abs(position.y), 1.0 - margin);
+	vec2 pos = vPosition * uResolution;
 
-	float m = a * b;
+	float outerX = step(abs(pos.x), uResolution.x - margin);
+	float outerY = step(abs(pos.y), uResolution.y - margin);
 
-	float c = step(1.0 - thickness - margin, abs(position.x));
-	float d = step(1.0 - thickness - margin, abs(position.y));
+	float outer = outerX * outerY;
 
-	float n = max(c, d);
+	float innerX = step(uResolution.x - margin - thickness, abs(pos.x));
+	float innerY = step(uResolution.y - margin - thickness, abs(pos.y));
 
-	float x = m * n;
+	float inner = max(innerX, innerY);
 
-	if(x <= 0.0)
-		discard;
-
-	gl_FragColor = vec4(x, 0, 0, 1.0);
+	gl_FragColor = vec4(1.0, 0.0, 0.0, inner * outer);
 }

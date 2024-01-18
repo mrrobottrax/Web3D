@@ -509,6 +509,8 @@ export class SelectTool extends Tool {
 	}
 
 	drawVertexHandles(viewport: Viewport) {
+		// todo: use point sprites
+
 		gl.useProgram(solidShader.program);
 
 		// make em slightly more visible than they should be

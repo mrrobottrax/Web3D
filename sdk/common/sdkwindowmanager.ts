@@ -1,4 +1,5 @@
-import { canvas, glProperties } from "../../src/client/render/gl.js";
+import { canvas, gl, glProperties } from "../../src/client/render/gl.js";
+import { borderShader } from "./gl.js";
 import { SdkWindow } from "./sdkwindow.js";
 
 export class SdkWindowManager {
@@ -15,6 +16,10 @@ export class SdkWindowManager {
 	}
 
 	updateWindows() {
+		gl.useProgram(borderShader.program);
+		gl.uniform2f(borderShader.resolution, glProperties.width, glProperties.height);
+		gl.useProgram(null);
+
 		this.windows.forEach(window => {
 			if (glProperties.resolutionChanged) {
 				window.recalculateSize();

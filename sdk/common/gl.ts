@@ -15,8 +15,12 @@ export let gridShader: GridShader = {
 	offsetUnif: null
 };
 
-export let borderShader: ShaderBase = {
-	program: null
+interface BorderShader extends ShaderBase {
+	resolution: WebGLUniformLocation | null;
+}
+export let borderShader: BorderShader = {
+	program: null,
+	resolution: null
 };
 
 export async function initSdkGl(): Promise<void> {
@@ -110,4 +114,8 @@ async function loadGridShader() {
 
 async function loadBorderShader() {
 	borderShader.program = await initProgramFromWeb("sdk/editor/data/shaders/border.vert", "sdk/editor/data/shaders/border.frag");
+
+	if (!borderShader.program) return;
+
+	borderShader.resolution = gl.getUniformLocation(borderShader.program, "uResolution");
 }

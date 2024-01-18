@@ -1,8 +1,8 @@
 attribute vec4 aVertexPosition;
 
-varying vec2 position;
+varying vec2 vPosition;
 
 void main() {
-	position = aVertexPosition.xy;
+	vPosition = aVertexPosition.xy;
 	gl_Position = aVertexPosition;
 }
