@@ -3,7 +3,7 @@ import { initSdkGl } from "../../../common/gl.js";
 import { initSdkInput} from "../../../common/sdkinput.js";
 import { SdkWindowManager } from "../../../common/sdkwindowmanager.js";
 import { closeModelFile } from "../file/modelLoader.js";
-import { ModelViewPort } from "../render/modelviewport.js";
+import { ModelViewPort } from "../windows/modelviewport.js";
 import { initModelViewerFooter } from "../ui/footer.js";
 import { initModelViewerHeader } from "../ui/header.js";
 
