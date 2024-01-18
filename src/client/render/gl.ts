@@ -258,7 +258,7 @@ export function initializeGl() {
 	gl = _gl;
 
 	// clear
-	gl.clearColor(0.15, 0.15, 0.15, 1.0);
+	gl.clearColor(0.1, 0.1, 0.1, 1.0);
 	gl.clearDepth(1.0);
 
 	// depth
