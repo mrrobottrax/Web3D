@@ -6,7 +6,7 @@ import gMath from "../../../../src/common/math/gmath.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
-import { gridShader } from "../render/gl.js";
+import { gridShader } from "../../../common/gl.js";
 import { mousePosX, mousePosY } from "../../../common/sdkinput.js";
 import { Viewport } from "./viewport.js";
 

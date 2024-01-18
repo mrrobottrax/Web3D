@@ -95,7 +95,7 @@ export class Viewport3D extends Viewport {
 		lockCursor();
 		this.looking = true;
 	}
-
+	
 	stopLook() {
 		unlockCursor();
 		this.looking = false;

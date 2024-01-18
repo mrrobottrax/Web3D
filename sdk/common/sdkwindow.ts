@@ -1,7 +1,7 @@
 import { gl, glProperties } from "../../src/client/render/gl.js";
 import { rectVao } from "../../src/client/render/ui.js";
 import { vec2 } from "../../src/common/math/vector.js";
-import { borderShader } from "../editor/src/render/gl.js";
+import { borderShader } from "./gl.js";
 import { mousePosX, mousePosY } from "./sdkinput.js";
 
 export abstract class SdkWindow {

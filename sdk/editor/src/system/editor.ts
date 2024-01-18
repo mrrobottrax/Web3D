@@ -1,5 +1,5 @@
 import { EditorFace, EditorMesh } from "../mesh/editormesh.js";
-import { initEditorGl } from "../render/gl.js";
+import { initSdkGl } from "../../../common/gl.js";
 import { SdkWindowManager } from "../../../common/sdkwindowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
@@ -83,7 +83,7 @@ export class Editor {
 	}
 
 	async init() {
-		await initEditorGl();
+		await initSdkGl();
 		initSdkInput(this.windowManager);
 		this.initEditorInput();
 		initEditorUi();

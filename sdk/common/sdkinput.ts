@@ -67,7 +67,8 @@ export function initSdkInput(windowManager: SdkWindowManager) {
 	}
 
 	document.onpointerlockchange = () => {
-		windowManager.activeWindow?.mouseUnlock();
+		if (!document.pointerLockElement)
+			windowManager.activeWindow?.mouseUnlock();
 	}
 }
 

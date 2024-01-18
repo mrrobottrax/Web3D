@@ -29,6 +29,8 @@ export class Input {
 			event.preventDefault();
 			lockCursor();
 			this.mouse(event.button, true);
+
+			startAudio();
 		});
 
 		document.addEventListener("mouseup", event => {
@@ -38,8 +40,6 @@ export class Input {
 
 		document.addEventListener("mousemove", event => {
 			this.mouseLook(event.movementX, event.movementY, player)
-
-			startAudio();
 		});
 
 		document.onpointerlockchange = event => {
@@ -49,6 +49,10 @@ export class Input {
 				this.pointerLocked = false;
 				this.clearButtons();
 			}
+		}
+
+		document.oncontextmenu = event => {
+			event.preventDefault();
 		}
 	}
 
