@@ -65,8 +65,6 @@ export class Viewport2D extends Viewport {
 
 		this.drawTool();
 		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
-
-		this.drawBorder();
 	}
 
 	// grid background

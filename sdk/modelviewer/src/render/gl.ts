@@ -1,5 +1,6 @@
 import { defaultShader, gl, initCanvas, initDefaultShaders, initLineBuffer, initProgramFromWeb, initializeGl, resizeCanvas, skinnedShader, uiShader } from "../../../../src/client/render/gl.js";
 import { initUiBuffers } from "../../../../src/client/render/ui.js";
+import { borderShader, gridShader } from "../../../editor/src/render/gl.js";
 
 export async function initModelViewerGl(): Promise<void> {
 	initCanvas();
@@ -21,13 +22,15 @@ async function initModelViewerShaders() {
 		initProgramFromWeb("data/shaders/default/default.vert", "data/shaders/default/default.frag"),
 		initProgramFromWeb("data/shaders/default/ui.vert", "data/shaders/default/ui.frag"),
 		initProgramFromWeb("data/shaders/default/default_skinned.vert", "data/shaders/default/default.frag"),
+		initProgramFromWeb("sdk/editor/data/shaders/border.vert", "sdk/editor/data/shaders/border.frag"),
 	]).then((results) => {
 		defaultShader.program = results[0];
 		uiShader.program = results[1];
 		skinnedShader.program = results[2];
+		borderShader.program = results[3];
 	});
 
-	if (!defaultShader.program || !uiShader.program || !skinnedShader.program)
+	if (!defaultShader.program || !uiShader.program || !skinnedShader.program || !gridShader.program)
 		return;
 
 	defaultShader.modelViewMatrixUnif = gl.getUniformLocation(defaultShader.program, "uModelViewMatrix");
@@ -51,6 +54,11 @@ async function initModelViewerShaders() {
 	skinnedShader.fogColorUnif = gl.getUniformLocation(skinnedShader.program, "uFogColor");
 	skinnedShader.fogNearUnif = gl.getUniformLocation(skinnedShader.program, "uFogNear");
 	skinnedShader.fogFarUnif = gl.getUniformLocation(skinnedShader.program, "uFogFar");
+
+	gridShader.fillColorUnif = gl.getUniformLocation(gridShader.program, "uFillColor");
+	gridShader.zeroFillColorUnif = gl.getUniformLocation(gridShader.program, "uZeroFillColor");
+	gridShader.gridSizeUnif = gl.getUniformLocation(gridShader.program, "uGridSize");
+	gridShader.offsetUnif = gl.getUniformLocation(gridShader.program, "uOffset");
 
 	// no fog
 	gl.useProgram(defaultShader.program);

@@ -1,7 +1,6 @@
 import { Camera } from "../../../../src/client/render/camera.js";
 import { defaultShader, gl, solidShader } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
-import { rectVao } from "../../../../src/client/render/ui.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
@@ -67,22 +66,6 @@ export abstract class Viewport extends SdkWindow {
 			gl.bindVertexArray(null);
 		});
 
-		gl.useProgram(null);
-	}
-
-	drawBorder() {
-		if (editor.windowManager.activeWindow != this) {
-			return
-		}
-
-		gl.useProgram(borderShader.program);
-		gl.bindVertexArray(rectVao);
-		gl.disable(gl.DEPTH_TEST);
-
-		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-
-		gl.enable(gl.DEPTH_TEST);
-		gl.bindVertexArray(null);
 		gl.useProgram(null);
 	}
 

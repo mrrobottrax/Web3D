@@ -21,6 +21,9 @@ export class SdkWindowManager {
 			}
 
 			window.frame();
+
+			// could be slow but must be done in foreach for order
+			if (window == this.activeWindow) window.drawBorder();
 		});
 	}
 

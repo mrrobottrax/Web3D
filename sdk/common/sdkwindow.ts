@@ -1,5 +1,7 @@
-import { glProperties } from "../../src/client/render/gl.js";
+import { gl, glProperties } from "../../src/client/render/gl.js";
+import { rectVao } from "../../src/client/render/ui.js";
 import { vec2 } from "../../src/common/math/vector.js";
+import { borderShader } from "../editor/src/render/gl.js";
 import { mousePosX, mousePosY } from "./sdkinput.js";
 
 export abstract class SdkWindow {
@@ -59,5 +61,17 @@ export abstract class SdkWindow {
 
 	mouseUnlock() {
 
+	}
+
+	drawBorder() {
+		gl.useProgram(borderShader.program);
+		gl.bindVertexArray(rectVao);
+		gl.disable(gl.DEPTH_TEST);
+
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+		gl.enable(gl.DEPTH_TEST);
+		gl.bindVertexArray(null);
+		gl.useProgram(null);
 	}
 }

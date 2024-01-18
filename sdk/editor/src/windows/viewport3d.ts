@@ -63,8 +63,6 @@ export class Viewport3D extends Viewport {
 		this.drawEntities();
 		this.drawTool();
 		renderDebug(this.camera.perspectiveMatrix, this.camera.viewMatrix);
-
-		this.drawBorder();
 	}
 
 	drawSetup() {
