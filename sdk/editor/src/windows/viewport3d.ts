@@ -9,7 +9,7 @@ import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Time } from "../../../../src/common/system/time.js";
 import { editor } from "../main.js";
 import { editorConfig } from "../system/editorconfig.js";
-import { getKeyDown } from "../system/input.js";
+import { getSdkKeyDown } from "../../../common/sdkinput.js";
 import { Viewport } from "./viewport.js";
 
 export class Viewport3D extends Viewport {
@@ -39,18 +39,18 @@ export class Viewport3D extends Viewport {
 
 		let moveVector = vec3.origin();
 
-		if (getKeyDown("KeyA")) moveVector.x -= 1;
-		if (getKeyDown("KeyD")) moveVector.x += 1;
-		if (getKeyDown("KeyW")) moveVector.z -= 1;
-		if (getKeyDown("KeyS")) moveVector.z += 1;
+		if (getSdkKeyDown("KeyA")) moveVector.x -= 1;
+		if (getSdkKeyDown("KeyD")) moveVector.x += 1;
+		if (getSdkKeyDown("KeyW")) moveVector.z -= 1;
+		if (getSdkKeyDown("KeyS")) moveVector.z += 1;
 
 		moveVector = moveVector.rotatePitch(this.pitch);
 		moveVector = moveVector.rotateYaw(this.yaw);
 
 		moveVector.normalise();
 
-		if (getKeyDown("Space")) moveVector.y += 0.8;
-		if (getKeyDown("ShiftLeft")) moveVector.y -= 0.8;
+		if (getSdkKeyDown("Space")) moveVector.y += 0.8;
+		if (getSdkKeyDown("ShiftLeft")) moveVector.y -= 0.8;
 
 
 		this.camera.position.add(moveVector.times(Time.deltaTime * editorConfig.moveSpeed));

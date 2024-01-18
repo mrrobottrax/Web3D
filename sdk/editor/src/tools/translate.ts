@@ -6,7 +6,7 @@ import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorVertex } from "../mesh/editormesh.js";
-import { getKeyDown } from "../system/input.js";
+import { getSdkKeyDown } from "../../../common/sdkinput.js";
 import { Viewport } from "../windows/viewport.js";
 import { EntityTool } from "./entitytool.js";
 import { SelectExtension } from "./selectextension.js";
@@ -206,7 +206,7 @@ export class TranslateTool extends SelectExtension {
 			}
 
 			// extrude
-			if (!this.extruding && getKeyDown("ShiftLeft")) {
+			if (!this.extruding && getSdkKeyDown("ShiftLeft")) {
 				this.extruding = true;
 
 				switch (select.mode) {

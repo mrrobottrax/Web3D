@@ -92,7 +92,7 @@ export function initSdkInput() {
 	}
 }
 
-export function getKeyDown(code: string): boolean {
+export function getSdkKeyDown(code: string): boolean {
 	return keys[code];
 }
 

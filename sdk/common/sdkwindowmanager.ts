@@ -1,16 +1,16 @@
-import { canvas, glProperties } from "../../../../src/client/render/gl.js";
-import { EditorWindow } from "./window.js";
+import { canvas, glProperties } from "../../src/client/render/gl.js";
+import { SdkWindow } from "./sdkwindow.js";
 
-export class WindowManager {
-	windows: EditorWindow[] = [];
-	activeWindow: EditorWindow | null;
+export class SdkWindowManager {
+	windows: SdkWindow[] = [];
+	activeWindow: SdkWindow | null;
 	lockActive = false;
 
 	constructor() {
 		this.activeWindow = null;
 	}
 
-	addWindow(window: EditorWindow) {
+	addWindow(window: SdkWindow) {
 		this.windows.push(window);
 	}
 

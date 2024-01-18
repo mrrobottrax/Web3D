@@ -1,5 +1,5 @@
 import { updateTime } from "../../../src/common/system/time.js";
-import { ModelViewer } from "./system/modelViewer.js";
+import { ModelViewer } from "./system/modelviewer.js";
 
 export const modelViewer = new ModelViewer();
 

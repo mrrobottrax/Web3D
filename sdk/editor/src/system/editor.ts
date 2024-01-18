@@ -1,9 +1,9 @@
 import { EditorFace, EditorMesh } from "../mesh/editormesh.js";
 import { initEditorGl } from "../render/gl.js";
-import { WindowManager } from "../windows/windowmanager.js";
+import { SdkWindowManager } from "../../../common/sdkwindowmanager.js";
 import { Viewport2D, Viewport2DAngle } from "../windows/viewport2d.js";
 import { Viewport3D } from "../windows/viewport3d.js";
-import { addHighPriorityShortcuts, addLowPriorityShortcuts, initSdkInput, setKeyDownFunc, setKeyUpFunc, setMouseDownFunc, setMouseMoveFunc, setMouseUpFunc, setPointerLockFunc, setWheelFunc } from "./input.js";
+import { addHighPriorityShortcuts, addLowPriorityShortcuts, initSdkInput, setKeyDownFunc, setKeyUpFunc, setMouseDownFunc, setMouseMoveFunc, setMouseUpFunc, setPointerLockFunc, setWheelFunc } from "../../../common/sdkinput.js";
 import { gl, glEndFrame, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { Tool, ToolEnum, getToolButtons as initToolButtons, updateToolButtonVisuals } from "../tools/tool.js";
 import { BlockTool } from "../tools/blocktool.js";
@@ -32,7 +32,7 @@ export class Editor {
 	gridRotation: quaternion = quaternion.identity();
 	gridOffset: number = 0;
 
-	windowManager: WindowManager;
+	windowManager: SdkWindowManager;
 	selectTool: SelectTool;
 	translateTool: TranslateTool;
 	rotateTool: RotateTool;
@@ -42,7 +42,7 @@ export class Editor {
 	cutTool: CutTool;
 
 	constructor() {
-		this.windowManager = new WindowManager();
+		this.windowManager = new SdkWindowManager();
 
 		this.selectTool = new SelectTool();
 		this.translateTool = new TranslateTool();

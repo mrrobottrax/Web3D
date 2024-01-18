@@ -8,7 +8,7 @@ import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
-import { getKeyDown } from "../system/input.js";
+import { getSdkKeyDown } from "../../../common/sdkinput.js";
 import { PropertiesPanel } from "../system/propertiespanel.js";
 import { Viewport } from "../windows/viewport.js";
 import { Tool, ToolEnum } from "./tool.js";
@@ -224,7 +224,7 @@ export class SelectTool extends Tool {
 	}
 
 	key(code: string, pressed: boolean): boolean {
-		this.cursorCopy = getKeyDown("ShiftLeft") || getKeyDown("ControlLeft");
+		this.cursorCopy = getSdkKeyDown("ShiftLeft") || getSdkKeyDown("ControlLeft");
 
 		if (pressed) {
 			switch (code) {
@@ -885,9 +885,9 @@ export class SelectTool extends Tool {
 			PropertiesPanel.updateProperties();
 		}
 
-		if (getKeyDown("ShiftLeft")) {
+		if (getSdkKeyDown("ShiftLeft")) {
 			addThing();
-		} else if (getKeyDown("ControlLeft")) {
+		} else if (getSdkKeyDown("ControlLeft")) {
 			if (this.mode != SelectMode.Mesh) {
 				addThing(true);
 				this.vertexUnderCursor = null;

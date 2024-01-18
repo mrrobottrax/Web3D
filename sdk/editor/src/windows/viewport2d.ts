@@ -7,7 +7,7 @@ import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { editor } from "../main.js";
 import { gridShader } from "../render/gl.js";
-import { mousePosX, mousePosY } from "../system/input.js";
+import { mousePosX, mousePosY } from "../../../common/sdkinput.js";
 import { Viewport } from "./viewport.js";
 
 export enum Viewport2DAngle {

@@ -2,10 +2,10 @@ import { Camera } from "../../../../src/client/render/camera.js";
 import { defaultShader, gl, glEndFrame, glProperties, resizeCanvas } from "../../../../src/client/render/gl.js";
 import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
-import { EditorWindow } from "../../../editor/src/windows/window.js";
+import { SdkWindow } from "../../../common/sdkwindow.js";
 import { modelViewer } from "../main.js";
 
-export class ModelViewPort extends EditorWindow {
+export class ModelViewPort extends SdkWindow {
 	camera: Camera = new Camera(80, new vec3(0, 0, 0), quaternion.identity());
 
 	orbitRotation = vec3.origin();

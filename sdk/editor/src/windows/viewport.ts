@@ -8,9 +8,9 @@ import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
 import { editor } from "../main.js";
 import { borderShader } from "../render/gl.js";
 import { ToolEnum } from "../tools/tool.js";
-import { EditorWindow } from "./window.js";
+import { SdkWindow } from "../../../common/sdkwindow.js";
 
-export abstract class Viewport extends EditorWindow {
+export abstract class Viewport extends SdkWindow {
 	camera!: Camera;
 	looking!: boolean;
 	perspective: boolean = false;

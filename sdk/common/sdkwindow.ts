@@ -1,8 +1,8 @@
-import { glProperties } from "../../../../src/client/render/gl.js";
-import { vec2 } from "../../../../src/common/math/vector.js";
-import { mousePosX, mousePosY } from "../system/input.js";
+import { glProperties } from "../../src/client/render/gl.js";
+import { vec2 } from "../../src/common/math/vector.js";
+import { mousePosX, mousePosY } from "./sdkinput.js";
 
-export abstract class EditorWindow {
+export abstract class SdkWindow {
 	pos: vec2;
 	size: vec2
 
