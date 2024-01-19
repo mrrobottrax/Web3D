@@ -60,7 +60,7 @@ export class Client {
 		this.nextCmdNumber = 0;
 		input.initInput(this.localPlayer);
 
-		drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
+		// drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
 	}
 
 	public connect(url: string): void {
