@@ -1,0 +1,6 @@
+.hiddensection {
+	display: none;
+	border: #3d3d3d;
+	border-style: dotted;
+	border-width: 1px;
+}

@@ -9,7 +9,9 @@
 <head>
 	<link rel="stylesheet" href="sdk/toolstyle.css">
 	<link rel="stylesheet" href="sdk/editorstyle.css">
+	<link rel="stylesheet" href="sdk/viewerstyle.css">
 	<script type="module" src="out/sdk/modelviewer/src/main.js"></script>
+	<script type="module" src="sdk/collapsible.js"></script>
 </head>
 
 <body>
@@ -38,23 +40,21 @@
 			</div>
 			<!-- PANEL -->
 			<div class="panel" id="properties-panel" style="overflow-y: scroll">
-				<p class="small">Animations:</p>
-				<div style="height: 150px; border: #3d3d3d;
-					border-style: dotted; border-width: 1px;">
+				<button class="small subtle-button collapsible">Animations:</button>
+				<div style="height: 150px;" class="hiddensection">
 
 				</div>
 				<hr>
-				<p class="small">Bones:</p>
-				<div style="height: 150px; border: #3d3d3d;
-					border-style: dotted; border-width: 1px;">
+				<button class="small subtle-button collapsible">Bones:</button>
+				<div style="height: 150px;" class="hiddensection">
 
 				</div>
 				<hr>
-				<p class="small">Hitboxes:</p>
-				<div style="height: 700px; border: #3d3d3d;
-					border-style: dotted; border-width: 1px;">
+				<button class="small subtle-button collapsible">Hitboxes:</button>
+				<div style="height: 150px;" class="hiddensection">
 
 				</div>
+				<hr>
 			</div>
 		</div>
 		<!-- FOOTER -->
