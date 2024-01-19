@@ -70,9 +70,9 @@
 			<div class="panel" id="properties-panel">
 				<!-- ADDED BY SCRIPT -->
 			</div>
-			<div id="assets-panel" style="padding: 0; margin: 0; display: grid; grid-template-rows: auto auto;">
+			<div id="assets-panel" style="padding: 0; margin: 0; display: grid; grid-template-rows: auto 30px;">
 				<!-- TEXTURE PANEL -->
-				<div class="vertical" id="textures-panel">
+				<div id="textures-panel" class="vertical">
 					<div class="vertical">
 						<img id="texture-preview" src="data/levels/textures/dev.png"
 							style="align-self: center; width: 128px; height: 128px">
@@ -83,12 +83,14 @@
 					<div id="texture-list" style="
 						overflow-y: scroll;
 						display: flex;
-						height: 550px;
 						flex-direction: row;
 						flex-wrap: wrap;
 						justify-content: space-evenly;
 						border: 1px dotted rgb(62, 62, 62);
-					">
+						position: fixed;
+						height: calc(100% - 340px);
+						width: 340px;
+						top: 280px">
 						<!-- ADDED BY SCRIPT -->
 						<!-- <div style="overflow: hidden; width: 128px; height: 175px; padding: 5px; word-wrap: break-word;"
 							class="button subtle-button">
