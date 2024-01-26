@@ -5,7 +5,6 @@ import { Ray } from "../../../../src/common/math/ray.js";
 import { vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { loadedModels } from "../../../../src/common/mesh/gltfloader.js";
 import { editor } from "../main.js";
-import { borderShader } from "../../../common/gl.js";
 import { ToolEnum } from "../tools/tool.js";
 import { SdkWindow } from "../../../common/sdkwindow.js";
 
