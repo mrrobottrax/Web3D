@@ -45,7 +45,7 @@ export class Server {
 		});
 
 		setInterval(() => { this.tick() }, Time.fixedDeltaTime * 1000);
-		setLevelServer("./data/levels/bigmap");
+		setLevelServer("./data/levels/koth");
 		setPlayerModel(await ServerGltfLoader.loadGltfFromDisk("./data/models/sci_player"));
 
 		console.log("SERVER OPENED");
