@@ -67,3 +67,5 @@
 	height: 100%;
 	float: left;
 }
+
+html, body {margin: 0; height: 100%; overflow: hidden}
