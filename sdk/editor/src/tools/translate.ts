@@ -5,7 +5,7 @@ import gMath from "../../../../src/common/math/gmath.js";
 import { quaternion, vec2, vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
 import { editor } from "../main.js";
-import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorVertex } from "../mesh/editormesh.js";
+import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } from "../mesh/editormesh.js";
 import { getSdkKeyDown } from "../../../common/sdkinput.js";
 import { Viewport } from "../windows/viewport.js";
 import { EntityTool } from "./entitytool.js";
@@ -363,13 +363,19 @@ export class TranslateTool extends SelectExtension {
 
 	duplicateMeshes() {
 		const select = editor.selectTool;
-		// const newMeshSelection = new Set<EditorMesh>();
+		const newMeshSelection = new Set<EditorMesh>();
 		const newEntitySelection = new Set<any>();
 
-		// select.selectedMeshes.forEach(mesh => {
-		// 	const newMesh = ObjectHelper.deepCopy(mesh);
-		// 	newMeshSelection.add(newMesh);
-		// });
+		select.selectedMeshes.forEach(mesh => {
+			const json = mesh.toJSON();
+			const m = EditorMesh.fromJson(json);
+
+			if (m != null)
+			{
+				newMeshSelection.add(m);
+				editor.meshes.add(m);
+			}
+		});
 		select.selectedEntities.forEach(entity => {
 			const newEntity = EntityTool.getNewEntity(entity.className);
 
@@ -379,9 +385,7 @@ export class TranslateTool extends SelectExtension {
 			editor.entities.add(newEntity);
 		});
 
-		// select.selectedMeshes = newMeshSelection;
-
-		// todo: copy meshes
+		select.selectedMeshes = newMeshSelection;
 		select.selectedEntities = newEntitySelection;
 	}
 
