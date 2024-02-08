@@ -97,8 +97,8 @@ export class TranslateTool extends SelectExtension {
 
 		const startMat = viewport.camera.viewMatrix.copy();
 
-		const dist = vec3.dist(this.center, viewport.camera.position);
-		// const pos = this.center.multMat4(startMat);
+		const cameraDir = viewport.cameraRay().direction;
+		const dist = vec3.dot(this.center, cameraDir) - vec3.dot(viewport.camera.position, cameraDir);
 
 		const drawArrow = (rotation: quaternion, color: number[]) => {
 			// line

@@ -167,18 +167,24 @@ export class Viewport2D extends Viewport {
 		return v.minus(this.size.times(0.5)).times(1 / this.getPixelsPerUnit()).plus(new vec2(this.camera.position.x, this.camera.position.y));
 	}
 
-	override screenRay(): Ray {
+	override screenRay(screenPos: vec2): Ray {
 		if (!this.pos)
 			return { origin: vec3.origin(), direction: vec3.origin() };
 
 		const direction = new vec3(0, 0, -1).rotate(this.camera.rotation);
 		const dist = 100000;
 
-		const mouse = this.mouseToGrid();
-		const mouse3 = new vec3(mouse.x, mouse.y, 0);
-		const origin = new vec3(0, 0, dist).plus(mouse3).rotate(this.camera.rotation);
+		const pos = new vec3(screenPos.x, screenPos.y, 0);
+		const origin = new vec3(0, 0, dist).plus(pos).rotate(this.camera.rotation);
 
 		return { origin: origin, direction: direction };
+	}
+
+	override cameraRay(): Ray {
+		return {
+			origin: this.camera.position,
+			direction:  new vec3(0, 0, -1).rotate(this.camera.rotation)
+		};
 	}
 
 	override gridToWorld(v: vec2): vec3 {

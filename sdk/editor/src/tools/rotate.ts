@@ -1,6 +1,6 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
 import { gl, solidShader } from "../../../../src/client/render/gl.js";
-import { drawPrimitive } from "../../../../src/client/render/render.js";
+import { camPos, drawPrimitive } from "../../../../src/client/render/render.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
@@ -11,27 +11,15 @@ export class RotateTool extends SelectExtension {
 	circleModel: Model = new Model();
 
 	async init() {
-		// this.gizmoVao = gl.createVertexArray();
-		// gl.bindVertexArray(this.gizmoVao);
-
-		// this.gizmoBuffer = gl.createBuffer();
-		// gl.bindBuffer(gl.ARRAY_BUFFER, this.gizmoBuffer);
-
-		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 0, lineLength, 0, 0]), gl.STATIC_DRAW);
-
-		// gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
-		// gl.enableVertexAttribArray(0);
-
 		this.circleModel = await ClientGltfLoader.loadGltfFromWeb("./sdk/editor/data/models/circle");
-
-		// gl.bindBuffer(gl.ARRAY_BUFFER, null);
-		// gl.bindVertexArray(null);
 	}
 
 	draw(viewport: Viewport) {
 		super.draw(viewport);
 
-		const dist = vec3.dist(this.center, viewport.camera.position);
+		const cameraDir = viewport.cameraRay().direction;
+		const dist = vec3.dot(this.center, cameraDir) - vec3.dot(viewport.camera.position, cameraDir);
+
 		const drawCircle = (rotation: quaternion, color: number[]) => {
 			let mat: mat4 = viewport.camera.viewMatrix.copy();
 			mat.translate(this.center);

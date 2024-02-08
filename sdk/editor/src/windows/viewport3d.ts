@@ -119,7 +119,7 @@ export class Viewport3D extends Viewport {
 
 	screenToGrid(v: vec2): vec2 {
 		// get ray
-		const ray = this.screenRay(this.getRelativeMousePos());
+		const ray = this.screenRay(v);
 		ray.origin = ray.origin.rotate(editor.gridRotation.inverse());
 		ray.direction = ray.direction.rotate(editor.gridRotation.inverse());
 
@@ -165,5 +165,12 @@ export class Viewport3D extends Viewport {
 		vector.normalise();
 
 		return { origin: this.camera.position, direction: vector };
+	}
+
+	override cameraRay(): Ray {
+		return {
+			origin: this.camera.position,
+			direction: new vec3(0, 0, -1).rotate(this.camera.rotation)
+		};
 	}
 }
