@@ -47,6 +47,7 @@ export class ClientGltfLoader extends GltfLoader {
 		let primitives: Primitive[] = [];
 
 		if (environment == Environment.server) {
+			console.error("Wrong environment");
 			return primitives;
 		}
 

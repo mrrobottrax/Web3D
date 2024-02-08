@@ -102,7 +102,8 @@ export class Editor {
 		// await setLevelClient("./data/levels/styletest");
 		// drawHalfEdgeMesh(currentLevel.collision, [0, 1, 0, 1], Infinity);
 
-		this.translateTool.init();
+		await this.translateTool.init();
+		await this.rotateTool.init();
 	}
 
 	initEditorInput() {

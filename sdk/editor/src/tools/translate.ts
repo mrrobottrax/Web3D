@@ -9,17 +9,10 @@ import { EditorFace, EditorFullEdge, EditorHalfEdge, EditorMesh, EditorVertex } 
 import { getSdkKeyDown } from "../../../common/sdkinput.js";
 import { Viewport } from "../windows/viewport.js";
 import { EntityTool } from "./entitytool.js";
-import { SelectExtension } from "./selectextension.js";
+import { GizmoPart, SelectExtension } from "./selectextension.js";
 import { SelectMode } from "./selecttool.js";
 
 const lineLength = 0.2;
-
-enum GizmoPart {
-	None,
-	X,
-	Y,
-	Z
-}
 
 export class TranslateTool extends SelectExtension {
 	gizmoVao: WebGLVertexArrayObject | null = null;
@@ -33,7 +26,7 @@ export class TranslateTool extends SelectExtension {
 	dragPos: vec3 = vec3.origin();
 	dragViewport!: Viewport;
 
-	init() {
+	async init() {
 		this.gizmoVao = gl.createVertexArray();
 		gl.bindVertexArray(this.gizmoVao);
 
@@ -45,12 +38,10 @@ export class TranslateTool extends SelectExtension {
 		gl.vertexAttribPointer(SharedAttribs.positionAttrib, 3, gl.FLOAT, false, 0, 0);
 		gl.enableVertexAttribArray(0);
 
-		ClientGltfLoader.loadGltfFromWeb("./sdk/editor/data/models/arrow").then(model => {
-			this.arrowHeadModel = model;
-		});
-
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 		gl.bindVertexArray(null);
+
+		this.arrowHeadModel = await ClientGltfLoader.loadGltfFromWeb("./sdk/editor/data/models/arrow");
 	}
 
 	startDrag() {
@@ -145,6 +136,7 @@ export class TranslateTool extends SelectExtension {
 			mat.translate(new vec3(lineLength, 0, 0));
 			mat.rotate(quaternion.euler(0, 0, -90));
 			mat.scale(new vec3(0.02, 0.02, 0.02));
+
 			this.arrowHeadModel.nodes.forEach(node => {
 				node.primitives.forEach(primitive => {
 					drawPrimitive(primitive, mat, solidShader, color);
@@ -370,8 +362,7 @@ export class TranslateTool extends SelectExtension {
 			const json = mesh.toJSON();
 			const m = EditorMesh.fromJson(json);
 
-			if (m != null)
-			{
+			if (m != null) {
 				newMeshSelection.add(m);
 				editor.meshes.add(m);
 			}

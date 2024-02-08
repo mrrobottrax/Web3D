@@ -4,6 +4,13 @@ import { Viewport } from "../windows/viewport.js";
 import { SelectMode } from "./selecttool.js";
 import { Tool } from "./tool.js";
 
+export enum GizmoPart {
+	None,
+	X,
+	Y,
+	Z
+}
+
 export class SelectExtension extends Tool {
 	center: vec3 = vec3.origin();
 
