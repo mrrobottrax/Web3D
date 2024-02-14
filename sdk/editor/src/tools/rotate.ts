@@ -1,9 +1,12 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
 import { gl, solidShader } from "../../../../src/client/render/gl.js";
 import { camPos, drawPrimitive } from "../../../../src/client/render/render.js";
+import gMath from "../../../../src/common/math/gmath.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
+import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
+import { editor } from "../main.js";
 import { Viewport } from "../windows/viewport.js";
 import { SelectExtension } from "./selectextension.js";
 
@@ -47,5 +50,38 @@ export class RotateTool extends SelectExtension {
 		drawCircle(quaternion.euler(90, 0, 0), [0, 0, 1, 1]); // Z
 
 		gl.useProgram(null);
+	}
+
+	mouseMove(dx: number, dy: number): boolean {
+		const viewport = editor.windowManager.activeWindow as Viewport;
+
+		if (viewport && !viewport.looking) {
+			// Get scale of gizmo
+			let gizmoScale;
+			if (viewport.perspective) {
+				const camDir = viewport.cameraRay().direction;
+				const distFromCamera = vec3.dot(this.center, camDir) - vec3.dot(viewport.camera.position, camDir);
+
+				gizmoScale = distFromCamera;
+			}
+			else {
+				gizmoScale = 1 / viewport.camera.fov;
+			}
+
+			// Get dist of ray to gizmo
+			const ray: Ray = viewport.mouseRay();
+			const dist = gMath.distToRay(ray, this.center) / gizmoScale;
+
+			const sphereRadius = 0.2;
+
+			if (dist < sphereRadius)
+			{
+				console.log("ROTATE");
+
+				// Get point of intersection on sphere
+			}
+		}
+
+		return super.mouseMove(dx, dy);
 	}
 }

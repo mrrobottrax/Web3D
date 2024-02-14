@@ -47,6 +47,20 @@ export default class gMath {
 		return vec2.sqrDist(point, p);
 	}
 
+	static sqrDistToRay(ray: Ray, point: vec3): number
+	{
+		const relativePoint = point.minus(ray.origin);
+		const dot = vec3.dot(ray.direction, relativePoint);
+		const pointOnRay = ray.origin.plus(ray.direction.times(dot));
+
+		return vec3.sqrDist(pointOnRay, point);
+	}
+
+	static distToRay(ray: Ray, point: vec3): number
+	{
+		return Math.sqrt(this.sqrDistToRay(ray, point));
+	}
+
 	static getClosestCardinalRotation(rotation: quaternion): quaternion {
 		let forward = new vec3(0, 0, 1);
 		forward = forward.rotate(rotation);

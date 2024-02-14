@@ -174,7 +174,15 @@ export class Viewport2D extends Viewport {
 		const direction = new vec3(0, 0, -1).rotate(this.camera.rotation);
 		const dist = 100000;
 
-		const pos = new vec3(screenPos.x, screenPos.y, 0);
+		let midScreenPos = vec2.copy(screenPos);
+		midScreenPos.x -= this.size.x / 2;
+		midScreenPos.y -= this.size.y / 2;
+
+		const pos = new vec3(
+			midScreenPos.x / this.getPixelsPerUnit() + this.camera.position.x,
+			midScreenPos.y / this.getPixelsPerUnit() + this.camera.position.y,
+			0
+		);
 		const origin = new vec3(0, 0, dist).plus(pos).rotate(this.camera.rotation);
 
 		return { origin: origin, direction: direction };
@@ -183,7 +191,7 @@ export class Viewport2D extends Viewport {
 	override cameraRay(): Ray {
 		return {
 			origin: this.camera.position,
-			direction:  new vec3(0, 0, -1).rotate(this.camera.rotation)
+			direction: new vec3(0, 0, -1).rotate(this.camera.rotation)
 		};
 	}
 
