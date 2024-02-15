@@ -1,4 +1,5 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
+import { drawLine } from "../../../../src/client/render/debugRender.js";
 import { gl, solidShader } from "../../../../src/client/render/gl.js";
 import { camPos, drawPrimitive } from "../../../../src/client/render/render.js";
 import gMath from "../../../../src/common/math/gmath.js";
@@ -68,17 +69,21 @@ export class RotateTool extends SelectExtension {
 				gizmoScale = 1 / viewport.camera.fov;
 			}
 
-			// Get dist of ray to gizmo
 			const ray: Ray = viewport.mouseRay();
-			const dist = gMath.distToRay(ray, this.center) / gizmoScale;
-
-			const sphereRadius = 0.2;
-
-			if (dist < sphereRadius)
+			const sphereCenter = this.center.minus(ray.origin); // Center relative to ray origin
+			const sphereRadius = 0.2 * gizmoScale;
+			
+			const tCenter = vec3.dot(sphereCenter, ray.direction); // Dist along ray to center
+			
+			const distSquared = vec3.dot(sphereCenter, sphereCenter) - tCenter * tCenter; // Squared dist from center to nearest point
+			if (distSquared < sphereRadius * sphereRadius)
 			{
-				console.log("ROTATE");
+				// Hit
 
-				// Get point of intersection on sphere
+				const tInverse = Math.sqrt(sphereRadius * sphereRadius - distSquared); // Inverse distance along ray to hitpoint
+				const t = tCenter - tInverse;
+				
+				const hitpoint = ray.direction.times(t).minus(sphereCenter).normalised(); // Local sphere coordinates
 			}
 		}
 
