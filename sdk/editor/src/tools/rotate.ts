@@ -1,18 +1,18 @@
 import { ClientGltfLoader } from "../../../../src/client/mesh/gltfloader.js";
-import { drawLine } from "../../../../src/client/render/debugRender.js";
 import { gl, solidShader } from "../../../../src/client/render/gl.js";
-import { camPos, drawPrimitive } from "../../../../src/client/render/render.js";
-import gMath from "../../../../src/common/math/gmath.js";
+import { drawPrimitive } from "../../../../src/client/render/render.js";
 import { mat4 } from "../../../../src/common/math/matrix.js";
 import { Ray } from "../../../../src/common/math/ray.js";
 import { quaternion, vec3 } from "../../../../src/common/math/vector.js";
 import { Model } from "../../../../src/common/mesh/model.js";
 import { editor } from "../main.js";
 import { Viewport } from "../windows/viewport.js";
-import { SelectExtension } from "./selectextension.js";
+import { GizmoPart, SelectExtension } from "./selectextension.js";
 
 export class RotateTool extends SelectExtension {
 	circleModel: Model = new Model();
+
+	gizmoPartUnderMouse: GizmoPart = GizmoPart.None;
 
 	async init() {
 		this.circleModel = await ClientGltfLoader.loadGltfFromWeb("./sdk/editor/data/models/circle");
@@ -46,9 +46,11 @@ export class RotateTool extends SelectExtension {
 		gl.useProgram(solidShader.program);
 		gl.clear(gl.DEPTH_BUFFER_BIT);
 
-		drawCircle(quaternion.euler(0, 0, 90), [1, 0, 0, 1]); // X
-		drawCircle(quaternion.identity(), [0, 1, 0, 1]); // Y
-		drawCircle(quaternion.euler(90, 0, 0), [0, 0, 1, 1]); // Z
+		const hoverColor = [1, 1, 0, 1];
+
+		drawCircle(quaternion.euler(0, 0, 90), this.gizmoPartUnderMouse == GizmoPart.X ? hoverColor : [1, 0, 0, 1]); // X
+		drawCircle(quaternion.identity(), this.gizmoPartUnderMouse == GizmoPart.Y ? hoverColor : [0, 1, 0, 1]); // Y
+		drawCircle(quaternion.euler(90, 0, 0), this.gizmoPartUnderMouse == GizmoPart.Z ? hoverColor : [0, 0, 1, 1]); // Z
 
 		gl.useProgram(null);
 	}
@@ -72,18 +74,34 @@ export class RotateTool extends SelectExtension {
 			const ray: Ray = viewport.mouseRay();
 			const sphereCenter = this.center.minus(ray.origin); // Center relative to ray origin
 			const sphereRadius = 0.2 * gizmoScale;
-			
+
 			const tCenter = vec3.dot(sphereCenter, ray.direction); // Dist along ray to center
-			
+
 			const distSquared = vec3.dot(sphereCenter, sphereCenter) - tCenter * tCenter; // Squared dist from center to nearest point
-			if (distSquared < sphereRadius * sphereRadius)
-			{
+			if (distSquared < sphereRadius * sphereRadius) {
 				// Hit
 
 				const tInverse = Math.sqrt(sphereRadius * sphereRadius - distSquared); // Inverse distance along ray to hitpoint
 				const t = tCenter - tInverse;
-				
+
 				const hitpoint = ray.direction.times(t).minus(sphereCenter).normalised(); // Local sphere coordinates
+
+				let distX = Math.abs(hitpoint.x);
+				let distY = Math.abs(hitpoint.y);
+				let distZ = Math.abs(hitpoint.z);
+
+				if (distX < distY && distX < distZ) {
+					// x
+					this.gizmoPartUnderMouse = GizmoPart.X;
+				}
+				else if (distY < distX && distY < distZ) {
+					// y
+					this.gizmoPartUnderMouse = GizmoPart.Y;
+				}
+				else {
+					// z
+					this.gizmoPartUnderMouse = GizmoPart.Z;
+				}
 			}
 		}
 
