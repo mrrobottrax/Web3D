@@ -111,6 +111,22 @@ export class SelectExtension extends Tool {
 
 					return position;
 				}
+			case SelectMode.Entity:
+				// average all entities
+				{
+					let objCount = 0;
+					let position = vec3.origin();
+
+					editor.selectTool.selectedEntities.forEach(entity => {
+						const origin = vec3.parse(entity.keyvalues.origin);
+						position.add(origin);
+						++objCount;
+					});
+
+					position.div(objCount);
+
+					return position;
+				}
 
 			default:
 				return vec3.origin();

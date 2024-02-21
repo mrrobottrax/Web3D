@@ -207,6 +207,10 @@ export class TranslateTool extends SelectExtension {
 						break;
 					case SelectMode.Mesh:
 						this.duplicateMeshes();
+						this.duplicateEntities();
+						break;
+					case SelectMode.Entity:
+						this.duplicateEntities();
 						break;
 				}
 			}
@@ -255,6 +259,13 @@ export class TranslateTool extends SelectExtension {
 							affectedVerts.add(vert);
 						});
 					});
+					select.selectedEntities.forEach(entity => {
+						const origin = vec3.parse(entity.keyvalues.origin)
+						origin.add(delta);
+						entity.keyvalues.origin = origin.toString();
+					});
+					break;
+				case SelectMode.Entity:
 					select.selectedEntities.forEach(entity => {
 						const origin = vec3.parse(entity.keyvalues.origin)
 						origin.add(delta);
@@ -356,7 +367,6 @@ export class TranslateTool extends SelectExtension {
 	duplicateMeshes() {
 		const select = editor.selectTool;
 		const newMeshSelection = new Set<EditorMesh>();
-		const newEntitySelection = new Set<any>();
 
 		select.selectedMeshes.forEach(mesh => {
 			const json = mesh.toJSON();
@@ -367,6 +377,15 @@ export class TranslateTool extends SelectExtension {
 				editor.meshes.add(m);
 			}
 		});
+
+		select.selectedMeshes = newMeshSelection;
+
+	}
+
+	duplicateEntities() {
+		const select = editor.selectTool;
+		const newEntitySelection = new Set<any>();
+
 		select.selectedEntities.forEach(entity => {
 			const newEntity = EntityTool.getNewEntity(entity.className);
 
@@ -375,8 +394,6 @@ export class TranslateTool extends SelectExtension {
 			newEntitySelection.add(newEntity);
 			editor.entities.add(newEntity);
 		});
-
-		select.selectedMeshes = newMeshSelection;
 		select.selectedEntities = newEntitySelection;
 	}
 
