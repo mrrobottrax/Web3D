@@ -17,7 +17,8 @@ export enum SelectMode {
 	Vertex,
 	Edge,
 	Face,
-	Mesh
+	Mesh,
+	Entity
 }
 
 export class SelectTool extends Tool {
@@ -27,6 +28,7 @@ export class SelectTool extends Tool {
 	edgeButton: HTMLElement | null;
 	faceButton: HTMLElement | null;
 	meshButton: HTMLElement | null;
+	entityButton: HTMLElement | null;
 
 	meshUnderCursor: EditorMesh | null = null;
 	entityUnderCursor: any = null;
@@ -57,9 +59,10 @@ export class SelectTool extends Tool {
 		this.edgeButton = document.getElementById("select-edge");
 		this.faceButton = document.getElementById("select-face");
 		this.meshButton = document.getElementById("select-mesh");
+		this.entityButton = document.getElementById("select-entity");
 
 		if (!(this.vertexButton && this.edgeButton && this.faceButton
-			&& this.meshButton)) {
+			&& this.meshButton && this.entityButton)) {
 			console.error("MISSING BUTTONS!");
 			return;
 		}
@@ -68,6 +71,7 @@ export class SelectTool extends Tool {
 		this.edgeButton.onclick = () => this.setSelectMode(SelectMode.Edge);
 		this.faceButton.onclick = () => this.setSelectMode(SelectMode.Face);
 		this.meshButton.onclick = () => this.setSelectMode(SelectMode.Mesh);
+		this.entityButton.onclick = () => this.setSelectMode(SelectMode.Entity);
 
 		this.updateModeGraphics();
 	}
@@ -92,6 +96,7 @@ export class SelectTool extends Tool {
 		this.edgeButton?.classList.remove("selected-button");
 		this.faceButton?.classList.remove("selected-button");
 		this.meshButton?.classList.remove("selected-button");
+		this.entityButton?.classList.remove("selected-button");
 
 		switch (this.mode) {
 			case SelectMode.Vertex:
@@ -106,6 +111,9 @@ export class SelectTool extends Tool {
 			case SelectMode.Mesh:
 				this.meshButton?.classList.add("selected-button");
 				break;
+			case SelectMode.Entity:
+				this.entityButton?.classList.add("selected-button");
+				break;
 		}
 	}
 
@@ -116,6 +124,7 @@ export class SelectTool extends Tool {
 
 		if (activeViewport.looking) return false;
 
+		// drag vertices
 		if (this.dragging && this.mode == SelectMode.Vertex) {
 			const start = this.dragPos;
 			const end = activeViewport.getMouseWorldRounded();
@@ -198,6 +207,9 @@ export class SelectTool extends Tool {
 			case SelectMode.Mesh:
 				this.entityUnderCursor = this.getEntityUnderCursor(activeViewport, meshDist);
 				break;
+			case SelectMode.Entity:
+				this.entityUnderCursor = this.getEntityUnderCursor(activeViewport, meshDist);
+				break;
 		}
 
 		return false;
@@ -277,6 +289,13 @@ export class SelectTool extends Tool {
 					});
 				}
 				break;
+			case SelectMode.Entity:
+				{
+					this.selectedEntities.forEach(entity => {
+						editor.entities.delete(entity);
+					});
+				}
+				break;
 			case SelectMode.Face:
 				{
 					this.selectedFaces.forEach(face => {
@@ -319,7 +338,7 @@ export class SelectTool extends Tool {
 
 	outlineFudge = 0.0002;
 	drawGizmos(viewport: Viewport) {
-		if (this.mode != SelectMode.Mesh) {
+		if ((this.mode != SelectMode.Mesh) && (this.mode != SelectMode.Entity)) {
 			// draw selected mesh outlines
 			gl.useProgram(solidShader.program);
 			const p = viewport.camera.perspectiveMatrix.copy();
@@ -882,6 +901,13 @@ export class SelectTool extends Tool {
 							this.selectedEntities.add(e);
 					}
 					break;
+				case SelectMode.Entity:
+					if (this.entityUnderCursor) {
+						const e = this.entityUnderCursor;
+						if (!remove)
+							this.selectedEntities.add(e);
+					}
+					break;
 			}
 
 			PropertiesPanel.updateProperties();
@@ -1137,6 +1163,9 @@ export class SelectTool extends Tool {
 		if (this.mode == SelectMode.Mesh) {
 			editor.meshes.forEach(mesh => {
 				this.selectedMeshes.add(mesh);
+			})
+			editor.entities.forEach(entity => {
+				this.selectedEntities.add(entity);
 			})
 			PropertiesPanel.updateProperties();
 			return;

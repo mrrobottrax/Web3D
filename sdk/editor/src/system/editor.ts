@@ -132,6 +132,10 @@ export class Editor {
 			function: () => this.selectTool.setSelectMode(SelectMode.Mesh)
 		},
 		{
+			keyCodes: ["Digit5"],
+			function: () => this.selectTool.setSelectMode(SelectMode.Entity)
+		},
+		{
 			keyCodes: ["KeyQ"],
 			function: () => this.setTool(ToolEnum.Select)
 		},
@@ -162,6 +166,10 @@ export class Editor {
 		addHighPriorityShortcuts([{
 			keyCodes: ["ShiftLeft", "KeyE"],
 			function: () => this.setTool(ToolEnum.Entity)
+		},
+		{
+			keyCodes: ["ControlLeft", "KeyS"],
+			function: () => EditorFileManagement.saveMap()
 		}]);
 	}
 

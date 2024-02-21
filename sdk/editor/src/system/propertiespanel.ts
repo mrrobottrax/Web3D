@@ -22,6 +22,9 @@ export class PropertiesPanel {
 			case SelectMode.Vertex:
 				this.vertexProperties(properties);
 				break;
+			case SelectMode.Entity:
+				this.entityProperties(properties);
+				break;
 		}
 	}
 
@@ -449,5 +452,15 @@ export class PropertiesPanel {
 				mesh.updateShape();
 			});
 		}
+	}
+
+	static entityProperties(properties: HTMLElement) {
+		let entity: any = editor.selectTool.selectedEntities.values().next().value;
+
+		console.log(entity);
+
+		properties.innerHTML += `
+		<input type="text" id="text" value="0">
+		`;
 	}
 }
