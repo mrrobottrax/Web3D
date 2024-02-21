@@ -73,7 +73,7 @@ export class PlayerUtil {
 		const primalVel = vec3.copy(velocity);
 		let vel = vec3.copy(velocity);
 		let pos = vec3.origin();
-		pos.copy(start);
+		pos.set(start);
 
 		let numplanes = 0;
 		let planes = new Array<vec3>(maxClipPlanes);
@@ -112,7 +112,7 @@ export class PlayerUtil {
 			let i;
 			for (i = 0; i < numplanes; ++i) {
 				// clip vel
-				vel.copy(primalVel.plus(cast.normal.times(-vec3.dot(cast.normal, primalVel) + 0.001)));
+				vel.set(primalVel.plus(cast.normal.times(-vec3.dot(cast.normal, primalVel) + 0.001)));
 				vel.x = vel.x > -stopEpsilon && vel.x < stopEpsilon ? 0 : vel.x;
 				vel.y = vel.y > -stopEpsilon && vel.y < stopEpsilon ? 0 : vel.y;
 				vel.z = vel.z > -stopEpsilon && vel.z < stopEpsilon ? 0 : vel.z;
@@ -209,14 +209,14 @@ export class PlayerUtil {
 
 			if (player.groundEnt) {
 				// move down
-				player.position.copy(player.position.plus(cast.dir.times(cast.dist)));
+				player.position.set(player.position.plus(cast.dir.times(cast.dist)));
 			}
 		}
 	}
 
 	static groundMove(player: SharedPlayer, cmd: UserCmd, delta: number): void {
-		player.velocity.copy(this.friction(player.velocity, delta));
-		player.velocity.copy(this.accel(player.velocity, cmd.wishDir,
+		player.velocity.set(this.friction(player.velocity, delta));
+		player.velocity.set(this.accel(player.velocity, cmd.wishDir,
 			player.isDucked ? duckMoveSpeed : moveSpeed, player.isDucked ? duckAccel : acceleration, delta));
 		player.velocity.y = 0;
 
@@ -230,8 +230,8 @@ export class PlayerUtil {
 		const castDown = castAABB(player.isDucked ? hullDuckSize : hullSize, stepMove.endPos, new vec3(0, -maxStepHeight * 2.01, 0));
 
 		if (/*castDown.fract == 0 || castDown.fract == 1 || */castDown.normal.y < minWalkableY) {
-			player.position.copy(move.endPos);
-			player.velocity.copy(move.endVel);
+			player.position.set(move.endPos);
+			player.velocity.set(move.endVel);
 			return;
 		}
 
@@ -241,11 +241,11 @@ export class PlayerUtil {
 		const stepDist = stepPos.sqrDist(player.position);
 
 		if (moveDist > stepDist) {
-			player.position.copy(move.endPos);
-			player.velocity.copy(move.endVel);
+			player.position.set(move.endPos);
+			player.velocity.set(move.endVel);
 		} else {
-			player.velocity.copy(stepMove.endVel);
-			player.position.copy(stepPos);
+			player.velocity.set(stepMove.endVel);
+			player.position.set(stepPos);
 			player.velocity.y = move.endVel.y;
 		}
 	}
@@ -253,11 +253,11 @@ export class PlayerUtil {
 	static airMove(player: SharedPlayer, cmd: UserCmd, delta: number): void {
 		player.velocity.y -= gravity * delta * 0.5;
 
-		player.velocity.copy(this.accel(player.velocity, cmd.wishDir, airSpeed, airAccel, delta));
+		player.velocity.set(this.accel(player.velocity, cmd.wishDir, airSpeed, airAccel, delta));
 
 		const move = this.flyMove(player.position, player.velocity, delta, player);
-		player.position.copy(move.endPos);
-		player.velocity.copy(move.endVel);
+		player.position.set(move.endPos);
+		player.velocity.set(move.endVel);
 
 		player.velocity.y -= gravity * delta * 0.5;
 	}

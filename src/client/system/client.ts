@@ -101,7 +101,7 @@ export class Client {
 		if (!this.isConnected)
 			return;
 
-		lastCamPos.copy(this.localPlayer.camPosition);
+		lastCamPos.set(this.localPlayer.camPosition);
 
 		const cmd = input.createUserCMD(this.localPlayer);
 		const cmdPacket: UserCmdPacket = {
@@ -160,7 +160,7 @@ export class Client {
 					players.set(playerSnapshot.id, player);
 				}
 
-				player.position.copy(playerSnapshot.data.position);
+				player.position.set(playerSnapshot.data.position);
 				player.yaw = playerSnapshot.yaw;
 				player.pitch = playerSnapshot.pitch;
 				player.controller.setState(playerSnapshot.anim);

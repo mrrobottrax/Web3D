@@ -50,7 +50,13 @@ export class vec3 {
 		this.z *= s;
 	}
 
-	public copy(v: vec3): void {
+	public div(s: number): void {
+		this.x /= s;
+		this.y /= s;
+		this.z /= s;
+	}
+
+	public set(v: vec3): void {
 		this.x = v.x;
 		this.y = v.y;
 		this.z = v.z;

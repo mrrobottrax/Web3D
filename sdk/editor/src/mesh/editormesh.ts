@@ -1108,4 +1108,36 @@ export class EditorMesh {
 		this.halfEdges.delete(edge);
 		edge.tail?.edges.delete(edge);
 	}
+
+	getOrigin(): vec3 {
+		// average all vertices
+		let origin = vec3.origin();
+
+		let vertCount = 0;
+		this.verts.forEach(vert => {
+			origin.add(vert.position);
+			++vertCount;
+		});
+		origin.mult(1 / vertCount);
+
+		return origin;
+	}
+
+	rotateY(degrees: number, pivot: vec3) {
+		const rad = gMath.deg2Rad(degrees);
+
+		this.verts.forEach(vert => {
+			const pos = vec3.copy(vert.position);
+			pos.sub(pivot);
+
+			const temp = vec3.copy(pos);
+			temp.x = Math.cos(rad) * pos.x + Math.sin(rad) * pos.z;
+			temp.z = -Math.sin(rad) * pos.x + Math.cos(rad) * pos.z;
+
+			temp.add(pivot);
+			vert.position.set(temp);
+		});
+
+		this.updateShape();
+	}
 }

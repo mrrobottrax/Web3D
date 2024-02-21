@@ -42,7 +42,7 @@ export async function initViewmodel() {
 }
 
 export function tickViewmodel(player: SharedPlayer) {
-	lastBobOffset.copy(nextBobOffset);
+	lastBobOffset.set(nextBobOffset);
 
 	let playerSpeed = player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z;
 	playerSpeed = Math.sqrt(playerSpeed);

@@ -116,8 +116,8 @@ export abstract class SharedPlayer extends Entity {
 	}
 
 	setPredictedData(data: PredictedData): void {
-		this.position.copy(data.position);
-		this.velocity.copy(data.velocity);
+		this.position.set(data.position);
+		this.velocity.set(data.velocity);
 		this.isDucked = data.isDucked;
 		this.duckProg = data.duckProg;
 	}

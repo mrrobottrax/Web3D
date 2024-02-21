@@ -97,14 +97,7 @@ export class SelectExtension extends Tool {
 					let objCount = 0;
 					let position = vec3.origin();
 					editor.selectTool.selectedMeshes.forEach(mesh => {
-						const meshOrigin = vec3.origin();
-						let vertCount = 0;
-						mesh.verts.forEach(vert => {
-							meshOrigin.add(vert.position);
-							++vertCount;
-						});
-						meshOrigin.mult(1 / vertCount);
-						position.add(meshOrigin);
+						position.add(mesh.getOrigin());
 						++objCount;
 					});
 

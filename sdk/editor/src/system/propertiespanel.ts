@@ -214,6 +214,7 @@ export class PropertiesPanel {
 		<button class="wide margin" id="print">Print</button>
 		<button class="wide margin" id="validate">Validate</button>
 		<button class="wide margin" id="combine">Combine meshes</button>
+		<button class="wide margin" id="rotate">Rotate 15d</button>
 		`;
 
 		const print = document.getElementById("print") as HTMLElement;
@@ -256,6 +257,23 @@ export class PropertiesPanel {
 
 			editor.meshes.add(newMesh);
 			newMesh.updateShape();
+		}
+
+		const rotate = document.getElementById("rotate") as HTMLElement;
+		rotate.onclick = () => {
+			// Get pivot
+			let pivot: vec3 = vec3.origin();
+			select.selectedMeshes.forEach(mesh => {
+				pivot.add(mesh.getOrigin());
+			});
+			pivot.div(select.selectedMeshes.size);
+
+			// Snap pivot to grid
+			editor.snapToGrid(pivot);
+
+			select.selectedMeshes.forEach(mesh => {
+				mesh.rotateY(15, pivot);
+			});
 		}
 	}
 

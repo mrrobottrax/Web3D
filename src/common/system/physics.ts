@@ -111,7 +111,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 						let t = (minTri - maxBox) / speed;
 						if (t > tFirst + bias) {
 							tFirst = t;
-							_normal.copy(axis.inverse());
+							_normal.set(axis.inverse());
 						}
 
 						t = (maxTri - minBox) / speed;
@@ -132,7 +132,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 						let t = (maxTri - minBox) / speed;
 						if (t > tFirst + bias) {
 							tFirst = t;
-							_normal.copy(axis);
+							_normal.set(axis);
 						}
 
 						t = (minTri - maxBox) / speed;
@@ -159,7 +159,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 							const p = maxBox - minTri;
 							if (p < pen) {
 								pen = p;
-								_stuckNormal.copy(axis.inverse());
+								_stuckNormal.set(axis.inverse());
 							}
 						} else if (speed < 0) {
 							const t = (minTri - maxBox) / speed;
@@ -174,7 +174,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 							const p = maxTri - minBox;
 							if (p < pen) {
 								pen = p;
-								_stuckNormal.copy(axis);
+								_stuckNormal.set(axis);
 							}
 						}
 					}
@@ -197,7 +197,7 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 				for (let i = 0; i < 3; ++i) {
 					const triEdge: HalfEdge = triEdges[i];
 					const triPos = vec3.origin();
-					triPos.copy(level.vertices[triEdge.vert].position);
+					triPos.set(level.vertices[triEdge.vert].position);
 					const triEdgeDir = triPos.minus(
 						level.vertices[level.halfEdges[triEdge.next].vert].position);
 
@@ -267,10 +267,10 @@ export function castAABB(size: vec3, start: vec3, move: vec3): CastResult {
 					// check if least penetration
 					if (pen < minPen) {
 						minPen = pen;
-						normal.copy(_stuckNormal);
+						normal.set(_stuckNormal);
 					}
 				} else {
-					normal.copy(_normal);
+					normal.set(_normal);
 				}
 			}
 		}
