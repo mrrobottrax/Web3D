@@ -54,7 +54,7 @@ export class ServerPlayer extends SharedPlayer {
 			PlayerUtil.setFeetPos(this, pos);
 			this.health = 100;
 			this.pitch = 0;
-			// player.yaw = spawn.transform.rotation.; todo:
+			this.yaw = spawn.transform.rotation.toEuler().y;
 		}
 	}
 }

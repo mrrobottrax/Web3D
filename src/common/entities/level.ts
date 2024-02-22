@@ -140,6 +140,7 @@ export class Level extends Entity {
 			case "player_spawn":
 				const spawnEntity = new PlayerSpawn();
 				setupTransform(spawnEntity);
+				spawnEntity.team = entityAny.keyvalues.team;
 				currentLevel?.spawns.push(spawnEntity);
 				return spawnEntity;
 			default:

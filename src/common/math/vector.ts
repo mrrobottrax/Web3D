@@ -442,6 +442,38 @@ export class quaternion {
 		return this.eulerRad(_x, _y, _z);
 	}
 
+	public toEulerRad(): vec3 {
+		const ysqr = this.y * this.y;
+	
+		// Roll (x-axis rotation)
+		const t0 = +2.0 * (this.w * this.x + this.y * this.z);
+		const t1 = +1.0 - 2.0 * (this.x * this.x + ysqr);
+		const roll = Math.atan2(t0, t1);
+	
+		// Pitch (y-axis rotation)
+		let t2 = +2.0 * (this.w * this.y - this.z * this.x);
+		t2 = t2 > 1.0 ? 1.0 : t2;
+		t2 = t2 < -1.0 ? -1.0 : t2;
+		const pitch = Math.asin(t2);
+	
+		// Yaw (z-axis rotation)
+		const t3 = +2.0 * (this.w * this.z + this.x * this.y);
+		const t4 = +1.0 - 2.0 * (ysqr + this.z * this.z);
+		const yaw = Math.atan2(t3, t4);
+	
+		return new vec3(pitch, yaw, roll);
+	}
+	
+	public toEuler(): vec3 {
+		const v = this.toEulerRad();
+
+		v.x = gMath.rad2Deg(v.x);
+		v.y = gMath.rad2Deg(v.y);
+		v.z = gMath.rad2Deg(v.z);
+
+		return v;
+	}
+
 	public static lerp(a: quaternion, b: quaternion, t: number): quaternion {
 		// todo: fix with signs
 		let result = quaternion.identity();
