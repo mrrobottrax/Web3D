@@ -143,23 +143,28 @@ export class Server {
 
 		player.lastButtons = player.buttons;
 		player.buttons = cmd.buttons;
-		player.processCmd(cmd);
+		player.processCmd(cmd, player.forcedAng);
 		player.lastCmd = packet.number;
 	}
 
 	generateSnapshot() {
 		let playerSnaps: PlayerSnapshot[] = [];
 
-		for (const player of players.values()) {
+		for (const p of players.values()) {
+			const player = p as ServerPlayer;
 			playerSnaps.push({
 				id: player.id,
 				pitch: player.pitch,
 				yaw: player.yaw,
+				forcedAng: player.forcedAng,
 				anim: player.controller.state,
 				time: player.controller.time,
 				data: player.createPredictedData(),
 				health: player.health
 			});
+
+			// unset triggers
+			player.forcedAng = false;
 		}
 
 		this.snapshot = {

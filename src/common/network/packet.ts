@@ -32,6 +32,7 @@ export interface PlayerSnapshot {
 	id: number,
 	pitch: number,
 	yaw: number,
+	forcedAng: boolean,
 	anim: PlayerAnimState,
 	time: number,
 	data: PredictedData,

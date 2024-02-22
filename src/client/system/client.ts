@@ -133,6 +133,7 @@ export class Client {
 		updateEntities();
 		updateInterp(this);
 
+		this.localPlayer.camRotation = quaternion.eulerRad(this.localPlayer.pitch, this.localPlayer.yaw, 0);
 		this.camera.rotation = this.localPlayer.camRotation;
 
 		resizeCanvas();
@@ -185,6 +186,12 @@ export class Client {
 			// move to origin
 			client.localPlayer.camPosition = new vec3(0, 1, 0);
 		} else {
+			// forced angle from server
+			if (playerSnapshot.forcedAng)
+			{
+				client.localPlayer.yaw = playerSnapshot.yaw;
+			}
+
 			// check if predicted stuff is valid
 			const offset = this.nextCmdNumber - snapshot.lastCmd;
 			const playerData = this.cmdBuffer.rewind(offset);
@@ -197,7 +204,7 @@ export class Client {
 				drawLine(playerSnapshot.data.position, vec3.copy(playerSnapshot.data.position).plus(new vec3(0, 2, 0)), [0, 0, 1, 1], 1);
 				drawLine(playerData.predictedData.position, playerData.predictedData.position.plus(new vec3(0, 2, 0)), [1, 0, 0, 1], 1);
 
-				console.error("Prediction error: " + playerData.predictedData.position.dist(playerSnapshot.data.position));
+				console.warn("Prediction error: " + playerData.predictedData.position.dist(playerSnapshot.data.position));
 
 				// snap to position and resimulate all usercmds
 				playerData.predictedData = SharedPlayer.copyPredictedData(playerSnapshot.data);

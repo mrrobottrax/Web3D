@@ -115,8 +115,6 @@ export class Input {
 
 		player.yaw %= 2 * Math.PI;
 		player.pitch %= 2 * Math.PI;
-
-		player.camRotation = quaternion.eulerRad(player.pitch, player.yaw, 0);
 	}
 
 	key(code: string, down: boolean) {

@@ -1,10 +1,9 @@
 import { WebSocket } from "ws";
-import { SharedPlayer, playerModel } from "../../common/player/sharedplayer.js";
+import { SharedPlayer } from "../../common/player/sharedplayer.js";
 import { Buttons } from "../../common/input/buttons.js";
 import { Pistol } from "../../common/weapons/pistol.js";
 import { Time } from "../../common/system/time.js";
 import { findSpawn } from "./level.js";
-import { vec3 } from "../../common/math/vector.js";
 import { PlayerUtil } from "../../common/player/playerutil.js";
 
 export class ServerPlayer extends SharedPlayer {
@@ -12,6 +11,7 @@ export class ServerPlayer extends SharedPlayer {
 	ws: WebSocket
 	lastButtons = new Array<boolean>(Buttons.MAX_BUTTONS);
 	buttons = new Array<boolean>(Buttons.MAX_BUTTONS);
+	forcedAng: boolean = false;
 
 	constructor(id: number, ws: WebSocket) {
 		super(id);
@@ -53,8 +53,13 @@ export class ServerPlayer extends SharedPlayer {
 			const pos = spawn.transform.translation;
 			PlayerUtil.setFeetPos(this, pos);
 			this.health = 100;
-			this.pitch = 0;
-			this.yaw = spawn.transform.rotation.toEuler().y;
+			this.setAng(0, spawn.transform.rotation.toEulerRad().y)
 		}
+	}
+
+	setAng(pitch: number, yaw: number) {
+		this.pitch = pitch;
+		this.yaw = yaw;
+		this.forcedAng = true;
 	}
 }
