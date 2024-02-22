@@ -21,7 +21,10 @@
 			"min": [-0.75, 0, -0.75],
 			"max": [0.75, 2.5, 0.75],
 			"description": "A spawn point for players",
-			"model": "./data/models/sci_player"
+			"model": "./data/models/sci_player",
+			"keyvalues": {
+				"team": "0"
+			}
 		}
 	}
 }

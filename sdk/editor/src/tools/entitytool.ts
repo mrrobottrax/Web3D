@@ -27,7 +27,11 @@ export class EntityTool extends Tool {
 
 	static async fromJson(fileEntity: any): Promise<any> {
 		const entity = EntityTool.getNewEntity(fileEntity.classname);
-		entity.keyvalues = fileEntity.keyvalues;
+
+		for (const key in fileEntity.keyvalues) {
+			entity.keyvalues[key] = fileEntity.keyvalues[key];
+		}
+		
 		await EntityTool.loadEntityModel(entity);
 		return entity;
 	}
@@ -61,6 +65,7 @@ export class EntityTool extends Tool {
 		const entity = EditorFileManagement.engineEntities.get(name);
 		let newEntity: any = {};
 		let base = entity;
+		let keyvalues: string = "{";
 		while (base) {
 			const base2 = EditorFileManagement.baseClasses.get(base.base);
 
@@ -71,6 +76,11 @@ export class EntityTool extends Tool {
 					if (!newEntity[k])
 						newEntity[k] = base[k];
 				}
+
+				// add keyvalues
+				for (const key in base.keyvalues) {
+					keyvalues += `"${key}": "${base.keyvalues[key]}",`;
+				}
 			}
 			else break;
 		}
@@ -79,8 +89,15 @@ export class EntityTool extends Tool {
 			newEntity[k] = entity[k];
 		}
 
+		for (const key in newEntity.keyvalues) {
+			keyvalues += `"${key}": "${newEntity.keyvalues[key]}",`;
+		}
+
+		keyvalues = keyvalues.slice(0, keyvalues.length - 1); // remove ','
+		keyvalues += "}";
+
 		newEntity.className = name;
-		newEntity.keyvalues = JSON.parse(JSON.stringify(newEntity.keyvalues)); // Sharing is NOT caring!
+		newEntity.keyvalues = JSON.parse(keyvalues); // copy over
 
 		newEntity.toJSON = () => {
 			return {

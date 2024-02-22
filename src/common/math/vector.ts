@@ -434,6 +434,14 @@ export class quaternion {
 		return this.eulerRad(_x, _y, _z);
 	}
 
+	public static eulerV(v: vec3): quaternion {
+		const _x = gMath.deg2Rad(v.x);
+		const _y = gMath.deg2Rad(v.y);
+		const _z = gMath.deg2Rad(v.z);
+
+		return this.eulerRad(_x, _y, _z);
+	}
+
 	public static lerp(a: quaternion, b: quaternion, t: number): quaternion {
 		// todo: fix with signs
 		let result = quaternion.identity();

@@ -457,10 +457,20 @@ export class PropertiesPanel {
 	static entityProperties(properties: HTMLElement) {
 		let entity: any = editor.selectTool.selectedEntities.values().next().value;
 
-		console.log(entity);
+		if (!entity) return;
 
-		properties.innerHTML += `
-		<input type="text" id="text" value="0">
-		`;
+		for (const key in entity.keyvalues) {
+			properties.innerHTML += `
+			<p class="small">${key}</p>
+			<input type="text" id="kv_${key}" value="${entity.keyvalues[key]}">
+			`;
+		}
+
+		for (const key in entity.keyvalues) {
+			const kv = document.getElementById(`kv_${key}`) as HTMLInputElement;
+			kv.oninput = () => {
+				entity.keyvalues[key] = kv.value;
+			}
+		}
 	}
 }
