@@ -11,5 +11,5 @@ Now you can connect to your webserver from a browser to start the client.
 
 To connect the client to the game's server:
 
-1. Open the browser's console and type 'connect("ws://127.0.0.1")' to connect to the local host.
+1. Open the browser's console and type 'connect("ws://127.0.0.1")' to connect to the local host (this was supposed to be temporary until I got around to UI but oh well).
 2. The client should quickly connect to the server be able to move around.
