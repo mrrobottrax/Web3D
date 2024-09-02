@@ -63,6 +63,7 @@ export class Client {
 		// drawText(new vec3(-10, -10, 0), "TEST TEXT! HelLo wOrLd! _0123()[]", 1000, new vec3(1, 1, 1));
 	}
 
+	// loopback command: connect("ws://127.0.0.1")
 	public connect(url: string): void {
 		console.log("Connecting to: " + url);
 
